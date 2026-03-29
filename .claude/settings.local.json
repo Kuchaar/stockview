@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(/usr/local/bin/node --version)",
+      "Read(//usr/local/bin/**)"
+    ]
+  }
+}
