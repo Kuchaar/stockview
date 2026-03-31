@@ -6,11 +6,16 @@ import {
   wig20Companies, sectors, formatPrice, formatPercent, formatNumber,
   calculateHealthScore, calculateSubScores,
 } from '../data/wig20';
+import useStockData from '../hooks/useStockData';
+import useFinancials from '../hooks/useFinancials';
 import TradingViewChart from '../components/TradingViewChart';
 import FinancialTable from '../components/FinancialTable';
+import BalanceSheet from '../components/BalanceSheet';
+import IncomeStatement from '../components/IncomeStatement';
+import CashFlowStatement from '../components/CashFlowStatement';
 import ValuationMetrics from '../components/ValuationMetrics';
 import HealthScore from '../components/HealthScore';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TABS = [
@@ -21,13 +26,26 @@ const TABS = [
   { id: 'health',     pl: 'Kondycja',    en: 'Health' },
 ];
 
+const FINANCIAL_SUB_TABS = [
+  { id: 'overview',  pl: 'Przegląd',               en: 'Overview' },
+  { id: 'income',    pl: 'Rachunek zysków i strat', en: 'Income Statement' },
+  { id: 'balance',   pl: 'Bilans',                  en: 'Balance Sheet' },
+  { id: 'cashflow',  pl: 'Przepływy pieniężne',     en: 'Cash Flow' },
+];
+
 export default function StockPage() {
   const { id } = useParams();
   const { t, lang } = useLang();
   const { dark } = useTheme();
   const [tab, setTab] = useState('overview');
+  const [financialSubTab, setFinancialSubTab] = useState('overview');
 
-  const stock = wig20Companies.find(s => s.id === id);
+  // Live stock data
+  const { companies, lastUpdated } = useStockData();
+  const stock = companies.find(s => s.id === id);
+
+  // Live financials (only fetch when on financials tab or overview)
+  const { data: liveFinancials, loading: financialsLoading } = useFinancials(stock?.yahooSymbol);
 
   if (!stock) {
     return (
@@ -102,8 +120,14 @@ export default function StockPage() {
 
         {/* Price block */}
         <div className="sm:text-right flex-shrink-0">
-          <div className="text-[11px] uppercase tracking-wide text-surface-400 mb-1">
-            {lang === 'pl' ? 'Kurs zamknięcia' : 'Closing price'}
+          <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-surface-400 mb-1">
+            <span>{lang === 'pl' ? 'Kurs zamknięcia' : 'Closing price'}</span>
+            {stock._live && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-semibold normal-case">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
+                LIVE
+              </span>
+            )}
           </div>
           <div className="font-mono font-bold text-[2rem] tracking-tight leading-none mb-2.5">
             {formatPrice(stock.price)}{' '}
@@ -150,7 +174,7 @@ export default function StockPage() {
 
         {tab === 'chart' && (
           <div className="space-y-4">
-            <TradingViewChart symbol={stock.tvSymbol} height={520} />
+            <TradingViewChart symbol={stock.tvSymbol} variant="full" />
             <p className="text-xs text-surface-400 text-center">
               {lang === 'pl'
                 ? 'Użyj paska narzędzi wykresu, aby dodać oscylatory (RSI, MACD, Bollinger Bands i inne).'
@@ -161,8 +185,58 @@ export default function StockPage() {
 
         {tab === 'financials' && (
           <div className="card">
-            <h2 className="section-title mb-6">{t('stock.financials')}</h2>
-            <FinancialTable financials={stock.financials} />
+            <h2 className="section-title mb-4">{t('stock.financials')}</h2>
+
+            {/* Financial sub-tabs */}
+            <div className="flex overflow-x-auto gap-1 mb-6 pb-1">
+              {FINANCIAL_SUB_TABS.map(st => (
+                <button
+                  key={st.id}
+                  onClick={() => setFinancialSubTab(st.id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200 ${
+                    financialSubTab === st.id
+                      ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 dark:border-green-400/20'
+                      : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'
+                  }`}
+                >
+                  {lang === 'pl' ? st.pl : st.en}
+                </button>
+              ))}
+              {financialsLoading && (
+                <span className="flex items-center gap-1 text-xs text-surface-400 ml-2">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  {lang === 'pl' ? 'Ładowanie...' : 'Loading...'}
+                </span>
+              )}
+            </div>
+
+            {financialSubTab === 'overview' && (
+              <FinancialTable financials={stock.financials} />
+            )}
+            {financialSubTab === 'income' && (
+              <IncomeStatement
+                liveData={liveFinancials?.incomeStatement}
+                fallbackFinancials={stock.financials}
+              />
+            )}
+            {financialSubTab === 'balance' && (
+              <BalanceSheet
+                liveData={liveFinancials?.balanceSheet}
+                fallbackFinancials={stock.financials}
+              />
+            )}
+            {financialSubTab === 'cashflow' && (
+              <CashFlowStatement
+                liveData={liveFinancials?.cashFlow}
+                fallbackFinancials={stock.financials}
+              />
+            )}
+
+            {liveFinancials && (
+              <p className="text-[10px] text-surface-400 mt-4 text-right">
+                {lang === 'pl' ? 'Dane z Yahoo Finance' : 'Data from Yahoo Finance'}
+              </p>
+            )}
           </div>
         )}
 
