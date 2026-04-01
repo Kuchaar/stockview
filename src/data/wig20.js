@@ -2,28 +2,13 @@
 // Live data fetched from Yahoo Finance via /api/quote and /api/financials
 // Financial data approximate as of late 2024 / early 2025
 
-// Yahoo Finance symbol mapping for GPW (Warsaw Stock Exchange)
+// Ticker mapping for data sources
+// Yahoo Finance (.WA suffix) used for historical OHLCV data via scripts/fetch-stooq.mjs
 export const TICKER_TO_YAHOO = {
-  PKO: 'PKO.WA',
-  PKN: 'PKN.WA',
-  KGH: 'KGH.WA',
-  PZU: 'PZU.WA',
-  PEO: 'PEO.WA',
-  CDR: 'CDR.WA',
-  ALE: 'ALE.WA',
-  DNP: 'DNP.WA',
-  LPP: 'LPP.WA',
-  CPS: 'CPS.WA',
-  MBK: 'MBK.WA',
-  JSW: 'JSW.WA',
-  PGE: 'PGE.WA',
-  KRU: 'KRU.WA',
-  CCC: 'CCC.WA',
-  PCO: 'PCO.WA',
-  ACP: 'ACP.WA',
-  OPL: 'OPL.WA',
-  ALR: 'ALR.WA',
-  KTY: 'KTY.WA',
+  PKO: 'PKO.WA', PKN: 'PKN.WA', KGH: 'KGH.WA', PZU: 'PZU.WA', PEO: 'PEO.WA',
+  CDR: 'CDR.WA', ALE: 'ALE.WA', DNP: 'DNP.WA', LPP: 'LPP.WA', CPS: 'CPS.WA',
+  MBK: 'MBK.WA', JSW: 'JSW.WA', PGE: 'PGE.WA', KRU: 'KRU.WA', CCC: 'CCC.WA',
+  PCO: 'PCO.WA', ACP: 'ACP.WA', OPL: 'OPL.WA', ALR: 'ALR.WA', KTY: 'KTY.WA',
 };
 
 export const sectors = {

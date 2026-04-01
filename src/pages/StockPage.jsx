@@ -15,7 +15,7 @@ import IncomeStatement from '../components/IncomeStatement';
 import CashFlowStatement from '../components/CashFlowStatement';
 import ValuationMetrics from '../components/ValuationMetrics';
 import HealthScore from '../components/HealthScore';
-import { ArrowLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TABS = [
@@ -122,10 +122,9 @@ export default function StockPage() {
         <div className="sm:text-right flex-shrink-0">
           <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-surface-400 mb-1">
             <span>{lang === 'pl' ? 'Kurs zamknięcia' : 'Closing price'}</span>
-            {stock._live && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-semibold normal-case">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
-                LIVE
+            {stock._priceDate && (
+              <span className="text-[10px] normal-case font-normal">
+                ({stock._priceDate})
               </span>
             )}
           </div>
@@ -204,7 +203,7 @@ export default function StockPage() {
               ))}
               {financialsLoading && (
                 <span className="flex items-center gap-1 text-xs text-surface-400 ml-2">
-                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-3 h-3 animate-spin" />
                   {lang === 'pl' ? 'Ładowanie...' : 'Loading...'}
                 </span>
               )}

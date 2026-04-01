@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "npx wrangler pages dev -- npx vite",
+    "update-prices": "node scripts/fetch-stooq.mjs",
+    "prebuild": "node scripts/fetch-stooq.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

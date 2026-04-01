@@ -5,7 +5,7 @@ import useStockData from '../hooks/useStockData';
 import StockCard from '../components/StockCard';
 import TradingViewChart from '../components/TradingViewChart';
 import TickerTape from '../components/TickerTape';
-import { Search, TrendingUp, TrendingDown, Activity, BarChart3, RefreshCw } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
@@ -116,19 +116,12 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Live data indicator */}
-        {lastUpdateStr && (
+        {/* Data date indicator */}
+        {lastUpdated && (
           <div className="flex items-center justify-center gap-1.5 text-xs text-surface-400">
-            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
             <span>
-              {lang === 'pl' ? 'Ostatnia aktualizacja:' : 'Last updated:'} {lastUpdateStr}
+              {lang === 'pl' ? 'Dane na dzien:' : 'Data as of:'} {lastUpdated}
             </span>
-            {companies[0]?._live && (
-              <span className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
-                LIVE
-              </span>
-            )}
           </div>
         )}
       </motion.div>
