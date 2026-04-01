@@ -21,7 +21,7 @@ const STOCKS = [
   { ticker: 'PZU', yahoo: 'PZU.WA' },
   { ticker: 'PEO', yahoo: 'PEO.WA' },
   { ticker: 'CDR', yahoo: 'CDR.WA' },
-  { ticker: 'ALE', yahoo: 'ALE.WA' },
+  { ticker: 'MOD', yahoo: 'MDV.WA' },
   { ticker: 'DNP', yahoo: 'DNP.WA' },
   { ticker: 'LPP', yahoo: 'LPP.WA' },
   { ticker: 'CPS', yahoo: 'CPS.WA' },
