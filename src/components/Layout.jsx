@@ -1,13 +1,24 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LangContext';
-import { Sun, Moon, Globe, TrendingUp, BarChart3 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import {
+  Sun, Moon, Globe, TrendingUp, BarChart3,
+  DollarSign, Calendar, LogIn, Menu, X,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Layout({ children }) {
   const { dark, toggle: toggleTheme } = useTheme();
   const { lang, toggle: toggleLang, t } = useLang();
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = [
+    { to: '/', label: t('nav.home'), icon: BarChart3 },
+    { to: '/dividends', label: t('nav.dividends'), icon: DollarSign, comingSoon: true },
+    { to: '/calendar', label: t('nav.calendar'), icon: Calendar, comingSoon: true },
+  ];
 
   return (
     <div className="min-h-screen noise-overlay flex flex-col">
@@ -27,16 +38,35 @@ export default function Layout({ children }) {
               </span>
             </Link>
 
-            {/* Nav */}
+            {/* Desktop Nav */}
             <nav className="hidden sm:flex items-center gap-1">
-              <NavLink to="/" active={location.pathname === '/'}>
-                <BarChart3 className="w-4 h-4" />
-                {t('nav.home')}
-              </NavLink>
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  active={location.pathname === item.to}
+                  comingSoon={item.comingSoon}
+                  comingSoonLabel={t('nav.comingSoon')}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </NavLink>
+              ))}
             </nav>
 
             {/* Controls */}
             <div className="flex items-center gap-2">
+              {/* Login button — desktop */}
+              <button
+                onClick={() => alert(t('nav.comingSoon') + '!')}
+                className="hidden sm:flex items-center gap-1.5 border border-brand-600 text-brand-600
+                         hover:bg-brand-600 hover:text-white rounded-lg px-3 py-1.5 text-sm font-medium
+                         transition-all duration-200"
+              >
+                <LogIn className="w-4 h-4" />
+                {t('nav.login')}
+              </button>
+
               {/* Language */}
               <button
                 onClick={toggleLang}
@@ -66,9 +96,63 @@ export default function Layout({ children }) {
                   {dark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
                 </motion.div>
               </button>
+
+              {/* Mobile hamburger */}
+              <button
+                onClick={() => setMobileOpen((v) => !v)}
+                className="sm:hidden w-9 h-9 rounded-lg flex items-center justify-center
+                         text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-900
+                         transition-colors duration-200"
+                aria-label="Menu"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="sm:hidden overflow-hidden border-t border-surface-200/40 dark:border-surface-800/40"
+            >
+              <nav className="flex flex-col gap-1 px-4 py-3">
+                {navItems.map((item) => (
+                  <MobileNavLink
+                    key={item.to}
+                    to={item.to}
+                    active={location.pathname === item.to}
+                    comingSoon={item.comingSoon}
+                    comingSoonLabel={t('nav.comingSoon')}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </MobileNavLink>
+                ))}
+
+                {/* Login — mobile */}
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    alert(t('nav.comingSoon') + '!');
+                  }}
+                  className="flex items-center gap-2 mt-2 border border-brand-600 text-brand-600
+                           hover:bg-brand-600 hover:text-white rounded-lg px-3 py-2 text-sm font-medium
+                           transition-all duration-200"
+                >
+                  <LogIn className="w-4 h-4" />
+                  {t('nav.login')}
+                </button>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Main */}
@@ -98,15 +182,66 @@ export default function Layout({ children }) {
   );
 }
 
-function NavLink({ to, active, children }) {
+/* ─── Desktop nav link ─────────────────────────────────────────────────────── */
+
+function NavLink({ to, active, comingSoon, comingSoonLabel, children }) {
+  const base =
+    'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative';
+
+  if (comingSoon) {
+    return (
+      <span
+        className={`${base} text-surface-400 dark:text-surface-600 cursor-default`}
+        title={comingSoonLabel}
+      >
+        {children}
+        <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-200/60 dark:bg-surface-800/60 text-surface-400 dark:text-surface-600">
+          {comingSoonLabel}
+        </span>
+      </span>
+    );
+  }
+
   return (
     <Link
       to={to}
-      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-        ${active
+      className={`${base} ${
+        active
           ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
           : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-900'
-        }`}
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+/* ─── Mobile nav link ──────────────────────────────────────────────────────── */
+
+function MobileNavLink({ to, active, comingSoon, comingSoonLabel, onClick, children }) {
+  const base =
+    'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200';
+
+  if (comingSoon) {
+    return (
+      <span className={`${base} text-surface-400 dark:text-surface-600 cursor-default`}>
+        {children}
+        <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-200/60 dark:bg-surface-800/60 text-surface-400 dark:text-surface-600">
+          {comingSoonLabel}
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`${base} ${
+        active
+          ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+          : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-900'
+      }`}
     >
       {children}
     </Link>
