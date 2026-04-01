@@ -13,13 +13,14 @@ const MODULES = [
 ].join(',');
 
 export async function onRequestGet(context) {
+  const reqOrigin = context.request.headers.get('Origin');
   const url = new URL(context.request.url);
   const symbol = url.searchParams.get('symbol');
 
   if (!symbol) {
     return new Response(JSON.stringify({ error: 'Missing symbol parameter' }), {
       status: 400,
-      headers: corsHeaders('application/json'),
+      headers: corsHeaders('application/json', reqOrigin),
     });
   }
 
@@ -45,7 +46,7 @@ export async function onRequestGet(context) {
     if (!resp.ok) {
       return new Response(JSON.stringify({ error: 'Yahoo Finance API unavailable' }), {
         status: 502,
-        headers: corsHeaders('application/json'),
+        headers: corsHeaders('application/json', reqOrigin),
       });
     }
 
@@ -55,7 +56,7 @@ export async function onRequestGet(context) {
     if (!result) {
       return new Response(JSON.stringify({ error: 'No data found for symbol' }), {
         status: 404,
-        headers: corsHeaders('application/json'),
+        headers: corsHeaders('application/json', reqOrigin),
       });
     }
 
@@ -63,18 +64,19 @@ export async function onRequestGet(context) {
 
     return new Response(JSON.stringify({ symbol, ...transformed, timestamp: Date.now() }), {
       status: 200,
-      headers: corsHeaders('application/json'),
+      headers: corsHeaders('application/json', reqOrigin),
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: 'Proxy error', detail: err.message }), {
       status: 502,
-      headers: corsHeaders('application/json'),
+      headers: corsHeaders('application/json', reqOrigin),
     });
   }
 }
 
-export async function onRequestOptions() {
-  return new Response(null, { status: 204, headers: corsHeaders() });
+export async function onRequestOptions(context) {
+  const reqOrigin = context.request.headers.get('Origin');
+  return new Response(null, { status: 204, headers: corsHeaders(null, reqOrigin) });
 }
 
 function transformFinancials(result) {
@@ -140,12 +142,20 @@ function extractKeyStats(keyStats, financialData) {
   };
 }
 
-function corsHeaders(contentType) {
+const ALLOWED_ORIGINS = [
+  'https://stockview.pages.dev',
+  'http://localhost:5173',
+  'http://localhost:8788',
+];
+
+function corsHeaders(contentType, requestOrigin) {
+  const origin = ALLOWED_ORIGINS.includes(requestOrigin) ? requestOrigin : ALLOWED_ORIGINS[0];
   const h = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Cache-Control': 'public, max-age=3600',
+    'Vary': 'Origin',
   };
   if (contentType) h['Content-Type'] = contentType;
   return h;
