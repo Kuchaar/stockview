@@ -120,7 +120,7 @@ export default function HomePage() {
         {lastUpdated && (
           <div className="flex items-center justify-center gap-1.5 text-xs text-surface-400">
             <span>
-              {lang === 'pl' ? 'Dane na dzien:' : 'Data as of:'} {lastUpdated}
+              {lang === 'pl' ? 'Kursy zamknięcia z sesji:' : 'Closing prices from session:'} {lastUpdated}
             </span>
           </div>
         )}

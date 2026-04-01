@@ -45,10 +45,17 @@ export default function useLatestPrices() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Use the actual trading session date from the price data, not the script run date
+  const sessionDate = (() => {
+    if (!data?.prices) return null;
+    const dates = Object.values(data.prices).map((p) => p.date).filter(Boolean);
+    return dates.length ? dates.sort().pop() : data.lastUpdated;
+  })();
+
   return {
     prices: data?.prices || null,
     loading,
     error,
-    lastUpdated: data?.lastUpdated || null,
+    lastUpdated: sessionDate,
   };
 }
