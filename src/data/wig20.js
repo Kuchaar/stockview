@@ -6,7 +6,7 @@
 // Yahoo Finance (.WA suffix) used for historical OHLCV data via scripts/fetch-stooq.mjs
 export const TICKER_TO_YAHOO = {
   PKO: 'PKO.WA', PKN: 'PKN.WA', KGH: 'KGH.WA', PZU: 'PZU.WA', PEO: 'PEO.WA',
-  CDR: 'CDR.WA', ALE: 'ALE.WA', DNP: 'DNP.WA', LPP: 'LPP.WA', CPS: 'CPS.WA',
+  CDR: 'CDR.WA', MOD: 'MDV.WA', DNP: 'DNP.WA', LPP: 'LPP.WA', CPS: 'CPS.WA',
   MBK: 'MBK.WA', JSW: 'JSW.WA', PGE: 'PGE.WA', KRU: 'KRU.WA', CCC: 'CCC.WA',
   PCO: 'PCO.WA', ACP: 'ACP.WA', OPL: 'OPL.WA', ALR: 'ALR.WA', KTY: 'KTY.WA',
 };
@@ -336,12 +336,12 @@ export const wig20Companies = [
     },
   },
   {
-    id: 'allegro',
-    ticker: 'ALE',
-    tvSymbol: 'GPW:ALE',
-    yahooSymbol: 'ALE.WA',
-    name: 'Allegro.eu',
-    shortName: 'Allegro',
+    id: 'modivo',
+    ticker: 'MOD',
+    tvSymbol: 'GPW:MOD',
+    yahooSymbol: 'MDV.WA',
+    name: 'Modivo S.A.',
+    shortName: 'Modivo',
     sector: 'ecommerce',
     logo: '🛒',
     price: 33.40,

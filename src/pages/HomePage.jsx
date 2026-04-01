@@ -5,7 +5,8 @@ import useStockData from '../hooks/useStockData';
 import StockCard from '../components/StockCard';
 import TradingViewChart from '../components/TradingViewChart';
 import TickerTape from '../components/TickerTape';
-import { Search, TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, TrendingUp, TrendingDown, Activity, BarChart3, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
@@ -72,15 +73,58 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-center py-6"
+        className="text-center py-8 sm:py-12 space-y-6"
       >
-        <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight mb-3">
-          {t('home.hero').split(' ')[0]}{' '}
-          <span className="text-gradient">{t('home.hero').split(' ').slice(1).join(' ')}</span>
-        </h1>
+        <div>
+          <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight mb-1">
+            {t('home.hero')}
+          </h1>
+          <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-gradient">
+            {t('home.heroLine2')}
+          </h1>
+        </div>
         <p className="text-surface-500 text-lg max-w-xl mx-auto">
           {t('home.heroSub')}
         </p>
+
+        {/* Search bar */}
+        <div className="flex justify-center">
+          <div className="relative max-w-lg w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={t('home.heroSearchPlaceholder')}
+              className="w-full pl-12 pr-4 py-3 rounded-xl bg-surface-100 dark:bg-surface-900
+                       border border-surface-200/60 dark:border-surface-800/50
+                       text-sm font-body focus:outline-none focus:ring-2 focus:ring-brand-500/40
+                       placeholder:text-surface-400 shadow-lg
+                       transition-all duration-200"
+            />
+          </div>
+        </div>
+
+        {/* CTA buttons */}
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => alert(lang === 'pl' ? 'Wkrótce!' : 'Coming soon!')}
+            className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl
+                     text-sm font-medium shadow-md shadow-brand-600/20
+                     hover:bg-brand-700 transition-all duration-200"
+          >
+            {t('home.heroCta')}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <Link
+            to="/stock/pkobp"
+            className="inline-flex items-center gap-2 border border-surface-300 dark:border-surface-700
+                     px-5 py-2.5 rounded-xl text-sm font-medium
+                     hover:bg-surface-100 dark:hover:bg-surface-900 transition-all duration-200"
+          >
+            {lang === 'pl' ? 'Zobacz PKO BP' : 'View PKO BP'}
+          </Link>
+        </div>
       </motion.div>
 
       {/* Index stats */}
