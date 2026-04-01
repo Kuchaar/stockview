@@ -1,24 +1,49 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LangContext';
+import { useAuth } from '../context/AuthContext';
+import AuthModal from './AuthModal';
 import {
   Sun, Moon, Globe, TrendingUp, BarChart3,
-  DollarSign, Calendar, LogIn, Menu, X,
+  DollarSign, Calendar, LogIn, LogOut, Menu, X, ChevronDown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Layout({ children }) {
   const { dark, toggle: toggleTheme } = useTheme();
   const { lang, toggle: toggleLang, t } = useLang();
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+
+  // Close user dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const navItems = [
     { to: '/', label: t('nav.home'), icon: BarChart3 },
     { to: '/dividends', label: t('nav.dividends'), icon: DollarSign },
     { to: '/calendar', label: t('nav.calendar'), icon: Calendar, comingSoon: true },
   ];
+
+  const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : '?';
+
+  async function handleSignOut() {
+    setShowUserMenu(false);
+    setMobileOpen(false);
+    await signOut();
+  }
 
   return (
     <div className="min-h-screen noise-overlay flex flex-col">
@@ -56,16 +81,57 @@ export default function Layout({ children }) {
 
             {/* Controls */}
             <div className="flex items-center gap-2">
-              {/* Login button — desktop */}
-              <button
-                onClick={() => alert(t('nav.comingSoon') + '!')}
-                className="hidden sm:flex items-center gap-1.5 border border-brand-600 text-brand-600
-                         hover:bg-brand-600 hover:text-white rounded-lg px-3 py-1.5 text-sm font-medium
-                         transition-all duration-200"
-              >
-                <LogIn className="w-4 h-4" />
-                {t('nav.login')}
-              </button>
+              {/* Auth — desktop */}
+              {user ? (
+                <div className="hidden sm:block relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setShowUserMenu((v) => !v)}
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg
+                             hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors duration-200"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center
+                                  text-white text-xs font-bold">
+                      {userInitial}
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-surface-400" />
+                  </button>
+
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full mt-1 w-56 glass card !p-2 shadow-xl z-50"
+                      >
+                        <div className="px-3 py-2 border-b border-surface-200/40 dark:border-surface-800/40 mb-1">
+                          <p className="text-xs text-surface-400 truncate">{user.email}</p>
+                        </div>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-surface-600
+                                   dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800
+                                   transition-colors duration-200"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          {lang === 'pl' ? 'Wyloguj się' : 'Sign out'}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="hidden sm:flex items-center gap-1.5 border border-brand-600 text-brand-600
+                           hover:bg-brand-600 hover:text-white rounded-lg px-3 py-1.5 text-sm font-medium
+                           transition-all duration-200"
+                >
+                  <LogIn className="w-4 h-4" />
+                  {t('nav.login')}
+                </button>
+              )}
 
               {/* Language */}
               <button
@@ -136,19 +202,34 @@ export default function Layout({ children }) {
                   </MobileNavLink>
                 ))}
 
-                {/* Login — mobile */}
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    alert(t('nav.comingSoon') + '!');
-                  }}
-                  className="flex items-center gap-2 mt-2 border border-brand-600 text-brand-600
-                           hover:bg-brand-600 hover:text-white rounded-lg px-3 py-2 text-sm font-medium
-                           transition-all duration-200"
-                >
-                  <LogIn className="w-4 h-4" />
-                  {t('nav.login')}
-                </button>
+                {/* Auth — mobile */}
+                {user ? (
+                  <div className="mt-2 pt-2 border-t border-surface-200/40 dark:border-surface-800/40">
+                    <p className="text-xs text-surface-400 px-3 py-1 truncate">{user.email}</p>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium
+                               text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-900
+                               transition-colors duration-200"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      {lang === 'pl' ? 'Wyloguj się' : 'Sign out'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setShowAuthModal(true);
+                    }}
+                    className="flex items-center gap-2 mt-2 border border-brand-600 text-brand-600
+                             hover:bg-brand-600 hover:text-white rounded-lg px-3 py-2 text-sm font-medium
+                             transition-all duration-200"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    {t('nav.login')}
+                  </button>
+                )}
               </nav>
             </motion.div>
           )}
@@ -178,6 +259,9 @@ export default function Layout({ children }) {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }
