@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useLang } from '../context/LangContext';
-import { wig20Companies, formatPercent } from '../data/wig20';
+import { formatPercent } from '../data/wig20';
+import useStockData from '../hooks/useStockData';
 import StockCard from '../components/StockCard';
 import TradingViewChart from '../components/TradingViewChart';
 import TickerTape from '../components/TickerTape';
@@ -12,16 +13,18 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
 
+  const { companies, loading, lastUpdated } = useStockData();
+
   const sorted = useMemo(() =>
-    [...wig20Companies].sort((a, b) => b.changePercent - a.changePercent),
-    []
+    [...companies].sort((a, b) => b.changePercent - a.changePercent),
+    [companies]
   );
 
   const topGainers = sorted.filter(s => s.changePercent > 0).slice(0, 3);
   const topLosers = [...sorted].reverse().filter(s => s.changePercent < 0).slice(0, 3);
 
   const filteredStocks = useMemo(() => {
-    let list = wig20Companies;
+    let list = companies;
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(s =>
@@ -34,9 +37,9 @@ export default function HomePage() {
       list = list.filter(s => s.sector === sectorFilter);
     }
     return list;
-  }, [search, sectorFilter]);
+  }, [companies, search, sectorFilter]);
 
-  const uniqueSectors = [...new Set(wig20Companies.map(s => s.sector))];
+  const uniqueSectors = [...new Set(companies.map(s => s.sector))];
 
   const sectorLabels = {
     pl: { all: 'Wszystkie', banking: 'Banki', energy: 'Energetyka', mining: 'Górnictwo',
@@ -48,10 +51,14 @@ export default function HomePage() {
   };
 
   // Index stats
-  const avgChange = (wig20Companies.reduce((s, c) => s + c.changePercent, 0) / wig20Companies.length);
-  const totalMarketCap = wig20Companies.reduce((s, c) => s + c.marketCap, 0);
-  const advancers = wig20Companies.filter(s => s.changePercent > 0).length;
-  const decliners = wig20Companies.filter(s => s.changePercent < 0).length;
+  const avgChange = (companies.reduce((s, c) => s + c.changePercent, 0) / companies.length);
+  const totalMarketCap = companies.reduce((s, c) => s + c.marketCap, 0);
+  const advancers = companies.filter(s => s.changePercent > 0).length;
+  const decliners = companies.filter(s => s.changePercent < 0).length;
+
+  const lastUpdateStr = lastUpdated
+    ? new Date(lastUpdated).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   return (
     <div className="space-y-10">
@@ -81,31 +88,42 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+        className="space-y-3"
       >
-        <StatBox
-          icon={<Activity className="w-4 h-4" />}
-          label={lang === 'pl' ? 'Śr. zmiana' : 'Avg. Change'}
-          value={formatPercent(avgChange)}
-          valueColor={avgChange >= 0 ? 'text-up' : 'text-down'}
-        />
-        <StatBox
-          icon={<BarChart3 className="w-4 h-4" />}
-          label={t('home.marketCap')}
-          value={`${(totalMarketCap / 1000).toFixed(0)} mld PLN`}
-        />
-        <StatBox
-          icon={<TrendingUp className="w-4 h-4" />}
-          label={lang === 'pl' ? 'Wzrosty' : 'Advancers'}
-          value={advancers}
-          valueColor="text-up"
-        />
-        <StatBox
-          icon={<TrendingDown className="w-4 h-4" />}
-          label={lang === 'pl' ? 'Spadki' : 'Decliners'}
-          value={decliners}
-          valueColor="text-down"
-        />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatBox
+            icon={<Activity className="w-4 h-4" />}
+            label={lang === 'pl' ? 'Sr. zmiana' : 'Avg. Change'}
+            value={formatPercent(avgChange)}
+            valueColor={avgChange >= 0 ? 'text-up' : 'text-down'}
+          />
+          <StatBox
+            icon={<BarChart3 className="w-4 h-4" />}
+            label={t('home.marketCap')}
+            value={`${(totalMarketCap / 1000).toFixed(0)} mld PLN`}
+          />
+          <StatBox
+            icon={<TrendingUp className="w-4 h-4" />}
+            label={lang === 'pl' ? 'Wzrosty' : 'Advancers'}
+            value={advancers}
+            valueColor="text-up"
+          />
+          <StatBox
+            icon={<TrendingDown className="w-4 h-4" />}
+            label={lang === 'pl' ? 'Spadki' : 'Decliners'}
+            value={decliners}
+            valueColor="text-down"
+          />
+        </div>
+
+        {/* Data date indicator */}
+        {lastUpdated && (
+          <div className="flex items-center justify-center gap-1.5 text-xs text-surface-400">
+            <span>
+              {lang === 'pl' ? 'Dane na dzien:' : 'Data as of:'} {lastUpdated}
+            </span>
+          </div>
+        )}
       </motion.div>
 
       {/* WIG20 Chart */}
@@ -115,7 +133,7 @@ export default function HomePage() {
         transition={{ duration: 0.5, delay: 0.15 }}
       >
         <h2 className="section-title mb-4">{t('home.indexOverview')}</h2>
-        <TradingViewChart symbol="GPW:WIG20" height={420} />
+        <TradingViewChart symbol="GPW:WIG20" variant="compact" />
       </motion.div>
 
       {/* Gainers / Losers */}
@@ -202,7 +220,7 @@ export default function HomePage() {
         {filteredStocks.length === 0 && (
           <div className="text-center py-16 text-surface-500">
             <Search className="w-8 h-8 mx-auto mb-3 opacity-50" />
-            <p>{lang === 'pl' ? 'Nie znaleziono spółek' : 'No stocks found'}</p>
+            <p>{lang === 'pl' ? 'Nie znaleziono spolek' : 'No stocks found'}</p>
           </div>
         )}
       </div>

@@ -1,7 +1,12 @@
 import { useEffect, useRef, memo } from 'react';
 import { useTheme } from '../context/ThemeContext';
 
-function TradingViewChart({ symbol = 'GPW:WIG20', height = 500 }) {
+const VARIANTS = {
+  compact: 'aspect-[16/7] min-h-[380px]', // HomePage — wider, shorter
+  full: 'aspect-video min-h-[450px]',       // StockPage — standard 16:9
+};
+
+function TradingViewChart({ symbol = 'GPW:WIG20', variant = 'full' }) {
   const containerRef = useRef(null);
   const { dark } = useTheme();
 
@@ -50,12 +55,13 @@ function TradingViewChart({ symbol = 'GPW:WIG20', height = 500 }) {
     };
   }, [symbol, dark]);
 
+  const sizeClass = VARIANTS[variant] || VARIANTS.full;
+
   return (
     <div className="rounded-2xl overflow-hidden border border-surface-200/60 dark:border-surface-800/50">
       <div
-        className="tradingview-widget-container"
+        className={`tradingview-widget-container ${sizeClass}`}
         ref={containerRef}
-        style={{ height: `${height}px`, width: '100%' }}
       />
     </div>
   );
