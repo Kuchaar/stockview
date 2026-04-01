@@ -4,6 +4,10 @@ export const translations = {
       home: 'Przegląd',
       stocks: 'Spółki',
       about: 'O nas',
+      dividends: 'Dywidendy',
+      calendar: 'Kalendarz',
+      login: 'Zaloguj się',
+      comingSoon: 'Wkrótce',
     },
     home: {
       hero: 'WIG20 na żywo',
@@ -79,6 +83,10 @@ export const translations = {
       home: 'Overview',
       stocks: 'Stocks',
       about: 'About',
+      dividends: 'Dividends',
+      calendar: 'Calendar',
+      login: 'Sign in',
+      comingSoon: 'Coming soon',
     },
     home: {
       hero: 'WIG20 Live',
