@@ -16,7 +16,7 @@ export default function Layout({ children }) {
 
   const navItems = [
     { to: '/', label: t('nav.home'), icon: BarChart3 },
-    { to: '/dividends', label: t('nav.dividends'), icon: DollarSign, comingSoon: true },
+    { to: '/dividends', label: t('nav.dividends'), icon: DollarSign },
     { to: '/calendar', label: t('nav.calendar'), icon: Calendar, comingSoon: true },
   ];
 
