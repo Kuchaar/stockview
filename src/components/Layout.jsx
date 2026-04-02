@@ -3,10 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
+import { useAuthModal } from '../context/AuthModalContext';
 import AuthModal from './AuthModal';
 import {
   Sun, Moon, Globe, TrendingUp, BarChart3,
-  DollarSign, Calendar, LogIn, LogOut, Menu, X, ChevronDown,
+  DollarSign, Calendar, LogIn, LogOut, Menu, X, ChevronDown, Bookmark,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,9 +15,9 @@ export default function Layout({ children }) {
   const { dark, toggle: toggleTheme } = useTheme();
   const { lang, toggle: toggleLang, t } = useLang();
   const { user, signOut } = useAuth();
+  const { open: showAuthModal, setOpen: setShowAuthModal } = useAuthModal();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
 
@@ -34,6 +35,9 @@ export default function Layout({ children }) {
   const navItems = [
     { to: '/', label: t('nav.home'), icon: BarChart3 },
     { to: '/dividends', label: t('nav.dividends'), icon: DollarSign },
+    ...(user
+      ? [{ to: '/watchlist', label: t('nav.watchlist'), icon: Bookmark }]
+      : []),
     { to: '/calendar', label: t('nav.calendar'), icon: Calendar, comingSoon: true },
   ];
 

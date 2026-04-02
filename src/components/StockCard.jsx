@@ -4,6 +4,7 @@ import { sectors } from '../data/wig20';
 import { formatPrice, formatPercent } from '../data/wig20';
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import WatchButton from './WatchButton';
 
 export default function StockCard({ stock, index = 0 }) {
   const { lang, t } = useLang();
@@ -31,10 +32,13 @@ export default function StockCard({ stock, index = 0 }) {
               <span className="text-xs text-surface-500 font-mono">{stock.ticker}</span>
             </div>
           </div>
-          <span className={`badge ${isUp ? 'badge-up' : 'badge-down'}`}>
-            {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            {formatPercent(stock.changePercent)}
-          </span>
+          <div className="flex items-center gap-1">
+            <WatchButton companyId={stock.id} size="sm" />
+            <span className={`badge ${isUp ? 'badge-up' : 'badge-down'}`}>
+              {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              {formatPercent(stock.changePercent)}
+            </span>
+          </div>
         </div>
 
         <div className="flex items-end justify-between">

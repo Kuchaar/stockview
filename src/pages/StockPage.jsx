@@ -16,6 +16,7 @@ import CashFlowStatement from '../components/CashFlowStatement';
 import ValuationMetrics from '../components/ValuationMetrics';
 import HealthScore from '../components/HealthScore';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
+import WatchButton from '../components/WatchButton';
 import { motion } from 'framer-motion';
 
 const TABS = [
@@ -92,9 +93,12 @@ export default function StockPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" />
             WIG20
           </div>
-          <h1 className="text-[1.9rem] sm:text-[2.1rem] font-bold tracking-tight leading-tight mb-1">
-            {stock.ticker}
-          </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-[1.9rem] sm:text-[2.1rem] font-bold tracking-tight leading-tight">
+              {stock.ticker}
+            </h1>
+            <WatchButton companyId={id} size="lg" />
+          </div>
           <p className="text-surface-500 text-sm mb-4">{stock.name}</p>
           <div className="flex flex-wrap gap-x-5 gap-y-1.5">
             <span className="text-sm text-surface-400">

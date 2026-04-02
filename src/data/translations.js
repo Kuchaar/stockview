@@ -7,6 +7,7 @@ export const translations = {
       dividends: 'Dywidendy',
       calendar: 'Kalendarz',
       login: 'Zaloguj się',
+      watchlist: 'Obserwowane',
       comingSoon: 'Wkrótce',
     },
     home: {
@@ -102,6 +103,7 @@ export const translations = {
       dividends: 'Dividends',
       calendar: 'Calendar',
       login: 'Sign in',
+      watchlist: 'Watchlist',
       comingSoon: 'Coming soon',
     },
     home: {
