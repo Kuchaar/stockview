@@ -143,6 +143,7 @@ function extractKeyStats(keyStats, financialData) {
 }
 
 const ALLOWED_ORIGINS = [
+  'https://stockview-3e4.pages.dev',
   'https://stockview.pages.dev',
   'http://localhost:5173',
   'http://localhost:8788',

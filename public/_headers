@@ -3,4 +3,4 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://s3.tradingview.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://s.tradingview.com https://*.tradingview.com; connect-src 'self' https://stockview.pages.dev https://*.yahoo.com https://*.supabase.co; worker-src 'self' blob:
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://s3.tradingview.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://s.tradingview.com https://*.tradingview.com; connect-src 'self' https://stockview-3e4.pages.dev https://stockview.pages.dev https://*.yahoo.com https://*.supabase.co; worker-src 'self' blob:
