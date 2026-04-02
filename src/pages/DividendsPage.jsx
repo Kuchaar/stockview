@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLang } from '../context/LangContext';
-import { getUpcomingDividends, getRecentDividends } from '../data/dividends';
-import { CalendarDays, Banknote, Info, Search } from 'lucide-react';
+import useDividends from '../hooks/useDividends';
+import { CalendarDays, Banknote, Info, Search, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TABS = [
@@ -31,11 +31,9 @@ function formatDateEN(dateStr) {
 export default function DividendsPage() {
   const { t, lang } = useLang();
   const [tab, setTab] = useState('upcoming');
+  const { upcoming, recent, loading } = useDividends();
 
-  const upcoming = useMemo(() => getUpcomingDividends(), []);
-  const paid = useMemo(() => getRecentDividends(), []);
-
-  const items = tab === 'upcoming' ? upcoming : paid;
+  const items = tab === 'upcoming' ? upcoming : recent;
   const formatDate = lang === 'pl' ? formatDatePL : formatDateEN;
 
   return (
@@ -84,8 +82,15 @@ export default function DividendsPage() {
         <span>{t('dividends.disclaimer')}</span>
       </motion.div>
 
+      {/* Loading */}
+      {loading && (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-surface-400" />
+        </div>
+      )}
+
       {/* Cards grid */}
-      {items.length > 0 ? (
+      {!loading && items.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((div, i) => (
             <DividendCard
@@ -98,7 +103,9 @@ export default function DividendsPage() {
             />
           ))}
         </div>
-      ) : (
+      )}
+
+      {!loading && items.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

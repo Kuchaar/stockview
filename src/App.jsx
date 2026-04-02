@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import StockPage from './pages/StockPage';
 import DividendsPage from './pages/DividendsPage';
 import WatchlistPage from './pages/WatchlistPage';
+import AdminDividendsPage from './pages/AdminDividendsPage';
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
                   <Route path="/stock/:id" element={<StockPage />} />
                   <Route path="/dividends" element={<DividendsPage />} />
                   <Route path="/watchlist" element={<WatchlistPage />} />
+                  <Route path="/admin/dividends" element={<AdminDividendsPage />} />
                 </Routes>
               </Layout>
             </BrowserRouter>
