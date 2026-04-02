@@ -6,11 +6,15 @@ import StockCard from '../components/StockCard';
 import TradingViewChart from '../components/TradingViewChart';
 import TickerTape from '../components/TickerTape';
 import { Link } from 'react-router-dom';
-import { Search, TrendingUp, TrendingDown, Activity, BarChart3, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useAuthModal } from '../context/AuthModalContext';
+import { Search, TrendingUp, TrendingDown, Activity, BarChart3, ArrowRight, Bookmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
   const { t, lang } = useLang();
+  const { user } = useAuth();
+  const { setOpen: openAuthModal } = useAuthModal();
   const [search, setSearch] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
 
@@ -107,23 +111,35 @@ export default function HomePage() {
 
         {/* CTA buttons */}
         <div className="flex items-center justify-center gap-3">
+          {user ? (
+            <Link
+              to="/watchlist"
+              className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl
+                       text-sm font-medium shadow-md shadow-brand-600/20
+                       hover:bg-brand-700 transition-all duration-200"
+            >
+              <Bookmark className="w-4 h-4" />
+              {lang === 'pl' ? 'Moje obserwowane' : 'My watchlist'}
+            </Link>
+          ) : (
+            <button
+              onClick={() => openAuthModal(true)}
+              className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl
+                       text-sm font-medium shadow-md shadow-brand-600/20
+                       hover:bg-brand-700 transition-all duration-200"
+            >
+              {t('home.heroCta')}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
           <button
-            onClick={() => alert(lang === 'pl' ? 'Wkrótce!' : 'Coming soon!')}
-            className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl
-                     text-sm font-medium shadow-md shadow-brand-600/20
-                     hover:bg-brand-700 transition-all duration-200"
-          >
-            {t('home.heroCta')}
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <Link
-            to="/stock/pkobp"
+            onClick={() => document.getElementById('stock-list')?.scrollIntoView({ behavior: 'smooth' })}
             className="inline-flex items-center gap-2 border border-surface-300 dark:border-surface-700
                      px-5 py-2.5 rounded-xl text-sm font-medium
                      hover:bg-surface-100 dark:hover:bg-surface-900 transition-all duration-200"
           >
-            {lang === 'pl' ? 'Zobacz PKO BP' : 'View PKO BP'}
-          </Link>
+            {lang === 'pl' ? 'Zobacz spółki ↓' : 'View stocks ↓'}
+          </button>
         </div>
       </motion.div>
 
@@ -216,7 +232,7 @@ export default function HomePage() {
       </div>
 
       {/* All stocks */}
-      <div>
+      <div id="stock-list">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h2 className="section-title">{t('home.allStocks')}</h2>
 
