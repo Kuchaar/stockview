@@ -17,6 +17,9 @@ import ValuationMetrics from '../components/ValuationMetrics';
 import HealthScore from '../components/HealthScore';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import WatchButton from '../components/WatchButton';
+import { useAuth } from '../context/AuthContext';
+import { useAuthModal } from '../context/AuthModalContext';
+import useWatchlist from '../hooks/useWatchlist';
 import { motion } from 'framer-motion';
 
 const TABS = [
@@ -274,7 +277,7 @@ function OverviewTab({ stock, lang, dark, health, t }) {
       <HealthGrid stock={stock} lang={lang} dark={dark} health={health} subs={subs} />
       <KeyRatiosSection stock={stock} lang={lang} />
       <FinancialHighlights stock={stock} lang={lang} />
-      <CtaBanner lang={lang} ticker={stock.ticker} />
+      <CtaBanner lang={lang} ticker={stock.ticker} stockId={stock.id} />
     </div>
   );
 }
@@ -617,24 +620,56 @@ function FinancialHighlights({ stock, lang }) {
 
 /* ─── CTA banner ────────────────────────────────────────────────────────────── */
 
-function CtaBanner({ lang, ticker }) {
+function CtaBanner({ lang, ticker, stockId }) {
+  const { user } = useAuth();
+  const { isWatched, toggle } = useWatchlist();
+  const { setOpen } = useAuthModal();
+
+  const watched = user ? isWatched(stockId) : false;
+
   return (
     <div className="rounded-2xl border border-green-500/15 dark:border-green-400/15 bg-gradient-to-br from-green-500/5 to-blue-500/5 dark:from-green-400/5 dark:to-blue-400/5 p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
       <div>
         <h3 className="text-base font-semibold mb-1.5">
-          {lang === 'pl'
-            ? `Dodaj ${ticker} do swojego portfela`
-            : `Add ${ticker} to your portfolio`}
+          {user
+            ? (watched
+                ? (lang === 'pl' ? `${ticker} jest na Twojej liście` : `${ticker} is on your watchlist`)
+                : (lang === 'pl' ? `Dodaj ${ticker} do obserwowanych` : `Add ${ticker} to your watchlist`))
+            : (lang === 'pl'
+                ? `Dodaj ${ticker} do swojego portfela`
+                : `Add ${ticker} to your portfolio`)}
         </h3>
         <p className="text-sm text-surface-500 max-w-lg leading-relaxed">
-          {lang === 'pl'
-            ? 'Śledź jak Twoje spółki radzą sobie w czasie, sprawdzaj dywersyfikację i porównuj wyniki. Darmowe konto — zero reklam, zero spamu.'
-            : 'Track how your stocks perform over time, check diversification and compare results. Free account — zero ads, zero spam.'}
+          {user
+            ? (lang === 'pl'
+                ? 'Śledź jak Twoje spółki radzą sobie w czasie, sprawdzaj dywersyfikację i porównuj wyniki.'
+                : 'Track how your stocks perform over time, check diversification and compare results.')
+            : (lang === 'pl'
+                ? 'Śledź jak Twoje spółki radzą sobie w czasie, sprawdzaj dywersyfikację i porównuj wyniki. Darmowe konto — zero reklam, zero spamu.'
+                : 'Track how your stocks perform over time, check diversification and compare results. Free account — zero ads, zero spam.')}
         </p>
       </div>
-      <button className="bg-green-500 dark:bg-green-400 text-white dark:text-[#0a0c10] font-semibold text-sm px-6 py-2.5 rounded-xl whitespace-nowrap hover:brightness-110 hover:-translate-y-px transition-all duration-200">
-        {lang === 'pl' ? 'Utwórz darmowe konto →' : 'Create free account →'}
-      </button>
+      {user ? (
+        <button
+          onClick={() => toggle(stockId)}
+          className={`font-semibold text-sm px-6 py-2.5 rounded-xl whitespace-nowrap hover:brightness-110 hover:-translate-y-px transition-all duration-200 ${
+            watched
+              ? 'bg-surface-200 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
+              : 'bg-green-500 dark:bg-green-400 text-white dark:text-[#0a0c10]'
+          }`}
+        >
+          {watched
+            ? (lang === 'pl' ? '✓ Obserwujesz' : '✓ Watching')
+            : (lang === 'pl' ? 'Obserwuj →' : 'Watch →')}
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="bg-green-500 dark:bg-green-400 text-white dark:text-[#0a0c10] font-semibold text-sm px-6 py-2.5 rounded-xl whitespace-nowrap hover:brightness-110 hover:-translate-y-px transition-all duration-200"
+        >
+          {lang === 'pl' ? 'Utwórz darmowe konto →' : 'Create free account →'}
+        </button>
+      )}
     </div>
   );
 }
