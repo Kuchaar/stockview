@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
 import { useTheme } from '../context/ThemeContext';
@@ -44,6 +44,9 @@ export default function StockPage() {
   const { dark } = useTheme();
   const [tab, setTab] = useState('overview');
   const [financialSubTab, setFinancialSubTab] = useState('overview');
+  // Delay TradingView init: only mount chart widget after Chart tab is visited once
+  const chartEverVisited = useRef(false);
+  if (tab === 'chart') chartEverVisited.current = true;
 
   // Live stock data
   const { companies, lastUpdated } = useStockData();
@@ -205,8 +208,10 @@ export default function StockPage() {
           <OverviewTab stock={stock} lang={lang} dark={dark} health={health} t={t} />
         )}
 
-        {tab === 'chart' && (
-          <div className="space-y-4">
+        {/* Chart tab — render once after first visit, hidden when inactive.
+            TradingViewChart's IntersectionObserver handles lazy script injection. */}
+        {chartEverVisited.current && (
+          <div className={`space-y-4 ${tab !== 'chart' ? 'hidden' : ''}`}>
             <TradingViewChart symbol={stock.tvSymbol} variant="full" />
             <p className="text-xs text-surface-400 text-center">
               {lang === 'pl'

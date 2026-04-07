@@ -12,9 +12,19 @@
     <meta name="author" content="StockView" />
     <meta name="robots" content="index, follow" />
 
+    <!-- Preconnect: fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fonts with display=swap to prevent invisible text during load -->
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Preconnect: TradingView CDN (widgets injected later) -->
+    <link rel="preconnect" href="https://s3.tradingview.com" crossorigin>
+    <link rel="preconnect" href="https://s.tradingview.com" crossorigin>
+    <!-- DNS prefetch: data sources -->
+    <link rel="dns-prefetch" href="https://query1.finance.yahoo.com">
+    <link rel="dns-prefetch" href="https://query2.finance.yahoo.com">
+    <link rel="dns-prefetch" href="https://stooq.com">
   </head>
   <body class="antialiased">
     <div id="root"></div>

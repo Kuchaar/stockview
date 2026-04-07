@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
 import { formatPercent } from '../data/wig20';
 import useStockData from '../hooks/useStockData';
 import StockCard from '../components/StockCard';
 import TradingViewChart from '../components/TradingViewChart';
-import TickerTape from '../components/TickerTape';
+const TickerTape = lazy(() => import('../components/TickerTape'));
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
@@ -83,9 +83,11 @@ export default function HomePage() {
       <meta name="twitter:image" content="https://stockview.pages.dev/og-default.png" />
     </Helmet>
     <div className="space-y-10">
-      {/* Ticker tape */}
+      {/* Ticker tape — lazy loaded, doesn't block first paint */}
       <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-        <TickerTape />
+        <Suspense fallback={<div className="h-[46px] bg-slate-100 dark:bg-slate-800 animate-pulse" />}>
+          <TickerTape />
+        </Suspense>
       </div>
 
       {/* Hero */}
