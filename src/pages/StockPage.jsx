@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
 import { useTheme } from '../context/ThemeContext';
 import {
@@ -69,7 +70,33 @@ export default function StockPage() {
   const sectorName = sectors[lang]?.[stock.sector] || stock.sector;
   const health = calculateHealthScore(stock.ratios);
 
+  const pageTitle = `${stock.name} (${stock.ticker}) — analiza, wykres, wskaźniki | StockView`;
+  const pageDesc = `${stock.name} — analiza fundamentalna, wykres TradingView, P/E ${stock.ratios.pe ?? '–'}, ROE ${stock.ratios.roe ?? '–'}%, dywidenda ${stock.ratios.dividendYield ?? '–'}%. Sprawdź ocenę kondycji finansowej i wycenę na StockView.`;
+  const pageUrl = `https://stockview.pages.dev/stock/${stock.id}`;
+
   return (
+    <>
+    <Helmet>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDesc} />
+      <link rel="canonical" href={pageUrl} />
+      <meta property="og:title" content={`${stock.name} (${stock.ticker}) | StockView`} />
+      <meta property="og:description" content={pageDesc} />
+      <meta property="og:url" content={pageUrl} />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://stockview.pages.dev/og-default.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={`${stock.name} (${stock.ticker}) | StockView`} />
+      <meta name="twitter:description" content={pageDesc} />
+      <meta name="twitter:image" content="https://stockview.pages.dev/og-default.png" />
+      <script type="application/ld+json">{JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Corporation",
+        "name": stock.name,
+        "tickerSymbol": stock.ticker,
+        "url": pageUrl,
+      })}</script>
+    </Helmet>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -264,6 +291,7 @@ export default function StockPage() {
       {/* Stock navigation */}
       <StockNavigation currentId={stock.id} />
     </motion.div>
+    </>
   );
 }
 
