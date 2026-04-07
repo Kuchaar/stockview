@@ -44,7 +44,10 @@ export default function useFinancials(yahooSymbol) {
 
       const result = await resp.json();
       setData(result);
-      setCache(yahooSymbol, result);
+      // Nie cachuj fallbacku — przy kolejnym mount próbujemy znowu
+      if (result.source !== 'unavailable') {
+        setCache(yahooSymbol, result);
+      }
     } catch (err) {
       setError(err.message);
     } finally {

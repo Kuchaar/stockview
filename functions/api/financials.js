@@ -1,9 +1,14 @@
 // Cloudflare Pages Function — proxy for Yahoo Finance financial statements
 // GET /api/financials?symbol=PKO.WA
 //
-// Używa v10/finance/quoteSummary (NIE v7/finance/quote — ten jest zablokowany).
-// v10/quoteSummary nadal działa anonimowo i dostarcza pełne dane finansowe.
-// Odpowiedzi cachowane na edge Cloudflare przez 1 godzinę (dane kwartalne).
+// Yahoo Finance v10/quoteSummary wymaga crumb+cookie dla requestów z serwerów
+// (od ~2023, szczególnie z Cloudflare edge — zwraca 401 "Invalid Crumb" bez nich).
+// Przepływ: 1) fc.yahoo.com → Set-Cookie (A1/A3 session)
+//           2) /v1/test/getcrumb z cookie → plain text crumb
+//           3) /v10/finance/quoteSummary?crumb=... z cookie → dane
+// Crumb cachowany 30 min, odpowiedzi 1h (dane kwartalne).
+// Jeśli Yahoo całkowicie padnie → 200 z source:'unavailable' zamiast 502,
+// żeby frontend mógł użyć hardkodowanych danych z wig20.js bez błędu w UI.
 
 const MODULES = [
   'incomeStatementHistory',
@@ -15,6 +20,12 @@ const MODULES = [
   'defaultKeyStatistics',
   'financialData',
 ].join(',');
+
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+// Synthetic cache key do przechowywania crumba (niezależny od symbolu)
+const CRUMB_CACHE_URL = 'https://internal.stockview/yahoo-crumb';
 
 export async function onRequestGet(context) {
   const { request, waitUntil } = context;
@@ -29,62 +40,162 @@ export async function onRequestGet(context) {
     });
   }
 
-  // --- Cloudflare edge cache (1h — dane kwartalne) ---
   const cache = caches.default;
-  const cacheKey = new Request(url.toString(), { method: 'GET' });
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
 
+  // --- Edge cache odpowiedzi (1h — dane kwartalne) ---
+  const responseCacheKey = new Request(url.toString(), { method: 'GET' });
+  const cachedResponse = await cache.match(responseCacheKey);
+  if (cachedResponse) return cachedResponse;
+
+  // --- Pobierz crumb+cookie (z cache lub świeży) ---
+  let auth = await getCachedCrumb(cache);
+  if (!auth) {
+    auth = await fetchFreshCrumb(cache, waitUntil);
+  }
+
+  // --- Zapytaj Yahoo v10/quoteSummary ---
+  let raw = null;
+  if (auth) {
+    raw = await fetchQuoteSummary(symbol, auth.crumb, auth.cookie, 'query2');
+
+    // 401 = wygasły/nieprawidłowy crumb → odśwież i spróbuj ponownie
+    if (raw === null || raw === 401) {
+      await cache.delete(new Request(CRUMB_CACHE_URL));
+      auth = await fetchFreshCrumb(cache, waitUntil);
+      if (auth) {
+        raw = await fetchQuoteSummary(symbol, auth.crumb, auth.cookie, 'query1');
+      }
+    }
+  }
+
+  // --- Graceful fallback gdy Yahoo totalnie padnie ---
+  if (!raw || raw === 401) {
+    const fallback = new Response(
+      JSON.stringify({
+        symbol,
+        source: 'unavailable',
+        message: 'Financials temporarily unavailable, using hardcoded fallback',
+        timestamp: Date.now(),
+      }),
+      { status: 200, headers: corsHeaders('application/json', reqOrigin) }
+    );
+    // Nie cachujemy fallbacku — przy kolejnym request próbujemy znowu
+    return fallback;
+  }
+
+  const result = raw.quoteSummary?.result?.[0];
+  if (!result) {
+    return new Response(
+      JSON.stringify({
+        symbol,
+        source: 'unavailable',
+        message: 'No data found for symbol',
+        timestamp: Date.now(),
+      }),
+      { status: 200, headers: corsHeaders('application/json', reqOrigin) }
+    );
+  }
+
+  const transformed = transformFinancials(result);
+  const response = new Response(
+    JSON.stringify({ symbol, ...transformed, source: 'yahoo', timestamp: Date.now() }),
+    { status: 200, headers: corsHeaders('application/json', reqOrigin) }
+  );
+
+  waitUntil(cache.put(responseCacheKey, response.clone()));
+  return response;
+}
+
+// Pobiera crumb+cookie z edge cache (zwraca null gdy brak/wygasły)
+async function getCachedCrumb(cache) {
   try {
-    const yahooUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=${MODULES}`;
+    const cached = await cache.match(new Request(CRUMB_CACHE_URL));
+    if (!cached) return null;
+    return await cached.json();
+  } catch {
+    return null;
+  }
+}
 
-    let resp = await fetch(yahooUrl, {
+// Wykonuje pełny 3-krokowy flow: fc.yahoo.com → cookie → crumb
+// Zapisuje wynik do cache z TTL 30 min i zwraca { crumb, cookie }
+async function fetchFreshCrumb(cache, waitUntil) {
+  try {
+    // Krok 1: pobierz session cookie z fc.yahoo.com
+    const fcResp = await fetch('https://fc.yahoo.com', {
+      headers: { 'User-Agent': USER_AGENT },
+      redirect: 'follow',
+    });
+
+    // Zbierz Set-Cookie headery (Workers obsługuje getAll dla multi-value headers)
+    let cookieHeaders = [];
+    if (typeof fcResp.headers.getAll === 'function') {
+      cookieHeaders = fcResp.headers.getAll('set-cookie');
+    } else {
+      const raw = fcResp.headers.get('set-cookie');
+      if (raw) cookieHeaders = [raw];
+    }
+
+    // Wyciągnij tylko name=value (bez atrybutów jak Path, Expires...)
+    const cookieParts = cookieHeaders
+      .map((h) => h.split(';')[0].trim())
+      .filter(Boolean);
+
+    // Dołóż też cookies z odpowiedzi samego crumb endpoint jeśli fc.yahoo nie dał
+    const cookie = cookieParts.length > 0 ? cookieParts.join('; ') : 'A1=d=AQAB';
+
+    // Krok 2: pobierz crumb używając cookie
+    const crumbResp = await fetch(
+      'https://query2.finance.yahoo.com/v1/test/getcrumb',
+      {
+        headers: {
+          'User-Agent': USER_AGENT,
+          'Cookie': cookie,
+          'Accept': 'text/plain',
+        },
+      }
+    );
+
+    if (!crumbResp.ok) return null;
+
+    const crumb = (await crumbResp.text()).trim();
+    if (!crumb || crumb.includes('<')) return null; // zwrócono HTML zamiast crumba
+
+    const auth = { crumb, cookie };
+
+    // Zapisz do cache z TTL 30 min
+    const crumbCacheResp = new Response(JSON.stringify(auth), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=1800' },
+    });
+    waitUntil(cache.put(new Request(CRUMB_CACHE_URL), crumbCacheResp));
+
+    return auth;
+  } catch {
+    return null;
+  }
+}
+
+// Wykonuje request do v10/quoteSummary. Zwraca: parsed JSON | 401 | null (inny błąd)
+async function fetchQuoteSummary(symbol, crumb, cookie, mirror) {
+  try {
+    const url =
+      `https://${mirror}.finance.yahoo.com/v10/finance/quoteSummary/` +
+      `${encodeURIComponent(symbol)}?modules=${MODULES}&crumb=${encodeURIComponent(crumb)}`;
+
+    const resp = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': USER_AGENT,
+        'Cookie': cookie,
+        'Accept': 'application/json',
       },
     });
 
-    if (!resp.ok) {
-      // Try fallback
-      const fallbackUrl = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=${MODULES}`;
-      resp = await fetch(fallbackUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-      });
-    }
+    if (resp.status === 401 || resp.status === 403) return 401;
+    if (!resp.ok) return null;
 
-    if (!resp.ok) {
-      return new Response(JSON.stringify({ error: 'Yahoo Finance API unavailable' }), {
-        status: 502,
-        headers: corsHeaders('application/json', reqOrigin),
-      });
-    }
-
-    const raw = await resp.json();
-    const result = raw.quoteSummary?.result?.[0];
-
-    if (!result) {
-      return new Response(JSON.stringify({ error: 'No data found for symbol' }), {
-        status: 404,
-        headers: corsHeaders('application/json', reqOrigin),
-      });
-    }
-
-    const transformed = transformFinancials(result);
-
-    const response = new Response(JSON.stringify({ symbol, ...transformed, timestamp: Date.now() }), {
-      status: 200,
-      headers: corsHeaders('application/json', reqOrigin),
-    });
-
-    waitUntil(cache.put(cacheKey, response.clone()));
-    return response;
-  } catch (err) {
-    return new Response(JSON.stringify({ error: 'Proxy error', detail: err.message }), {
-      status: 502,
-      headers: corsHeaders('application/json', reqOrigin),
-    });
+    return await resp.json();
+  } catch {
+    return null;
   }
 }
 
