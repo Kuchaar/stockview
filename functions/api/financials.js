@@ -1,5 +1,9 @@
 // Cloudflare Pages Function — proxy for Yahoo Finance financial statements
 // GET /api/financials?symbol=PKO.WA
+//
+// Używa v10/finance/quoteSummary (NIE v7/finance/quote — ten jest zablokowany).
+// v10/quoteSummary nadal działa anonimowo i dostarcza pełne dane finansowe.
+// Odpowiedzi cachowane na edge Cloudflare przez 1 godzinę (dane kwartalne).
 
 const MODULES = [
   'incomeStatementHistory',
@@ -13,8 +17,9 @@ const MODULES = [
 ].join(',');
 
 export async function onRequestGet(context) {
-  const reqOrigin = context.request.headers.get('Origin');
-  const url = new URL(context.request.url);
+  const { request, waitUntil } = context;
+  const reqOrigin = request.headers.get('Origin');
+  const url = new URL(request.url);
   const symbol = url.searchParams.get('symbol');
 
   if (!symbol) {
@@ -23,6 +28,12 @@ export async function onRequestGet(context) {
       headers: corsHeaders('application/json', reqOrigin),
     });
   }
+
+  // --- Cloudflare edge cache (1h — dane kwartalne) ---
+  const cache = caches.default;
+  const cacheKey = new Request(url.toString(), { method: 'GET' });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
 
   try {
     const yahooUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=${MODULES}`;
@@ -62,10 +73,13 @@ export async function onRequestGet(context) {
 
     const transformed = transformFinancials(result);
 
-    return new Response(JSON.stringify({ symbol, ...transformed, timestamp: Date.now() }), {
+    const response = new Response(JSON.stringify({ symbol, ...transformed, timestamp: Date.now() }), {
       status: 200,
       headers: corsHeaders('application/json', reqOrigin),
     });
+
+    waitUntil(cache.put(cacheKey, response.clone()));
+    return response;
   } catch (err) {
     return new Response(JSON.stringify({ error: 'Proxy error', detail: err.message }), {
       status: 502,
