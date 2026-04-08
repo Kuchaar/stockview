@@ -38,7 +38,7 @@
     @apply badge bg-down/10 text-down;
   }
   .btn-primary {
-    @apply px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium
+    @apply inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium
            hover:bg-brand-700 active:bg-brand-800 transition-all duration-200
            shadow-md shadow-brand-600/20 hover:shadow-lg hover:shadow-brand-600/30;
   }
@@ -52,7 +52,7 @@
     @apply text-surface-400;
   }
   .tab-button {
-    @apply px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
+    @apply inline-flex items-center justify-center min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
            text-surface-600 hover:text-surface-900 hover:bg-surface-100;
   }
   .dark .tab-button {
@@ -64,6 +64,13 @@
 }
 
 @layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-brand-700;
   }
@@ -89,6 +96,14 @@
 /* TradingView widget overrides */
 .tradingview-widget-container {
   @apply rounded-2xl overflow-hidden;
+}
+
+/* Touch device tap feedback */
+@media (hover: none) {
+  .card-hover:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
 }
 
 /* Custom scrollbar */

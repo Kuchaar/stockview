@@ -125,11 +125,14 @@ export default function BalanceSheet({ liveData, fallbackFinancials }) {
         </button>
       </div>
 
+      <p className="md:hidden text-xs text-surface-400 mb-2 italic">
+        {lang === 'pl' ? '← Przesuń tabelę, aby zobaczyć więcej' : '← Scroll table to see more'}
+      </p>
       <div className="overflow-x-auto -mx-6 px-6">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[480px] text-sm">
           <thead>
             <tr className="border-b border-surface-200 dark:border-surface-800">
-              <th className="text-left py-3 pr-4 font-medium text-surface-500 text-xs uppercase tracking-wider">
+              <th className="sticky left-0 z-10 bg-white dark:bg-surface-950 text-left py-3 pr-4 font-medium text-surface-500 text-xs uppercase tracking-wider">
                 {lang === 'pl' ? 'mln PLN' : 'M PLN'}
               </th>
               {headers.map(h => (
@@ -179,7 +182,7 @@ function SectionRows({ section, sorted, labels, lang }) {
               ${row.separator ? 'border-b-2 border-surface-200 dark:border-surface-800' : ''}
               ${i % 2 === 0 ? '' : 'bg-surface-50/50 dark:bg-surface-950/50'}`}
           >
-            <td className={`py-2.5 pr-4 whitespace-nowrap text-surface-700 dark:text-surface-300
+            <td className={`sticky left-0 z-10 bg-white dark:bg-surface-950 py-2.5 pr-4 whitespace-nowrap text-surface-700 dark:text-surface-300
               ${row.bold ? 'font-semibold' : 'font-medium'}
               ${row.indent ? 'pl-4' : ''}`}>
               {labels[row.key] || row.key}

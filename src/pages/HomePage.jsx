@@ -275,7 +275,7 @@ export default function HomePage() {
             <select
               value={sectorFilter}
               onChange={e => setSectorFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-surface-100 dark:bg-surface-900
+              className="px-3 py-2 min-h-[44px] rounded-xl bg-surface-100 dark:bg-surface-900
                        border border-surface-200/60 dark:border-surface-800/50
                        text-sm font-body focus:outline-none focus:ring-2 focus:ring-brand-500/30
                        appearance-none cursor-pointer transition-all duration-200"
@@ -289,7 +289,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredStocks.map((stock, i) => (
             <StockCard key={stock.id} stock={stock} index={i} />
           ))}

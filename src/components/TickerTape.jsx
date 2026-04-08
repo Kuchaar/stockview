@@ -62,6 +62,6 @@ export default function TickerTape() {
   }, [dark]);
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden min-h-[46px]" />
+    <div ref={containerRef} className="w-full overflow-hidden h-10 md:h-[46px]" />
   );
 }

@@ -181,20 +181,23 @@ export default function StockPage() {
       </div>
 
       {/* Tabs — underline style */}
-      <div className="flex overflow-x-auto border-b border-surface-200 dark:border-surface-800 mb-8 -mx-1 px-1">
-        {TABS.map(tabItem => (
-          <button
-            key={tabItem.id}
-            onClick={() => setTab(tabItem.id)}
-            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all duration-200 -mb-px ${
-              tab === tabItem.id
-                ? 'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400'
-                : 'text-surface-500 border-transparent hover:text-surface-700 dark:hover:text-surface-300'
-            }`}
-          >
-            {lang === 'pl' ? tabItem.pl : tabItem.en}
-          </button>
-        ))}
+      <div className="relative mb-8">
+        <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory border-b border-surface-200 dark:border-surface-800 -mx-1 px-1">
+          {TABS.map(tabItem => (
+            <button
+              key={tabItem.id}
+              onClick={() => setTab(tabItem.id)}
+              className={`snap-start flex-shrink-0 min-h-[44px] px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all duration-200 -mb-px ${
+                tab === tabItem.id
+                  ? 'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400'
+                  : 'text-surface-500 border-transparent hover:text-surface-700 dark:hover:text-surface-300'
+              }`}
+            >
+              {lang === 'pl' ? tabItem.pl : tabItem.en}
+            </button>
+          ))}
+        </div>
+        <div className="pointer-events-none absolute right-0 top-0 bottom-[1px] w-8 bg-gradient-to-l from-surface-50 dark:from-surface-950 to-transparent" />
       </div>
 
       {/* Tab content */}
@@ -226,12 +229,12 @@ export default function StockPage() {
             <h2 className="section-title mb-4">{t('stock.financials')}</h2>
 
             {/* Financial sub-tabs */}
-            <div className="flex overflow-x-auto gap-1 mb-6 pb-1">
+            <div className="flex overflow-x-auto scrollbar-hide gap-1 mb-6 pb-1">
               {FINANCIAL_SUB_TABS.map(st => (
                 <button
                   key={st.id}
                   onClick={() => setFinancialSubTab(st.id)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200 ${
+                  className={`flex-shrink-0 min-h-[44px] px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200 ${
                     financialSubTab === st.id
                       ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 dark:border-green-400/20'
                       : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'
