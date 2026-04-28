@@ -2,8 +2,8 @@ name: Update stock prices
 
 on:
   schedule:
-    # Every weekday at 18:05 CET (16:05 UTC) — after GPW closes at 17:00
-    - cron: '5 16 * * 1-5'
+    # Every weekday at 18:00 UTC — after GPW closes at 17:00 CET
+    - cron: '0 18 * * 1-5'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
