@@ -12,6 +12,16 @@ import { useAuthModal } from '../context/AuthModalContext';
 import { Search, TrendingUp, TrendingDown, Activity, BarChart3, ArrowRight, Bookmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 },
+};
+
 export default function HomePage() {
   const { t, lang } = useLang();
   const { user } = useAuth();
@@ -85,7 +95,7 @@ export default function HomePage() {
     <div className="space-y-10">
       {/* Ticker tape — lazy loaded, doesn't block first paint */}
       <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-        <Suspense fallback={<div className="h-[46px] bg-slate-100 dark:bg-slate-800 animate-pulse" />}>
+        <Suspense fallback={<div className="h-[46px] bg-surface-100 dark:bg-surface-800 animate-pulse skeleton-shimmer rounded" />}>
           <TickerTape />
         </Suspense>
       </div>
@@ -105,7 +115,7 @@ export default function HomePage() {
             {t('home.heroLine2')}
           </h1>
         </div>
-        <p className="text-surface-500 text-lg max-w-xl mx-auto">
+        <p className="text-surface-600 dark:text-surface-400 text-lg max-w-xl mx-auto">
           {t('home.heroSub')}
         </p>
 
@@ -196,7 +206,7 @@ export default function HomePage() {
 
         {/* Data date indicator */}
         {lastUpdated && (
-          <div className="flex items-center justify-center gap-1.5 text-xs text-surface-400">
+          <div className="flex items-center justify-center gap-1.5 text-xs text-surface-500 dark:text-surface-400">
             <span>
               {lang === 'pl' ? 'Kursy zamknięcia z sesji:' : 'Closing prices from session:'} {lastUpdated}
             </span>
@@ -289,11 +299,17 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredStocks.map((stock, i) => (
-            <StockCard key={stock.id} stock={stock} index={i} />
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          key={search + sectorFilter}
+        >
+          {filteredStocks.map((stock) => (
+            <StockCard key={stock.id} stock={stock} variants={staggerItem} />
           ))}
-        </div>
+        </motion.div>
 
         {filteredStocks.length === 0 && (
           <div className="text-center py-16 text-surface-500">
@@ -330,12 +346,13 @@ function MoverRow({ stock, rank, type }) {
         {rank}
       </span>
       <div className="w-9 h-9 rounded-lg bg-surface-100 dark:bg-surface-900
-                    flex items-center justify-center text-lg">
+                    flex items-center justify-center text-lg"
+           aria-hidden="true">
         {stock.logo}
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-display font-bold text-sm truncate">{stock.shortName}</div>
-        <div className="text-xs text-surface-500 font-mono">{stock.ticker}</div>
+        <div className="text-xs text-surface-600 dark:text-surface-400 font-mono">{stock.ticker}</div>
       </div>
       <div className="text-right">
         <div className="font-mono font-medium text-sm">

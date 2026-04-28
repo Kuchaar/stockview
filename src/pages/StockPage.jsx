@@ -106,7 +106,7 @@ export default function StockPage() {
       transition={{ duration: 0.4 }}
     >
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm text-surface-400 mb-6">
+      <div className="flex items-center gap-1.5 text-sm text-surface-500 dark:text-surface-400 mb-6">
         <Link
           to="/"
           className="text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 transition-colors"
@@ -132,20 +132,20 @@ export default function StockPage() {
             </h1>
             <WatchButton companyId={id} size="lg" />
           </div>
-          <p className="text-surface-500 text-sm mb-4">{stock.name}</p>
+          <p className="text-surface-600 dark:text-surface-400 text-sm mb-4">{stock.name}</p>
           <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-            <span className="text-sm text-surface-400">
+            <span className="text-sm text-surface-500 dark:text-surface-400">
               {lang === 'pl' ? 'Sektor:' : 'Sector:'}{' '}
               <strong className="text-surface-600 dark:text-surface-300 font-medium">{sectorName}</strong>
             </span>
-            <span className="text-sm text-surface-400">
+            <span className="text-sm text-surface-500 dark:text-surface-400">
               {lang === 'pl' ? 'Kapitalizacja:' : 'Market Cap:'}{' '}
               <strong className="text-surface-600 dark:text-surface-300 font-medium">
                 {formatNumber(stock.marketCap, lang)}
               </strong>
             </span>
             {stock.ratios.pe !== null && (
-              <span className="text-sm text-surface-400">
+              <span className="text-sm text-surface-500 dark:text-surface-400">
                 P/E:{' '}
                 <strong className="text-surface-600 dark:text-surface-300 font-medium">
                   {stock.ratios.pe.toFixed(1)}
@@ -157,7 +157,7 @@ export default function StockPage() {
 
         {/* Price block */}
         <div className="sm:text-right flex-shrink-0">
-          <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-surface-400 mb-1">
+          <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-1">
             <span>{lang === 'pl' ? 'Kurs zamknięcia' : 'Closing price'}</span>
             {stock._priceDate && (
               <span className="text-[10px] normal-case font-normal">
@@ -182,11 +182,15 @@ export default function StockPage() {
 
       {/* Tabs — underline style */}
       <div className="relative mb-8">
-        <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory border-b border-surface-200 dark:border-surface-800 -mx-1 px-1">
+        <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory border-b border-surface-200 dark:border-surface-800 -mx-1 px-1" role="tablist" aria-label={lang === 'pl' ? 'Sekcje spółki' : 'Stock sections'}>
           {TABS.map(tabItem => (
             <button
               key={tabItem.id}
               onClick={() => setTab(tabItem.id)}
+              role="tab"
+              aria-selected={tab === tabItem.id}
+              aria-controls={`tabpanel-${tabItem.id}`}
+              id={`tab-${tabItem.id}`}
               className={`snap-start flex-shrink-0 min-h-[44px] px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all duration-200 -mb-px ${
                 tab === tabItem.id
                   ? 'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400'
@@ -197,12 +201,15 @@ export default function StockPage() {
             </button>
           ))}
         </div>
-        <div className="pointer-events-none absolute right-0 top-0 bottom-[1px] w-8 bg-gradient-to-l from-surface-50 dark:from-surface-950 to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-[1px] w-8 bg-gradient-to-l from-surface-50 dark:from-surface-950 to-transparent" aria-hidden="true" />
       </div>
 
       {/* Tab content */}
       <motion.div
         key={tab}
+        role="tabpanel"
+        id={`tabpanel-${tab}`}
+        aria-labelledby={`tab-${tab}`}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
@@ -229,11 +236,13 @@ export default function StockPage() {
             <h2 className="section-title mb-4">{t('stock.financials')}</h2>
 
             {/* Financial sub-tabs */}
-            <div className="flex overflow-x-auto scrollbar-hide gap-1 mb-6 pb-1">
+            <div className="flex overflow-x-auto scrollbar-hide gap-1 mb-6 pb-1" role="tablist" aria-label={lang === 'pl' ? 'Typ sprawozdania' : 'Statement type'}>
               {FINANCIAL_SUB_TABS.map(st => (
                 <button
                   key={st.id}
                   onClick={() => setFinancialSubTab(st.id)}
+                  role="tab"
+                  aria-selected={financialSubTab === st.id}
                   className={`flex-shrink-0 min-h-[44px] px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200 ${
                     financialSubTab === st.id
                       ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 dark:border-green-400/20'
@@ -441,13 +450,13 @@ function HealthGrid({ stock, lang, dark, health, subs }) {
               <span className="font-mono font-bold text-[2.3rem] leading-none" style={{ color: accentColor }}>
                 {score}
               </span>
-              <span className="text-xs text-surface-400">/100</span>
+              <span className="text-xs text-surface-500 dark:text-surface-400">/100</span>
             </div>
           </div>
           <div className="text-sm font-semibold mb-1.5" style={{ color: accentColor }}>
             {healthLabelText}
           </div>
-          <p className="text-xs text-surface-400 leading-relaxed max-w-[190px]">
+          <p className="text-xs text-surface-500 dark:text-surface-400 leading-relaxed max-w-[190px]">
             {healthDescription(label, lang)}
           </p>
         </div>
@@ -462,7 +471,7 @@ function HealthGrid({ stock, lang, dark, health, subs }) {
                 className="card hover:border-surface-300/80 dark:hover:border-surface-700 transition-colors cursor-default"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-surface-500">{card.label}</span>
+                  <span className="text-xs font-medium text-surface-600 dark:text-surface-400">{card.label}</span>
                   <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${badge.cls}`}>
                     {badge.text}
                   </span>
@@ -470,7 +479,7 @@ function HealthGrid({ stock, lang, dark, health, subs }) {
                 <div className={`font-mono font-bold text-2xl tracking-tight mb-1.5 ${valueColorFor(card.score)}`}>
                   {card.value}
                 </div>
-                <p className="text-[11px] text-surface-400 leading-relaxed">{card.explain}</p>
+                <p className="text-[11px] text-surface-500 dark:text-surface-400 leading-relaxed">{card.explain}</p>
                 <div className="h-1 bg-surface-200/70 dark:bg-surface-800/70 rounded-full mt-3 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${barColorFor(card.score)}`}
@@ -596,12 +605,14 @@ function RatioCard({ rc }) {
   return (
     <div className="card hover:border-surface-300/80 dark:hover:border-surface-700 hover:-translate-y-px transition-all duration-200 cursor-default">
       <div className="flex items-center gap-1.5 mb-2.5">
-        <span className="text-xs font-medium text-surface-500">{rc.name}</span>
+        <span className="text-xs font-medium text-surface-600 dark:text-surface-400">{rc.name}</span>
         <button
           className="relative flex items-center justify-center w-4 h-4 rounded-full bg-surface-200/60 dark:bg-surface-800/60 text-[9px] font-bold text-surface-400 hover:bg-surface-300 dark:hover:bg-surface-700 transition-colors flex-shrink-0"
           onMouseEnter={() => setTipOpen(true)}
           onMouseLeave={() => setTipOpen(false)}
-          tabIndex={-1}
+          onFocus={() => setTipOpen(true)}
+          onBlur={() => setTipOpen(false)}
+          aria-label={rc.name + ' — info'}
         >
           ?
           {tipOpen && (
@@ -675,7 +686,7 @@ function CtaBanner({ lang, ticker, stockId }) {
                 ? `Dodaj ${ticker} do swojego portfela`
                 : `Add ${ticker} to your portfolio`)}
         </h3>
-        <p className="text-sm text-surface-500 max-w-lg leading-relaxed">
+        <p className="text-sm text-surface-600 dark:text-surface-400 max-w-lg leading-relaxed">
           {user
             ? (lang === 'pl'
                 ? 'Śledź jak Twoje spółki radzą sobie w czasie, sprawdzaj dywersyfikację i porównuj wyniki.'
@@ -716,7 +727,7 @@ function SectionHeader({ title, sub }) {
   return (
     <div className="mb-4">
       <div className="text-base font-semibold tracking-tight">{title}</div>
-      {sub && <div className="text-xs text-surface-400 mt-0.5">{sub}</div>}
+      {sub && <div className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{sub}</div>}
     </div>
   );
 }

@@ -1,0 +1,21 @@
+{
+  "name": "StockView — Analiza spółek WIG20",
+  "short_name": "StockView",
+  "description": "Analiza fundamentalna i wyceny spółek WIG20. Wykresy, wskaźniki finansowe, ocena kondycji.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1e6bf5",
+  "background_color": "#f8f9fc",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

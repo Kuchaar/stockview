@@ -18,8 +18,8 @@ function TradingViewChart({ symbol = 'GPW:WIG20', variant = 'full' }) {
 
   // Skeleton shown until widget enters viewport for the first time
   const [visible, setVisible]  = useState(false);
-  // Skeleton shown during theme-change rebuild
-  const [rebuilding, setRebuilding] = useState(false);
+  // Fade opacity for smooth theme transitions (0 → 1)
+  const [fadeIn, setFadeIn] = useState(true);
 
   // ----- IntersectionObserver: lazy-load when container enters viewport -----
   useEffect(() => {
@@ -42,17 +42,16 @@ function TradingViewChart({ symbol = 'GPW:WIG20', variant = 'full' }) {
   useEffect(() => {
     if (!visible || !containerRef.current) return;
 
-    // On first injection mount immediately.
-    // On theme change: show skeleton briefly so there's no blank flash.
+    // On theme change after first mount: fade out → rebuild → fade in
     if (mountedRef.current) {
-      // Theme changed after first mount → debounce rebuild
-      setRebuilding(true);
+      setFadeIn(false); // fade out
       rebuildRef.current = true;
       const timer = setTimeout(() => {
         rebuildRef.current = false;
         inject();
-        setRebuilding(false);
-      }, 300);
+        // Fade back in after injection
+        requestAnimationFrame(() => setFadeIn(true));
+      }, 150);
       return () => clearTimeout(timer);
     }
 
@@ -61,7 +60,8 @@ function TradingViewChart({ symbol = 'GPW:WIG20', variant = 'full' }) {
     function inject() {
       if (!containerRef.current) return;
       mountedRef.current = true;
-      containerRef.current.innerHTML = '';
+      containerRef.current.querySelector('.tradingview-widget-container__widget')?.remove();
+      containerRef.current.querySelector('script')?.remove();
 
       const script = document.createElement('script');
       script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
@@ -107,11 +107,18 @@ function TradingViewChart({ symbol = 'GPW:WIG20', variant = 'full' }) {
 
   return (
     <div className="rounded-2xl overflow-hidden border border-surface-200/60 dark:border-surface-800/50">
-      <div className={`tradingview-widget-container relative ${sizeClass}`} ref={containerRef}>
-        {/* Skeleton: shown before IntersectionObserver fires OR during theme rebuild */}
-        {(!visible || rebuilding) && (
-          <div className="w-full h-full animate-pulse bg-slate-200 dark:bg-slate-800 rounded-xl flex items-center justify-center absolute inset-0">
-            <span className="text-slate-400 text-sm">Ładowanie wykresu…</span>
+      <div
+        className={`tradingview-widget-container relative ${sizeClass}`}
+        ref={containerRef}
+        style={{
+          opacity: fadeIn ? 1 : 0,
+          transition: 'opacity 150ms ease-in-out',
+        }}
+      >
+        {/* Skeleton: shown before IntersectionObserver fires */}
+        {!visible && (
+          <div className="w-full h-full animate-pulse bg-surface-200 dark:bg-surface-800 rounded-xl flex items-center justify-center absolute inset-0">
+            <span className="text-surface-500 dark:text-surface-400 text-sm">Ładowanie wykresu…</span>
           </div>
         )}
       </div>

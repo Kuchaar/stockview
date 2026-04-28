@@ -43,7 +43,8 @@ export default function WatchButton({ companyId, size = 'md' }) {
     <motion.button
       whileTap={{ scale: 0.85 }}
       onClick={handleClick}
-      title={tooltip}
+      aria-label={tooltip}
+      aria-pressed={watched}
       className={`${sizes[size]} rounded-lg flex items-center justify-center
                  hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors duration-200`}
     >

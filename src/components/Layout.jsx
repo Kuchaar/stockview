@@ -51,6 +51,14 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen noise-overlay flex flex-col">
+      {/* Skip to content */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded focus:shadow-lg"
+      >
+        {lang === 'pl' ? 'Przejdź do głównej treści' : 'Skip to main content'}
+      </a>
+
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-surface-200/40 dark:border-surface-800/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,7 +76,7 @@ export default function Layout({ children }) {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden sm:flex items-center gap-1">
+            <nav className="hidden sm:flex items-center gap-1" aria-label={lang === 'pl' ? 'Nawigacja główna' : 'Main navigation'}>
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -90,6 +98,9 @@ export default function Layout({ children }) {
                 <div className="hidden sm:block relative" ref={userMenuRef}>
                   <button
                     onClick={() => setShowUserMenu((v) => !v)}
+                    aria-expanded={showUserMenu}
+                    aria-haspopup="true"
+                    aria-label={lang === 'pl' ? 'Menu użytkownika' : 'User menu'}
                     className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg
                              hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors duration-200"
                   >
@@ -143,7 +154,7 @@ export default function Layout({ children }) {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
                          text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-900
                          transition-colors duration-200"
-                title={lang === 'pl' ? 'Switch to English' : 'Przełącz na polski'}
+                aria-label={lang === 'pl' ? 'Switch to English' : 'Przełącz na polski'}
               >
                 <Globe className="w-4 h-4" />
                 <span className="uppercase font-mono text-xs">{lang === 'pl' ? 'EN' : 'PL'}</span>
@@ -155,7 +166,7 @@ export default function Layout({ children }) {
                 className="w-9 h-9 rounded-lg flex items-center justify-center
                          text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-900
                          transition-colors duration-200"
-                title={dark ? t('theme.light') : t('theme.dark')}
+                aria-label={dark ? t('theme.light') : t('theme.dark')}
               >
                 <motion.div
                   key={dark ? 'moon' : 'sun'}
@@ -173,7 +184,8 @@ export default function Layout({ children }) {
                 className="sm:hidden w-9 h-9 rounded-lg flex items-center justify-center
                          text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-900
                          transition-colors duration-200"
-                aria-label="Menu"
+                aria-label={mobileOpen ? (lang === 'pl' ? 'Zamknij menu' : 'Close menu') : (lang === 'pl' ? 'Otwórz menu' : 'Open menu')}
+                aria-expanded={mobileOpen}
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -191,7 +203,7 @@ export default function Layout({ children }) {
               transition={{ duration: 0.2 }}
               className="sm:hidden overflow-hidden border-t border-surface-200/40 dark:border-surface-800/40"
             >
-              <nav className="flex flex-col gap-1 px-4 py-3">
+              <nav className="flex flex-col gap-1 px-4 py-3" aria-label={lang === 'pl' ? 'Nawigacja mobilna' : 'Mobile navigation'}>
                 {navItems.map((item) => (
                   <MobileNavLink
                     key={item.to}
@@ -241,7 +253,7 @@ export default function Layout({ children }) {
       </header>
 
       {/* Main */}
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </div>
@@ -250,14 +262,14 @@ export default function Layout({ children }) {
       {/* Footer */}
       <footer className="border-t border-surface-200/40 dark:border-surface-800/40 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-surface-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-surface-600 dark:text-surface-400">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-brand-500" />
               <span className="font-display font-semibold">StockView</span>
               <span className="text-surface-400">·</span>
               <span>WIG20</span>
             </div>
-            <p className="text-center text-xs text-surface-400">
+            <p className="text-center text-xs text-surface-500 dark:text-surface-400">
               {t('footer.disclaimer')}
             </p>
           </div>

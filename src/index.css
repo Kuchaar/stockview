@@ -10,6 +10,23 @@
   body.dark-body {
     @apply text-surface-200 bg-surface-950;
   }
+
+  /* Focus-visible ring for all interactive elements */
+  *:focus-visible {
+    outline: 2px solid theme('colors.blue.500');
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
@@ -26,7 +43,7 @@
     @apply card hover:shadow-lg hover:shadow-brand-500/5 hover:-translate-y-0.5;
   }
   .dark .card-hover:hover {
-    @apply shadow-brand-500/10;
+    @apply shadow-2xl shadow-black/30;
   }
   .badge {
     @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
@@ -46,10 +63,10 @@
     @apply font-display font-bold text-2xl md:text-3xl tracking-tight;
   }
   .metric-label {
-    @apply text-xs font-medium uppercase tracking-wider text-surface-500;
+    @apply text-xs font-medium uppercase tracking-wider text-surface-600;
   }
   .dark .metric-label {
-    @apply text-surface-400;
+    @apply text-surface-300;
   }
   .tab-button {
     @apply inline-flex items-center justify-center min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
@@ -72,10 +89,10 @@
     display: none;
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-brand-700;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600;
   }
   .dark .text-gradient {
-    @apply from-brand-400 to-brand-300;
+    @apply from-blue-400 to-purple-400;
   }
   .animate-stagger > * {
     animation: slideUp 0.5s ease-out forwards;
@@ -91,6 +108,21 @@
   .animate-stagger > *:nth-child(8) { animation-delay: 0.4s; }
   .animate-stagger > *:nth-child(9) { animation-delay: 0.45s; }
   .animate-stagger > *:nth-child(10) { animation-delay: 0.5s; }
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.12) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.06) 50%, transparent 75%);
+  background-size: 200% 100%;
 }
 
 /* TradingView widget overrides */

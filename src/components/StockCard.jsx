@@ -1,35 +1,70 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLang } from '../context/LangContext';
 import { sectors } from '../data/wig20';
 import { formatPrice, formatPercent } from '../data/wig20';
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useSpring, useTransform } from 'framer-motion';
 import WatchButton from './WatchButton';
 
-export default function StockCard({ stock, index = 0 }) {
+function AnimatedPrice({ value }) {
+  const spring = useSpring(value, { stiffness: 80, damping: 20 });
+  const display = useTransform(spring, v => formatPrice(v));
+  const [text, setText] = useState(formatPrice(value));
+  const prevValue = useRef(value);
+  const [flash, setFlash] = useState(null);
+
+  useEffect(() => {
+    spring.set(value);
+  }, [value, spring]);
+
+  useEffect(() => {
+    return display.on('change', v => setText(v));
+  }, [display]);
+
+  useEffect(() => {
+    if (prevValue.current !== value) {
+      setFlash(value > prevValue.current ? 'up' : 'down');
+      const timer = setTimeout(() => setFlash(null), 400);
+      prevValue.current = value;
+      return () => clearTimeout(timer);
+    }
+  }, [value]);
+
+  return (
+    <span className={`transition-colors duration-400 ${
+      flash === 'up' ? 'text-up' : flash === 'down' ? 'text-down' : ''
+    }`}>
+      {text}
+    </span>
+  );
+}
+
+export default function StockCard({ stock, variants }) {
   const { lang, t } = useLang();
   const isUp = stock.changePercent >= 0;
   const sectorName = sectors[lang]?.[stock.sector] || stock.sector;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.04 }}
+      variants={variants}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileTap={{ scale: 0.98 }}
     >
       <Link to={`/stock/${stock.id}`} className="block card-hover group">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-surface-100 dark:bg-surface-900
                           flex items-center justify-center text-xl
-                          group-hover:scale-110 transition-transform duration-300">
+                          group-hover:scale-110 transition-transform duration-300"
+                 aria-hidden="true">
               {stock.logo}
             </div>
             <div>
               <h3 className="font-display font-bold text-base leading-tight">
                 {stock.shortName}
               </h3>
-              <span className="text-xs text-surface-500 font-mono">{stock.ticker}</span>
+              <span className="text-xs text-surface-600 dark:text-surface-400 font-mono">{stock.ticker}</span>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -44,9 +79,9 @@ export default function StockCard({ stock, index = 0 }) {
         <div className="flex items-end justify-between">
           <div>
             <div className="font-mono font-semibold text-lg">
-              {formatPrice(stock.price)} <span className="text-xs text-surface-500">PLN</span>
+              <AnimatedPrice value={stock.price} /> <span className="text-xs text-surface-600 dark:text-surface-400">PLN</span>
             </div>
-            <div className="text-xs text-surface-400 mt-1">{sectorName}</div>
+            <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">{sectorName}</div>
           </div>
           <div className="text-right">
             <div className="metric-label">{t('home.pe')}</div>
@@ -58,7 +93,7 @@ export default function StockCard({ stock, index = 0 }) {
 
         <div className="mt-4 pt-3 border-t border-surface-200/50 dark:border-surface-800/50
                       flex items-center justify-between text-xs">
-          <span className="text-surface-400">
+          <span className="text-surface-500 dark:text-surface-400">
             {t('home.marketCap')}: {(stock.marketCap / 1000).toFixed(1)} mld PLN
           </span>
           <ArrowRight className="w-3.5 h-3.5 text-surface-400
