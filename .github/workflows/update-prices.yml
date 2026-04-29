@@ -28,5 +28,6 @@ jobs:
             echo "No price changes detected"
           else
             git commit -m "chore: update stock prices $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main
             git push
           fi
