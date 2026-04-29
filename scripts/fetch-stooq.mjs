@@ -29,7 +29,6 @@ const STOCKS = [
   { ticker: 'JSW', yahoo: 'JSW.WA' },
   { ticker: 'PGE', yahoo: 'PGE.WA' },
   { ticker: 'KRU', yahoo: 'KRU.WA' },
-  { ticker: 'CCC', yahoo: 'CCC.WA' },
   { ticker: 'PCO', yahoo: 'PCO.WA' },
   { ticker: 'ACP', yahoo: 'ACP.WA' },
   { ticker: 'OPL', yahoo: 'OPL.WA' },
