@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
 import { formatPercent } from '../data/wig20';
 import useStockData from '../hooks/useStockData';
+import DataSourceBanner from '../components/DataSourceBanner';
 import StockCard from '../components/StockCard';
 import TradingViewChart from '../components/TradingViewChart';
 const TickerTape = lazy(() => import('../components/TickerTape'));
@@ -29,7 +30,7 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
 
-  const { companies, loading, lastUpdated } = useStockData();
+  const { companies, loading, lastUpdated, error, source } = useStockData();
 
   const sorted = useMemo(() =>
     [...companies].sort((a, b) => b.changePercent - a.changePercent),
@@ -212,6 +213,10 @@ export default function HomePage() {
             </span>
           </div>
         )}
+
+        <div className="flex justify-center">
+          <DataSourceBanner error={error} source={source} lastUpdated={lastUpdated} />
+        </div>
       </motion.div>
 
       {/* WIG20 Chart */}
@@ -356,7 +361,7 @@ function MoverRow({ stock, rank, type }) {
       </div>
       <div className="text-right">
         <div className="font-mono font-medium text-sm">
-          {stock.price.toLocaleString('pl-PL', { minimumFractionDigits: 2 })} PLN
+          {(stock.price ?? 0).toLocaleString('pl-PL', { minimumFractionDigits: 2 })} PLN
         </div>
         <span className={`text-xs font-mono font-medium ${type === 'up' ? 'text-up' : 'text-down'}`}>
           {formatPercent(stock.changePercent)}

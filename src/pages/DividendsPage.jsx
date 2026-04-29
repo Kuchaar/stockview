@@ -163,12 +163,12 @@ function DividendCard({ dividend, index, lang, t, formatDate }) {
         <div className="flex items-baseline justify-between">
           <div>
             <span className="font-mono font-bold text-2xl">
-              {dividend.dividendPerShare.toLocaleString('pl-PL', { minimumFractionDigits: 2 })}
+              {(dividend.dividendPerShare ?? 0).toLocaleString('pl-PL', { minimumFractionDigits: 2 })}
             </span>
             <span className="text-sm text-surface-400 ml-1.5">{t('dividends.perShare')}</span>
           </div>
           <span className={`font-mono font-semibold text-sm ${dividend.dividendYield >= 3 ? 'text-up' : 'text-surface-500'}`}>
-            {dividend.dividendYield.toFixed(1)}%
+            {(dividend.dividendYield ?? 0).toFixed(1)}%
           </span>
         </div>
 

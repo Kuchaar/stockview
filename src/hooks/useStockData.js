@@ -3,7 +3,7 @@ import { wig20Companies } from '../data/wig20';
 import useLatestPrices from './useLatestPrices';
 
 export default function useStockData() {
-  const { prices, loading, error, lastUpdated } = useLatestPrices();
+  const { prices, loading, error, lastUpdated, source } = useLatestPrices();
 
   const companies = useMemo(() => {
     if (!prices) return wig20Companies;
@@ -23,5 +23,5 @@ export default function useStockData() {
     });
   }, [prices]);
 
-  return { companies, loading, error, lastUpdated };
+  return { companies, loading, error, lastUpdated, source };
 }

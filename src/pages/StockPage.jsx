@@ -52,8 +52,9 @@ export default function StockPage() {
   const { companies, lastUpdated } = useStockData();
   const stock = companies.find(s => s.id === id);
 
-  // Live financials (only fetch when on financials tab or overview)
-  const { data: liveFinancials, loading: financialsLoading } = useFinancials(stock?.yahooSymbol);
+  // Live financials — only fetch when on financials or overview tab
+  const financialsSymbol = (tab === 'financials' || tab === 'overview') ? stock?.yahooSymbol : null;
+  const { data: liveFinancials, loading: financialsLoading } = useFinancials(financialsSymbol);
 
   if (!stock) {
     return (
@@ -175,7 +176,7 @@ export default function StockPage() {
               : 'text-red-500 dark:text-red-400 bg-red-500/10'
           }`}>
             {isUp ? '▲' : '▼'}{' '}
-            {isUp ? '+' : ''}{stock.change.toFixed(2)} zł ({formatPercent(stock.changePercent)})
+            {isUp ? '+' : ''}{(stock.change ?? 0).toFixed(2)} zł ({formatPercent(stock.changePercent)})
           </div>
         </div>
       </div>

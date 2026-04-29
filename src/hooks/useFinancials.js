@@ -4,7 +4,7 @@ const CACHE_TTL = 3_600_000; // 1 hour
 
 function getCached(symbol) {
   try {
-    const raw = sessionStorage.getItem(`sv_fin_${symbol}`);
+    const raw = sessionStorage.getItem(`sv_fin_v2_${symbol}`);
     if (!raw) return null;
     const cached = JSON.parse(raw);
     if (Date.now() - cached.timestamp > CACHE_TTL) return null;
@@ -16,7 +16,7 @@ function getCached(symbol) {
 
 function setCache(symbol, data) {
   try {
-    sessionStorage.setItem(`sv_fin_${symbol}`, JSON.stringify(data));
+    sessionStorage.setItem(`sv_fin_v2_${symbol}`, JSON.stringify(data));
   } catch { /* ignore */ }
 }
 

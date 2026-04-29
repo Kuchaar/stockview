@@ -2,10 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
+const NOOP_WATCHLIST = { watchlist: [], loading: false, isWatched: () => false, toggle: () => {} };
+
 export default function useWatchlist() {
   const { user } = useAuth();
   const [watchlist, setWatchlist] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  if (!supabase) return NOOP_WATCHLIST;
 
   // Fetch watchlist on login
   useEffect(() => {

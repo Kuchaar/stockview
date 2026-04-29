@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { TICKER_TO_YAHOO } from '../data/wig20';
 
-const CACHE_KEY = 'sv_live_prices';
+const CACHE_KEY = 'sv_live_prices_v2';
 const CACHE_TTL = 60_000; // 60 seconds
 const REFRESH_INTERVAL = 60_000; // auto-refresh every 60s
 const FETCH_TIMEOUT = 5_000; // 5s timeout for /api/quote
@@ -149,5 +149,6 @@ export default function useLatestPrices() {
     loading,
     error,
     lastUpdated: data?.lastUpdated || null,
+    source: data?._source || null,
   };
 }

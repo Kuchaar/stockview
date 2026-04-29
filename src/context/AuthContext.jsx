@@ -26,17 +26,22 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const notConfigured = { data: null, error: { message: 'Auth not configured' } };
+
   async function signUp(email, password) {
+    if (!supabase) return notConfigured;
     const { data, error } = await supabase.auth.signUp({ email, password });
     return { data, error };
   }
 
   async function signIn(email, password) {
+    if (!supabase) return notConfigured;
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     return { data, error };
   }
 
   async function signOut() {
+    if (!supabase) return { error: null };
     const { error } = await supabase.auth.signOut();
     return { error };
   }

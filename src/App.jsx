@@ -10,6 +10,7 @@ import DividendsPage from './pages/DividendsPage';
 import WatchlistPage from './pages/WatchlistPage';
 import AdminDividendsPage from './pages/AdminDividendsPage';
 import { AnimatePresence, motion } from 'framer-motion';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
@@ -30,11 +31,11 @@ function AnimatedRoutes() {
         transition={{ duration: 0.2 }}
       >
         <Routes location={location}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/stock/:id" element={<StockPage />} />
-          <Route path="/dividends" element={<DividendsPage />} />
-          <Route path="/watchlist" element={<WatchlistPage />} />
-          <Route path="/admin/dividends" element={<AdminDividendsPage />} />
+          <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+          <Route path="/stock/:id" element={<ErrorBoundary><StockPage /></ErrorBoundary>} />
+          <Route path="/dividends" element={<ErrorBoundary><DividendsPage /></ErrorBoundary>} />
+          <Route path="/watchlist" element={<ErrorBoundary><WatchlistPage /></ErrorBoundary>} />
+          <Route path="/admin/dividends" element={<ErrorBoundary><AdminDividendsPage /></ErrorBoundary>} />
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -49,7 +50,9 @@ export default function App() {
           <AuthModalProvider>
             <BrowserRouter>
               <Layout>
-                <AnimatedRoutes />
+                <ErrorBoundary>
+                  <AnimatedRoutes />
+                </ErrorBoundary>
               </Layout>
             </BrowserRouter>
           </AuthModalProvider>

@@ -8,28 +8,29 @@ import { motion, useSpring, useTransform } from 'framer-motion';
 import WatchButton from './WatchButton';
 
 function AnimatedPrice({ value }) {
-  const spring = useSpring(value, { stiffness: 80, damping: 20 });
+  const safeValue = value ?? 0;
+  const spring = useSpring(safeValue, { stiffness: 80, damping: 20 });
   const display = useTransform(spring, v => formatPrice(v));
-  const [text, setText] = useState(formatPrice(value));
-  const prevValue = useRef(value);
+  const [text, setText] = useState(formatPrice(safeValue));
+  const prevValue = useRef(safeValue);
   const [flash, setFlash] = useState(null);
 
   useEffect(() => {
-    spring.set(value);
-  }, [value, spring]);
+    spring.set(safeValue);
+  }, [safeValue, spring]);
 
   useEffect(() => {
     return display.on('change', v => setText(v));
   }, [display]);
 
   useEffect(() => {
-    if (prevValue.current !== value) {
-      setFlash(value > prevValue.current ? 'up' : 'down');
+    if (prevValue.current !== safeValue) {
+      setFlash(safeValue > prevValue.current ? 'up' : 'down');
       const timer = setTimeout(() => setFlash(null), 400);
-      prevValue.current = value;
+      prevValue.current = safeValue;
       return () => clearTimeout(timer);
     }
-  }, [value]);
+  }, [safeValue]);
 
   return (
     <span className={`transition-colors duration-400 ${
@@ -94,7 +95,7 @@ export default function StockCard({ stock, variants }) {
         <div className="mt-4 pt-3 border-t border-surface-200/50 dark:border-surface-800/50
                       flex items-center justify-between text-xs">
           <span className="text-surface-500 dark:text-surface-400">
-            {t('home.marketCap')}: {(stock.marketCap / 1000).toFixed(1)} mld PLN
+            {t('home.marketCap')}: {((stock.marketCap ?? 0) / 1000).toFixed(1)} mld PLN
           </span>
           <ArrowRight className="w-3.5 h-3.5 text-surface-400
                                group-hover:text-brand-500 group-hover:translate-x-0.5

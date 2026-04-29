@@ -6,9 +6,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    // Target es2015 so esbuild transpiles ?. ?? to Chrome 69-compatible code
-    // (react-snap bundles puppeteer@1.8 / Chrome 69 which predates ES2020 syntax)
-    target: 'es2015',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
