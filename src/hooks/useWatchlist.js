@@ -2,18 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
-const NOOP_WATCHLIST = { watchlist: [], loading: false, isWatched: () => false, toggle: () => {} };
-
 export default function useWatchlist() {
   const { user } = useAuth();
   const [watchlist, setWatchlist] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  if (!supabase) return NOOP_WATCHLIST;
-
-  // Fetch watchlist on login
   useEffect(() => {
-    if (!user) {
+    if (!supabase || !user) {
       setWatchlist([]);
       return;
     }
@@ -34,7 +29,7 @@ export default function useWatchlist() {
 
   const toggle = useCallback(
     async (companyId) => {
-      if (!user) return;
+      if (!supabase || !user) return;
       if (isWatched(companyId)) {
         setWatchlist((prev) => prev.filter((id) => id !== companyId));
         await supabase.from('watchlist').delete().eq('company_id', companyId).eq('user_id', user.id);
