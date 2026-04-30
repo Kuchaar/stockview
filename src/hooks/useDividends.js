@@ -6,6 +6,10 @@ export default function useDividends() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
     supabase
       .from('dividends')
       .select('*')

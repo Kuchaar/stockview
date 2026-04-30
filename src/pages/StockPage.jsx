@@ -54,7 +54,7 @@ export default function StockPage() {
 
   // Live financials — only fetch when on financials or overview tab
   const financialsSymbol = (tab === 'financials' || tab === 'overview') ? stock?.yahooSymbol : null;
-  const { data: liveFinancials, loading: financialsLoading } = useFinancials(financialsSymbol);
+  const { data: liveFinancials, loading: financialsLoading } = useFinancials(financialsSymbol, stock?.id);
 
   if (!stock) {
     return (

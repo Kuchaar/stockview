@@ -1,0 +1,60 @@
+{
+  "ticker": null,
+  "lastUpdated": null,
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": null,
+        "costOfRevenue": null,
+        "grossProfit": null,
+        "operatingExpenses": null,
+        "operatingIncome": null,
+        "ebitda": null,
+        "interestExpense": null,
+        "netIncome": null,
+        "eps": null,
+        "netInterestIncome": null,
+        "netFeeIncome": null,
+        "provisionForCreditLosses": null
+      }
+    ],
+    "quarterly": []
+  },
+  "balanceSheet": {
+    "annual": [
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "totalAssets": null,
+        "currentAssets": null,
+        "cash": null,
+        "totalLiabilities": null,
+        "currentLiabilities": null,
+        "longTermDebt": null,
+        "totalDebt": null,
+        "totalEquity": null,
+        "bookValuePerShare": null,
+        "deposits": null,
+        "loans": null
+      }
+    ],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "operatingCashFlow": null,
+        "capitalExpenditure": null,
+        "freeCashFlow": null,
+        "investingCashFlow": null,
+        "financingCashFlow": null,
+        "dividendsPaid": null
+      }
+    ],
+    "quarterly": []
+  }
+}

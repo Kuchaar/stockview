@@ -207,22 +207,34 @@ export async function onRequestOptions(context) {
 function transformFinancials(result) {
   return {
     incomeStatement: {
-      annual: transformStatements(result.incomeStatementHistory?.incomeStatementHistory || []),
-      quarterly: transformStatements(result.incomeStatementHistoryQuarterly?.incomeStatementHistory || []),
+      annual: transformStatements(result.incomeStatementHistory?.incomeStatementHistory || [], false),
+      quarterly: transformStatements(result.incomeStatementHistoryQuarterly?.incomeStatementHistory || [], true),
     },
     balanceSheet: {
-      annual: transformStatements(result.balanceSheetHistory?.balanceSheetStatements || []),
-      quarterly: transformStatements(result.balanceSheetHistoryQuarterly?.balanceSheetStatements || []),
+      annual: transformStatements(result.balanceSheetHistory?.balanceSheetStatements || [], false),
+      quarterly: transformStatements(result.balanceSheetHistoryQuarterly?.balanceSheetStatements || [], true),
     },
     cashFlow: {
-      annual: transformStatements(result.cashflowStatementHistory?.cashflowStatements || []),
-      quarterly: transformStatements(result.cashflowStatementHistoryQuarterly?.cashflowStatements || []),
+      annual: transformStatements(result.cashflowStatementHistory?.cashflowStatements || [], false),
+      quarterly: transformStatements(result.cashflowStatementHistoryQuarterly?.cashflowStatements || [], true),
     },
     keyStats: extractKeyStats(result.defaultKeyStatistics, result.financialData),
   };
 }
 
-function transformStatements(statements) {
+function derivePeriod(dateStr, isQuarterly) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  if (!isQuarterly) return `FY${year}`;
+  const month = d.getMonth() + 1;
+  if (month <= 3) return `Q1 ${year}`;
+  if (month <= 6) return `Q2 ${year}`;
+  if (month <= 9) return `Q3 ${year}`;
+  return `Q4 ${year}`;
+}
+
+function transformStatements(statements, isQuarterly) {
   return statements.map((stmt) => {
     const row = {};
     for (const [key, val] of Object.entries(stmt)) {
@@ -230,11 +242,11 @@ function transformStatements(statements) {
         row[key] = val.raw;
       } else if (key === 'endDate' && val?.fmt) {
         row.date = val.fmt;
-        row.dateRaw = val.raw;
       } else if (typeof val === 'string' || typeof val === 'number') {
         row[key] = val;
       }
     }
+    row.period = derivePeriod(row.date, isQuarterly);
     return row;
   });
 }
