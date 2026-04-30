@@ -73,6 +73,13 @@ export const translations = {
       millions: 'mln PLN',
       billions: 'mld PLN',
     },
+    metrics: {
+      profitability: 'Rentowność',
+      valuation: 'Wycena',
+      debt: 'Zadłużenie i płynność',
+      dividend: 'Dywidenda',
+      growth: 'Wzrost',
+    },
     footer: {
       disclaimer: 'Dane mają charakter informacyjny. Nie stanowią porady inwestycyjnej.',
       builtWith: 'Zbudowane z',
@@ -168,6 +175,13 @@ export const translations = {
       backToList: '← Back to list',
       millions: 'M PLN',
       billions: 'B PLN',
+    },
+    metrics: {
+      profitability: 'Profitability',
+      valuation: 'Valuation',
+      debt: 'Debt & Liquidity',
+      dividend: 'Dividend',
+      growth: 'Growth',
     },
     footer: {
       disclaimer: 'Data is for informational purposes only. Not investment advice.',

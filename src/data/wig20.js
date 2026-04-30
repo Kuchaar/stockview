@@ -55,6 +55,7 @@ export const wig20Companies = [
     changePercent: 2.52,
     volume: 4820000,
     marketCap: 72250,
+    sharesOutstanding: 1_250_000_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -104,6 +105,7 @@ export const wig20Companies = [
     changePercent: -1.37,
     volume: 3150000,
     marketCap: 71400,
+    sharesOutstanding: 427_709_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -153,6 +155,7 @@ export const wig20Companies = [
     changePercent: 2.30,
     volume: 1200000,
     marketCap: 28500,
+    sharesOutstanding: 200_000_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -202,6 +205,7 @@ export const wig20Companies = [
     changePercent: 1.35,
     volume: 2400000,
     marketCap: 42200,
+    sharesOutstanding: 863_523_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -251,6 +255,7 @@ export const wig20Companies = [
     changePercent: 1.26,
     volume: 680000,
     marketCap: 44200,
+    sharesOutstanding: 262_470_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -300,6 +305,7 @@ export const wig20Companies = [
     changePercent: -2.07,
     volume: 920000,
     marketCap: 19800,
+    sharesOutstanding: 100_739_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -349,6 +355,7 @@ export const wig20Companies = [
     changePercent: 1.67,
     volume: 3800000,
     marketCap: 36200,
+    sharesOutstanding: 222_568_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -398,6 +405,7 @@ export const wig20Companies = [
     changePercent: -1.26,
     volume: 180000,
     marketCap: 42200,
+    sharesOutstanding: 98_040_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -447,6 +455,7 @@ export const wig20Companies = [
     changePercent: 1.28,
     volume: 12000,
     marketCap: 25800,
+    sharesOutstanding: 1_852_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -496,6 +505,7 @@ export const wig20Companies = [
     changePercent: -0.84,
     volume: 5200000,
     marketCap: 9000,
+    sharesOutstanding: 639_946_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -545,6 +555,7 @@ export const wig20Companies = [
     changePercent: 1.42,
     volume: 120000,
     marketCap: 25800,
+    sharesOutstanding: 42_538_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -594,6 +605,7 @@ export const wig20Companies = [
     changePercent: -4.00,
     volume: 3600000,
     marketCap: 2680,
+    sharesOutstanding: 117_412_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -643,6 +655,7 @@ export const wig20Companies = [
     changePercent: 1.09,
     volume: 12000000,
     marketCap: 14200,
+    sharesOutstanding: 1_869_760_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -692,6 +705,7 @@ export const wig20Companies = [
     changePercent: 1.64,
     volume: 95000,
     marketCap: 9200,
+    sharesOutstanding: 19_011_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -741,6 +755,7 @@ export const wig20Companies = [
     changePercent: -1.59,
     volume: 1800000,
     marketCap: 8200,
+    sharesOutstanding: 680_000_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -790,6 +805,7 @@ export const wig20Companies = [
     changePercent: 1.04,
     volume: 180000,
     marketCap: 7200,
+    sharesOutstanding: 83_000_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -839,6 +855,7 @@ export const wig20Companies = [
     changePercent: 0.61,
     volume: 4500000,
     marketCap: 10800,
+    sharesOutstanding: 1_312_000_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -888,6 +905,7 @@ export const wig20Companies = [
     changePercent: 1.32,
     volume: 420000,
     marketCap: 7600,
+    sharesOutstanding: 130_570_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -937,6 +955,7 @@ export const wig20Companies = [
     changePercent: 0.74,
     volume: 25000,
     marketCap: 6500,
+    sharesOutstanding: 9_594_000,
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],

@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
 import { useTheme } from '../context/ThemeContext';
@@ -9,12 +9,14 @@ import {
 } from '../data/wig20';
 import useStockData from '../hooks/useStockData';
 import useFinancials from '../hooks/useFinancials';
+import { calculateAllRatios } from '../data/ratioCalculator';
 import TradingViewChart from '../components/TradingViewChart';
 import FinancialTable from '../components/FinancialTable';
 import BalanceSheet from '../components/BalanceSheet';
 import IncomeStatement from '../components/IncomeStatement';
 import CashFlowStatement from '../components/CashFlowStatement';
 import ValuationMetrics from '../components/ValuationMetrics';
+import MetricsPanel from '../components/MetricsPanel';
 import HealthScore from '../components/HealthScore';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import WatchButton from '../components/WatchButton';
@@ -52,9 +54,15 @@ export default function StockPage() {
   const { companies, lastUpdated } = useStockData();
   const stock = companies.find(s => s.id === id);
 
-  // Live financials — only fetch when on financials or overview tab
-  const financialsSymbol = (tab === 'financials' || tab === 'overview') ? stock?.yahooSymbol : null;
+  // Live financials — only fetch when on financials, overview, or valuation tab
+  const financialsSymbol = (tab === 'financials' || tab === 'overview' || tab === 'valuation') ? stock?.yahooSymbol : null;
   const { data: liveFinancials, loading: financialsLoading } = useFinancials(financialsSymbol, stock?.id);
+
+  // Comprehensive ratios from live financial data
+  const allRatios = useMemo(() => {
+    if (!liveFinancials || !stock) return null;
+    return calculateAllRatios(liveFinancials, stock.price, stock.sharesOutstanding);
+  }, [liveFinancials, stock]);
 
   if (!stock) {
     return (
@@ -294,7 +302,10 @@ export default function StockPage() {
         {tab === 'valuation' && (
           <div className="card">
             <h2 className="section-title mb-6">{t('stock.valuation')}</h2>
-            <ValuationMetrics ratios={stock.ratios} />
+            {allRatios
+              ? <MetricsPanel ratios={allRatios} lang={lang} />
+              : <ValuationMetrics ratios={stock.ratios} />
+            }
           </div>
         )}
 
