@@ -18,6 +18,7 @@ import CashFlowStatement from '../components/CashFlowStatement';
 import ValuationMetrics from '../components/ValuationMetrics';
 import MetricsPanel from '../components/MetricsPanel';
 import HealthScore from '../components/HealthScore';
+import StockChart from '../components/StockChart';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import WatchButton from '../components/WatchButton';
 import { useAuth } from '../context/AuthContext';
@@ -46,9 +47,10 @@ export default function StockPage() {
   const { dark } = useTheme();
   const [tab, setTab] = useState('overview');
   const [financialSubTab, setFinancialSubTab] = useState('overview');
-  // Delay TradingView init: only mount chart widget after Chart tab is visited once
-  const chartEverVisited = useRef(false);
-  if (tab === 'chart') chartEverVisited.current = true;
+  const [chartSource, setChartSource] = useState('stockview');
+  // Delay TradingView init: only mount after user clicks "TradingView" toggle
+  const tvEverSelected = useRef(false);
+  if (chartSource === 'tradingview') tvEverSelected.current = true;
 
   // Live stock data
   const { companies, lastUpdated } = useStockData();
@@ -227,16 +229,40 @@ export default function StockPage() {
           <OverviewTab stock={stock} lang={lang} dark={dark} health={health} t={t} />
         )}
 
-        {/* Chart tab — render once after first visit, hidden when inactive.
-            TradingViewChart's IntersectionObserver handles lazy script injection. */}
-        {chartEverVisited.current && (
-          <div className={`space-y-4 ${tab !== 'chart' ? 'hidden' : ''}`}>
-            <TradingViewChart symbol={stock.tvSymbol} variant="full" />
-            <p className="text-xs text-surface-400 text-center">
-              {lang === 'pl'
-                ? 'Użyj paska narzędzi wykresu, aby dodać oscylatory (RSI, MACD, Bollinger Bands i inne).'
-                : 'Use the chart toolbar to add oscillators (RSI, MACD, Bollinger Bands, and more).'}
-            </p>
+        {tab === 'chart' && (
+          <div className="space-y-4">
+            {/* Chart source toggle */}
+            <div className="flex gap-1 p-1 rounded-lg bg-surface-100/80 dark:bg-surface-900/50 w-fit">
+              {['stockview', 'tradingview'].map(src => (
+                <button
+                  key={src}
+                  onClick={() => setChartSource(src)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    chartSource === src
+                      ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 dark:border-green-400/20'
+                      : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'
+                  }`}
+                >
+                  {t(`chart.${src}`)}
+                </button>
+              ))}
+            </div>
+
+            {chartSource === 'stockview' && (
+              <StockChart ticker={stock.ticker} />
+            )}
+
+            {/* TradingView — lazy mount only after first toggle click */}
+            {tvEverSelected.current && (
+              <div className={chartSource !== 'tradingview' ? 'hidden' : ''}>
+                <TradingViewChart symbol={stock.tvSymbol} variant="full" />
+                <p className="text-xs text-surface-400 text-center mt-4">
+                  {lang === 'pl'
+                    ? 'Użyj paska narzędzi wykresu, aby dodać oscylatory (RSI, MACD, Bollinger Bands i inne).'
+                    : 'Use the chart toolbar to add oscillators (RSI, MACD, Bollinger Bands, and more).'}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
