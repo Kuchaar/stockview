@@ -135,9 +135,17 @@ export default function StockPage() {
       {/* Company header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-8">
         <div className="flex-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-green-500/10 dark:bg-green-400/10 border border-green-500/20 dark:border-green-400/20 text-green-600 dark:text-green-400 text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wide mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" />
-            WIG20
+          <div className="flex items-center gap-3 mb-3">
+            <div className="inline-flex items-center gap-1.5 bg-green-500/10 dark:bg-green-400/10 border border-green-500/20 dark:border-green-400/20 text-green-600 dark:text-green-400 text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" />
+              WIG20
+            </div>
+            <Link
+              to={`/compare?stock=${stock.id}`}
+              className="text-xs text-surface-500 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+            >
+              {lang === 'pl' ? 'Porównaj ↗' : 'Compare ↗'}
+            </Link>
           </div>
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-[1.9rem] sm:text-[2.1rem] font-bold tracking-tight leading-tight">
@@ -301,8 +309,13 @@ export default function StockPage() {
               )}
             </div>
 
-            {financialSubTab === 'overview' && (
+            {financialSubTab === 'overview' && stock.financials?.annual?.years?.length > 0 && (
               <FinancialTable financials={stock.financials} />
+            )}
+            {financialSubTab === 'overview' && !stock.financials?.annual?.years?.length && (
+              <div className="text-sm text-surface-400 text-center py-8">
+                {lang === 'pl' ? 'Brak danych finansowych.' : 'No financial data available.'}
+              </div>
             )}
             {financialSubTab === 'income' && (
               <IncomeStatement
@@ -393,7 +406,7 @@ function HealthGrid({ stock, lang, dark, health, subs }) {
   }[label];
 
   // Revenue growth from last two annual data points
-  const rev = stock.financials.annual.revenue;
+  const rev = stock.financials?.annual?.revenue || [];
   const revenueGrowth =
     rev.length >= 2 && rev[rev.length - 2]
       ? ((rev[rev.length - 1] - rev[rev.length - 2]) / rev[rev.length - 2]) * 100
@@ -544,11 +557,11 @@ function HealthGrid({ stock, lang, dark, health, subs }) {
 function KeyRatiosSection({ stock, lang }) {
   const { ratios, financials } = stock;
 
-  const annualRevenue = financials.annual.revenue.filter(v => v != null);
+  const annualRevenue = (financials?.annual?.revenue || []).filter(v => v != null);
   const maxRev = Math.max(...annualRevenue, 1);
   const revBars = annualRevenue.map(v => Math.max((v / maxRev) * 100, 4));
 
-  const annualNI = financials.annual.netIncome.map(v => (v == null || v < 0 ? 0 : v));
+  const annualNI = (financials?.annual?.netIncome || []).map(v => (v == null || v < 0 ? 0 : v));
   const maxNI = Math.max(...annualNI, 1);
   const niBars = annualNI.map(v => Math.max((v / maxNI) * 100, 4));
 

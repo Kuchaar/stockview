@@ -7,7 +7,7 @@ import { useAuthModal } from '../context/AuthModalContext';
 import AuthModal from './AuthModal';
 import {
   Sun, Moon, Globe, TrendingUp, BarChart3,
-  DollarSign, Calendar, LogIn, LogOut, Menu, X, ChevronDown, Bookmark,
+  DollarSign, Calendar, LogIn, LogOut, Menu, X, ChevronDown, Bookmark, GitCompareArrows,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,6 +20,11 @@ export default function Layout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
+
+  // Set html lang attribute
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   // Close user dropdown on click outside
   useEffect(() => {
@@ -35,6 +40,7 @@ export default function Layout({ children }) {
   const navItems = [
     { to: '/', label: t('nav.home'), icon: BarChart3 },
     { to: '/dividends', label: t('nav.dividends'), icon: DollarSign },
+    { to: '/compare', label: t('nav.compare'), icon: GitCompareArrows },
     ...(user
       ? [{ to: '/watchlist', label: t('nav.watchlist'), icon: Bookmark }]
       : []),

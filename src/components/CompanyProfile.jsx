@@ -28,7 +28,7 @@ export default function CompanyProfile({ stock, lang }) {
         : null,
     },
     { label: t('company.ceo'), value: profile.ceo },
-    { label: 'ISIN', value: profile.isin, mono: true },
+    { label: t('company.isin'), value: profile.isin, mono: true },
   ];
 
   return (

@@ -56,7 +56,7 @@ export default function HomePage() {
     return list;
   }, [companies, search, sectorFilter]);
 
-  const uniqueSectors = [...new Set(companies.map(s => s.sector))];
+  const uniqueSectors = [...new Set(companies.map(s => s.sector).filter(Boolean))];
 
   const sectorLabels = {
     pl: { all: 'Wszystkie', banking: 'Banki', energy: 'Energetyka', mining: 'Górnictwo',

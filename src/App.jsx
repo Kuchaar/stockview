@@ -6,6 +6,7 @@ import { AuthModalProvider } from './context/AuthModalContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import StockPage from './pages/StockPage';
+import ComparePage from './pages/ComparePage';
 import DividendsPage from './pages/DividendsPage';
 import WatchlistPage from './pages/WatchlistPage';
 import AdminDividendsPage from './pages/AdminDividendsPage';
@@ -33,6 +34,7 @@ function AnimatedRoutes() {
         <Routes location={location}>
           <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
           <Route path="/stock/:id" element={<ErrorBoundary><StockPage /></ErrorBoundary>} />
+          <Route path="/compare" element={<ErrorBoundary><ComparePage /></ErrorBoundary>} />
           <Route path="/dividends" element={<ErrorBoundary><DividendsPage /></ErrorBoundary>} />
           <Route path="/watchlist" element={<ErrorBoundary><WatchlistPage /></ErrorBoundary>} />
           <Route path="/admin/dividends" element={<ErrorBoundary><AdminDividendsPage /></ErrorBoundary>} />
