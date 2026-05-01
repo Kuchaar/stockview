@@ -10,7 +10,7 @@ const TickerTape = lazy(() => import('../components/TickerTape'));
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
-import { Search, TrendingUp, TrendingDown, Activity, BarChart3, ArrowRight, Bookmark } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, Activity, BarChart3, ArrowRight, Bookmark, SlidersHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const staggerContainer = {
@@ -267,7 +267,16 @@ export default function HomePage() {
       {/* All stocks */}
       <div id="stock-list">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="section-title">{t('home.allStocks')}</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="section-title">{t('home.allStocks')}</h2>
+            <Link
+              to="/screener"
+              className="inline-flex items-center gap-1.5 text-xs text-surface-500 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              {lang === 'pl' ? 'Zaawansowane filtry' : 'Advanced filters'}
+            </Link>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}

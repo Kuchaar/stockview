@@ -7,7 +7,7 @@ import { useAuthModal } from '../context/AuthModalContext';
 import AuthModal from './AuthModal';
 import {
   Sun, Moon, Globe, TrendingUp, BarChart3,
-  DollarSign, Calendar, LogIn, LogOut, Menu, X, ChevronDown, Bookmark, GitCompareArrows,
+  DollarSign, Calendar, LogIn, LogOut, Menu, X, ChevronDown, Bookmark, GitCompareArrows, SlidersHorizontal,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -41,6 +41,7 @@ export default function Layout({ children }) {
     { to: '/', label: t('nav.home'), icon: BarChart3 },
     { to: '/dividends', label: t('nav.dividends'), icon: DollarSign },
     { to: '/compare', label: t('nav.compare'), icon: GitCompareArrows },
+    { to: '/screener', label: t('nav.screener'), icon: SlidersHorizontal },
     ...(user
       ? [{ to: '/watchlist', label: t('nav.watchlist'), icon: Bookmark }]
       : []),
