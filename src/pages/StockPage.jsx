@@ -19,6 +19,7 @@ import ValuationMetrics from '../components/ValuationMetrics';
 import MetricsPanel from '../components/MetricsPanel';
 import HealthScore from '../components/HealthScore';
 import StockChart from '../components/StockChart';
+import CompanyProfile from '../components/CompanyProfile';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import WatchButton from '../components/WatchButton';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +29,7 @@ import { motion } from 'framer-motion';
 
 const TABS = [
   { id: 'overview', pl: 'Przegląd', en: 'Overview' },
+  { id: 'about',    pl: 'O spółce', en: 'About' },
   { id: 'chart',    pl: 'Wykres',   en: 'Chart' },
   { id: 'financials', pl: 'Sprawozdania', en: 'Statements' },
   { id: 'valuation',  pl: 'Wskaźniki',   en: 'Metrics' },
@@ -227,6 +229,10 @@ export default function StockPage() {
       >
         {tab === 'overview' && (
           <OverviewTab stock={stock} lang={lang} dark={dark} health={health} t={t} />
+        )}
+
+        {tab === 'about' && (
+          <CompanyProfile stock={stock} lang={lang} />
         )}
 
         {tab === 'chart' && (

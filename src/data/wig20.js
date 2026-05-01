@@ -59,6 +59,17 @@ export const wig20Companies = [
     volume: 4820000,
     marketCap: 72250,
     sharesOutstanding: 1_250_000_000,
+    profile: {
+      description: {
+        pl: 'Największy bank w Polsce, kontrolowany przez Skarb Państwa. Oferuje usługi bankowości detalicznej, korporacyjnej i hipotecznej. Posiada największą sieć oddziałów i bankomatów w kraju.',
+        en: 'The largest bank in Poland, controlled by the State Treasury. Offers retail, corporate, and mortgage banking services. Operates the largest branch and ATM network in the country.',
+      },
+      founded: 1919, ipoYear: 2004, employees: 29000,
+      ceo: 'Szymon Midera',
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.pkobp.pl',
+      isin: 'PLPKO0000016',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -109,6 +120,17 @@ export const wig20Companies = [
     volume: 3150000,
     marketCap: 71400,
     sharesOutstanding: 427_709_000,
+    profile: {
+      description: {
+        pl: 'Multienergetyczny koncern — rafinerie, petrochemia, energetyka i sieć stacji paliw. Po fuzji z Lotosem i PGNiG jeden z największych podmiotów paliwowo-energetycznych w Europie.',
+        en: 'A multi-energy corporation — refineries, petrochemicals, power generation, and a fuel station network. Following mergers with Lotos and PGNiG, one of the largest fuel and energy companies in Europe.',
+      },
+      founded: 1999, ipoYear: 1999, employees: 75000,
+      ceo: 'Ireneusz Fąfara',
+      headquarters: { pl: 'Płock', en: 'Płock' },
+      website: 'https://www.orlen.pl',
+      isin: 'PLPKN0000018',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -159,6 +181,17 @@ export const wig20Companies = [
     volume: 1200000,
     marketCap: 28500,
     sharesOutstanding: 200_000_000,
+    profile: {
+      description: {
+        pl: 'Globalny producent miedzi i srebra z kopalniami w Polsce, Chile, USA i Kanadzie. Jeden z czołowych producentów miedzi na świecie i największy producent srebra.',
+        en: 'A global copper and silver producer with mines in Poland, Chile, the USA, and Canada. One of the leading copper producers worldwide and the largest silver producer.',
+      },
+      founded: 1961, ipoYear: 1997, employees: 34000,
+      ceo: 'Andrzej Szydło',
+      headquarters: { pl: 'Lubin', en: 'Lubin' },
+      website: 'https://www.kghm.com',
+      isin: 'PLKGHM000017',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -209,6 +242,17 @@ export const wig20Companies = [
     volume: 2400000,
     marketCap: 42200,
     sharesOutstanding: 863_523_000,
+    profile: {
+      description: {
+        pl: 'Największa grupa ubezpieczeniowa w Europie Środkowo-Wschodniej. Działalność obejmuje ubezpieczenia majątkowe i życiowe, zarządzanie aktywami oraz opiekę zdrowotną.',
+        en: 'The largest insurance group in Central and Eastern Europe. Operations include property and life insurance, asset management, and healthcare services.',
+      },
+      founded: 1803, ipoYear: 2010, employees: 11000,
+      ceo: 'Artur Olech',
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.pzu.pl',
+      isin: 'PLPZU0000011',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -259,6 +303,17 @@ export const wig20Companies = [
     volume: 680000,
     marketCap: 44200,
     sharesOutstanding: 262_470_000,
+    profile: {
+      description: {
+        pl: 'Drugi największy bank w Polsce. Oferuje pełen zakres usług bankowości detalicznej, prywatnej i korporacyjnej. Należy do grupy PZU.',
+        en: 'The second largest bank in Poland. Offers a full range of retail, private, and corporate banking services. Part of the PZU group.',
+      },
+      founded: 1929, ipoYear: 1998, employees: 12000,
+      ceo: null,
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.pekao.com.pl',
+      isin: 'PLPEKAO00016',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -309,6 +364,17 @@ export const wig20Companies = [
     volume: 920000,
     marketCap: 19800,
     sharesOutstanding: 100_739_000,
+    profile: {
+      description: {
+        pl: 'Studio gier wideo, twórca serii Wiedźmin i Cyberpunk 2077. Prowadzi również platformę cyfrowej dystrybucji gier GOG.com.',
+        en: 'A video game studio, creator of The Witcher series and Cyberpunk 2077. Also operates the GOG.com digital game distribution platform.',
+      },
+      founded: 1994, ipoYear: 2002, employees: 1200,
+      ceo: 'Michał Nowakowski',
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.cdprojekt.com',
+      isin: 'PLOPTTC00011',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -359,6 +425,17 @@ export const wig20Companies = [
     volume: 3800000,
     marketCap: 36200,
     sharesOutstanding: 222_568_000,
+    profile: {
+      description: {
+        pl: 'Grupa e-commerce specjalizująca się w modzie i obuwiu. Prowadzi platformy eobuwie.pl, Modivo oraz sieć sklepów stacjonarnych HalfPrice i CCC.',
+        en: 'An e-commerce group specializing in fashion and footwear. Operates the eobuwie.pl and Modivo platforms as well as the HalfPrice and CCC brick-and-mortar store chains.',
+      },
+      founded: 1999, ipoYear: 2004, employees: 16000,
+      ceo: null,
+      headquarters: { pl: 'Polkowice', en: 'Polkowice' },
+      website: 'https://www.modivo.pl',
+      isin: 'PLCCC0000016',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -409,6 +486,17 @@ export const wig20Companies = [
     volume: 180000,
     marketCap: 42200,
     sharesOutstanding: 98_040_000,
+    profile: {
+      description: {
+        pl: 'Sieć supermarketów proximity w mniejszych miastach i na obrzeżach dużych aglomeracji. Jedna z najszybciej rozwijających się sieci handlowych w Polsce.',
+        en: 'A proximity supermarket chain in smaller cities and suburbs of major urban areas. One of the fastest-growing retail chains in Poland.',
+      },
+      founded: 1999, ipoYear: 2017, employees: 45000,
+      ceo: 'Tomasz Biernacki',
+      headquarters: { pl: 'Krotoszyn', en: 'Krotoszyn' },
+      website: 'https://www.grupadino.pl',
+      isin: 'PLDINPL00011',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -459,6 +547,17 @@ export const wig20Companies = [
     volume: 12000,
     marketCap: 25800,
     sharesOutstanding: 1_852_000,
+    profile: {
+      description: {
+        pl: 'Największa polska grupa odzieżowa. Właściciel marek Reserved, Cropp, House, Mohito i Sinsay, działająca w kilkudziesięciu krajach.',
+        en: 'The largest Polish apparel group. Owner of the Reserved, Cropp, House, Mohito, and Sinsay brands, operating in dozens of countries.',
+      },
+      founded: 1991, ipoYear: 2001, employees: 32000,
+      ceo: 'Marek Piechocki',
+      headquarters: { pl: 'Gdańsk', en: 'Gdańsk' },
+      website: 'https://www.lppsa.com',
+      isin: 'PLLPP0000011',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -509,6 +608,17 @@ export const wig20Companies = [
     volume: 5200000,
     marketCap: 9000,
     sharesOutstanding: 639_946_000,
+    profile: {
+      description: {
+        pl: 'Grupa medialno-telekomunikacyjna. Obejmuje telewizję satelitarną Polsat, sieć komórkową Plus i dostawcę internetu Netia.',
+        en: 'A media and telecommunications group. Encompasses Polsat satellite television, the Plus mobile network, and Netia internet provider.',
+      },
+      founded: 1999, ipoYear: 2007, employees: 16000,
+      ceo: null,
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.cyfrowypolsat.pl',
+      isin: 'PLCFRPT00013',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -559,6 +669,17 @@ export const wig20Companies = [
     volume: 120000,
     marketCap: 25800,
     sharesOutstanding: 42_538_000,
+    profile: {
+      description: {
+        pl: 'Nowoczesny bank internetowy, dawniej BRE Bank. Pionier bankowości online w Polsce, obsługuje klientów detalicznych i korporacyjnych.',
+        en: 'A modern internet bank, formerly BRE Bank. A pioneer of online banking in Poland, serving retail and corporate customers.',
+      },
+      founded: 1986, ipoYear: 1992, employees: 6500,
+      ceo: 'Cezary Stypułkowski',
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.mbank.pl',
+      isin: 'PLBRE0000012',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -609,6 +730,17 @@ export const wig20Companies = [
     volume: 3600000,
     marketCap: 2680,
     sharesOutstanding: 117_412_000,
+    profile: {
+      description: {
+        pl: 'Największy producent węgla koksowego w Unii Europejskiej. Prowadzi kopalnie na Górnym Śląsku, dostarcza surowce dla przemysłu stalowego.',
+        en: 'The largest coking coal producer in the European Union. Operates mines in Upper Silesia, supplying raw materials to the steel industry.',
+      },
+      founded: 1993, ipoYear: 2011, employees: 22000,
+      ceo: null,
+      headquarters: { pl: 'Jastrzębie-Zdrój', en: 'Jastrzębie-Zdrój' },
+      website: 'https://www.jsw.pl',
+      isin: 'PLJSW0000015',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -659,6 +791,17 @@ export const wig20Companies = [
     volume: 12000000,
     marketCap: 14200,
     sharesOutstanding: 1_869_760_000,
+    profile: {
+      description: {
+        pl: 'Największa grupa energetyczna w Polsce. Zajmuje się wytwarzaniem, dystrybucją i handlem energią elektryczną oraz rozwojem odnawialnych źródeł energii.',
+        en: 'The largest energy group in Poland. Engaged in electricity generation, distribution, and trading, as well as renewable energy development.',
+      },
+      founded: 1990, ipoYear: 2009, employees: 42000,
+      ceo: null,
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.gkpge.pl',
+      isin: 'PLPGER000010',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -709,6 +852,17 @@ export const wig20Companies = [
     volume: 95000,
     marketCap: 9200,
     sharesOutstanding: 19_011_000,
+    profile: {
+      description: {
+        pl: 'Lider zarządzania wierzytelnościami w Europie Środkowo-Wschodniej. Kupuje i obsługuje portfele wierzytelności konsumenckich i korporacyjnych w kilkunastu krajach.',
+        en: 'A leader in debt management in Central and Eastern Europe. Purchases and services consumer and corporate debt portfolios across more than a dozen countries.',
+      },
+      founded: 1998, ipoYear: 2011, employees: 2700,
+      ceo: 'Piotr Krupa',
+      headquarters: { pl: 'Wrocław', en: 'Wrocław' },
+      website: 'https://www.kruk.eu',
+      isin: 'PLKRK0000010',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -759,6 +913,17 @@ export const wig20Companies = [
     volume: 1800000,
     marketCap: 8200,
     sharesOutstanding: 680_000_000,
+    profile: {
+      description: {
+        pl: 'Europejska sieć dyskontowa z artykułami codziennego użytku i odzieżą. Prowadzi sklepy pod markami Pepco i Dealz w kilkunastu krajach.',
+        en: 'A European variety discount retailer selling everyday items and clothing. Operates stores under the Pepco and Dealz brands across more than a dozen countries.',
+      },
+      founded: null, ipoYear: 2021, employees: 45000,
+      ceo: null,
+      headquarters: { pl: 'Poznań', en: 'Poznań' },
+      website: 'https://www.pepcogroup.eu',
+      isin: 'NL0015000AU7',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -809,6 +974,17 @@ export const wig20Companies = [
     volume: 180000,
     marketCap: 7200,
     sharesOutstanding: 83_000_000,
+    profile: {
+      description: {
+        pl: 'Największa polska firma informatyczna. Dostarcza oprogramowanie i rozwiązania IT dla sektora bankowego, administracji publicznej i przedsiębiorstw.',
+        en: 'The largest Polish IT company. Delivers software and IT solutions for the banking sector, public administration, and enterprises.',
+      },
+      founded: 1991, ipoYear: 1998, employees: 30000,
+      ceo: null,
+      headquarters: { pl: 'Rzeszów', en: 'Rzeszów' },
+      website: 'https://www.asseco.pl',
+      isin: 'PLSOFTB00016',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -859,6 +1035,17 @@ export const wig20Companies = [
     volume: 4500000,
     marketCap: 10800,
     sharesOutstanding: 1_312_000_000,
+    profile: {
+      description: {
+        pl: 'Operator telekomunikacyjny oferujący internet stacjonarny, telefonię komórkową, telewizję i usługi 5G. Dawniej Telekomunikacja Polska (TPSA).',
+        en: 'A telecommunications operator offering fixed-line internet, mobile telephony, television, and 5G services. Formerly Telekomunikacja Polska (TPSA).',
+      },
+      founded: 1991, ipoYear: 1998, employees: 10000,
+      ceo: null,
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.orange.pl',
+      isin: 'PLTLKPL00017',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -909,6 +1096,17 @@ export const wig20Companies = [
     volume: 420000,
     marketCap: 7600,
     sharesOutstanding: 130_570_000,
+    profile: {
+      description: {
+        pl: 'Bank detaliczno-korporacyjny typu challenger, założony w 2008 roku. Specjalizuje się w innowacyjnych produktach finansowych i bankowości cyfrowej.',
+        en: 'A challenger retail and corporate bank founded in 2008. Specializes in innovative financial products and digital banking.',
+      },
+      founded: 2008, ipoYear: 2012, employees: 7500,
+      ceo: null,
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.aliorbank.pl',
+      isin: 'PLALIOR00045',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -959,6 +1157,17 @@ export const wig20Companies = [
     volume: 25000,
     marketCap: 6500,
     sharesOutstanding: 9_594_000,
+    profile: {
+      description: {
+        pl: 'Grupa kapitałowa działająca w branży aluminium (ekstruzja, systemy okienne) i opakowań giętkich. Eksportuje do kilkudziesięciu krajów.',
+        en: 'A capital group operating in the aluminum industry (extrusion, window systems) and flexible packaging. Exports to dozens of countries.',
+      },
+      founded: 1953, ipoYear: 1996, employees: 7500,
+      ceo: null,
+      headquarters: { pl: 'Kęty', en: 'Kęty' },
+      website: 'https://www.grupakety.com',
+      isin: 'PLKETY000011',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -1009,6 +1218,17 @@ export const wig20Companies = [
     volume: 3200000,
     marketCap: 31900,
     sharesOutstanding: 1_056_905_000,
+    profile: {
+      description: {
+        pl: 'Największa platforma e-commerce w Polsce i Europie Środkowo-Wschodniej. Prowadzi marketplace, usługę Allegro Pay i sieć automatów paczkowych.',
+        en: 'The largest e-commerce platform in Poland and Central and Eastern Europe. Operates a marketplace, Allegro Pay, and a parcel locker network.',
+      },
+      founded: 1999, ipoYear: 2020, employees: 5750,
+      ceo: null,
+      headquarters: { pl: 'Poznań', en: 'Poznań' },
+      website: 'https://www.allegro.eu',
+      isin: 'LU2237380790',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -1059,6 +1279,17 @@ export const wig20Companies = [
     volume: 120000,
     marketCap: 17000,
     sharesOutstanding: 25_530_098,
+    profile: {
+      description: {
+        pl: 'Największa firma budowlana w Polsce. Realizuje projekty budownictwa ogólnego, drogowego i kolejowego. Należy do hiszpańskiej grupy Ferrovial.',
+        en: 'The largest construction company in Poland. Executes general, road, and railway construction projects. Part of the Spanish Ferrovial group.',
+      },
+      founded: 1968, ipoYear: 1995, employees: 7500,
+      ceo: null,
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.budimex.pl',
+      isin: 'PLBUDMX00013',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -1109,6 +1340,17 @@ export const wig20Companies = [
     volume: 350000,
     marketCap: 63800,
     sharesOutstanding: 102_189_314,
+    profile: {
+      description: {
+        pl: 'Trzeci największy bank w Polsce, dawniej Santander Bank Polska. Od 2026 roku w grupie Erste Group. Bankowość detaliczna i korporacyjna.',
+        en: 'The third largest bank in Poland, formerly Santander Bank Polska. Part of the Erste Group since 2026. Retail and corporate banking.',
+      },
+      founded: null, ipoYear: 2001, employees: 11000,
+      ceo: null,
+      headquarters: { pl: 'Warszawa', en: 'Warsaw' },
+      website: 'https://www.santander.pl',
+      isin: 'PLBZ00000044',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -1159,6 +1401,17 @@ export const wig20Companies = [
     volume: 8500000,
     marketCap: 16300,
     sharesOutstanding: 1_752_549_394,
+    profile: {
+      description: {
+        pl: 'Drugi największy dystrybutor energii elektrycznej w Polsce. Zajmuje się wytwarzaniem, dystrybucją i sprzedażą energii oraz rozwojem OZE.',
+        en: 'The second largest electricity distributor in Poland. Engaged in power generation, distribution, sales, and renewable energy development.',
+      },
+      founded: 2006, ipoYear: 2010, employees: 25000,
+      ceo: null,
+      headquarters: { pl: 'Katowice', en: 'Katowice' },
+      website: 'https://www.tauron.pl',
+      isin: 'PLTAURN00011',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
@@ -1209,6 +1462,17 @@ export const wig20Companies = [
     volume: 2800000,
     marketCap: 23500,
     sharesOutstanding: 1_000_000_000,
+    profile: {
+      description: {
+        pl: 'Największa sieć convenience w Europie Środkowo-Wschodniej z ponad 10 000 sklepów franczyzowych. Oferuje produkty codziennego użytku i gotowe posiłki.',
+        en: 'The largest convenience store chain in Central and Eastern Europe with over 10,000 franchise stores. Offers everyday products and ready-made meals.',
+      },
+      founded: null, ipoYear: 2024, employees: 4500,
+      ceo: null,
+      headquarters: { pl: 'Poznań', en: 'Poznań' },
+      website: 'https://www.zabka.pl',
+      isin: 'LU2910446546',
+    },
     financials: {
       annual: {
         years: ['2021', '2022', '2023', '2024E'],
