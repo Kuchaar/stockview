@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-26",
+  "lastUpdated": "2026-08-28",
   "prices": {
     "PKO": {
       "close": 115.78,
@@ -26,7 +26,7 @@
       "change": -1.65,
       "changePercent": -0.45,
       "date": "2026-08-26",
-      "volume": 781510,
+      "volume": 781577,
       "open": 369.5,
       "high": 376.35,
       "low": 360.3
@@ -36,7 +36,7 @@
       "change": 1.84,
       "changePercent": 2.55,
       "date": "2026-08-26",
-      "volume": 1422826,
+      "volume": 1423654,
       "open": 72.66,
       "high": 74,
       "low": 72.46
@@ -46,7 +46,7 @@
       "change": 4.8,
       "changePercent": 1.87,
       "date": "2026-08-26",
-      "volume": 1293074,
+      "volume": 1312481,
       "open": 258.9,
       "high": 261.9,
       "low": 257.6
@@ -116,10 +116,10 @@
       "change": 0.3,
       "changePercent": 0.95,
       "date": "2026-08-26",
-      "volume": 512610,
+      "volume": 512931,
       "open": 31.65,
       "high": 32.29,
-      "low": 31.12
+      "low": 31.11
     },
     "PGE": {
       "close": 10.83,
@@ -136,7 +136,7 @@
       "change": 4,
       "changePercent": 0.91,
       "date": "2026-08-26",
-      "volume": 35749,
+      "volume": 35868,
       "open": 441.5,
       "high": 447,
       "low": 438.5
