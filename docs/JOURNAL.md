@@ -2,6 +2,54 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-09-20 — D8: bilans i przepływy jednak są, tylko pod innym endpointem
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Endpoint przepisany na `fundamentals-timeseries`** (`5263274`). Moduły `*History`
+  w `v10/quoteSummary` są wypatroszone — stąd fałszywy obraz z U6. Timeseries oddaje
+  komplet i **nie wymaga crumba ani cookie**, wystarczy `User-Agent`. Crumb został
+  wyłącznie dla `keyStats` i jest teraz pobierany „w miarę możliwości": gdy padnie,
+  sprawozdania i tak wracają.
+- **Kontrakt odpowiedzi bez zmian** — klucze wierszy te same, więc `useFinancials`
+  i importer działają bez przeróbek. Kanoniczny schemat dostał pola, dla których nie
+  było miejsca: `currentDebt`, `inventory`, `retainedEarnings`, `netPPE`,
+  `sharesOutstanding` i walutę wiersza.
+- **Import do Supabase**: 189 → **243 wiersze**, 218 z bilansem, 212 z przepływami,
+  wszystkie 24 spółki. Najnowszy okres przesunął się z `2026-03-31` na `2026-07-31`.
+- **Ochrona `verified` sprawdzona na żywo**: zaznaczony PKO FY2024 został pominięty
+  („Pominiętych jako verified: 1") i jako jedyny nie dostał bilansu, dopóki nie zdjąłem
+  flagi. Drugi przebieg bez duplikatów (243 → 243).
+- **Importer**: waluta z danych zamiast wpisanej na sztywno, 300 ms przerwy między
+  spółkami.
+- **Dokumentacja** (`eaf1c36`) — U6 oznaczone jako nieaktualne z odesłaniem do U9,
+  nowe U9 i U10, decyzja D8 z kosztem, D8 odhaczone w roadmapie.
+
+**Decyzje.**
+
+- **Źródłem bilansu i przepływów jest Yahoo `fundamentals-timeseries`, koszt 0 zł.**
+  EODHD (59,99 USD/mc) odrzucone — nie ma za co płacić, dopóki to działa; zostaje jako
+  plan awaryjny. Import z ESPI odłożony (PDF-y i XML-e w niejednolitych formatach,
+  parser byłby projektem samym w sobie). Panel `/admin/financials` zostaje do korekt,
+  nie jako podstawowe źródło.
+- **Założenie z D2 obroniło się w całości** — brakowało nie danych, tylko właściwego
+  endpointu. U6 zostaje w dokumencie jako zapis błędnej diagnozy, bo z niej wzięły się
+  D4a i część decyzji z D2.
+
+**Do sprawdzenia.** **U10: Pepco raportuje w EUR** (5,6 mld przychodu), a tabele na
+stronie spółki są podpisane „mln PLN" — dane mają walutę w bazie, UI jej nie używa.
+Pliki w `public/data/financials/` mają nadal stare, chude dane — odświeży je sobotni
+`update-financials.yml` albo `npm run export-financials`. Nic nie oglądane w przeglądarce
+(Chrome nie łączy się z localhostem).
+
+**Następne:** UI pod nowe dane — zakładki Bilans i Przepływy wreszcie mają co pokazywać,
+więc warto przejrzeć `BalanceSheet.jsx` i `CashFlowStatement.jsx` pod kątem nowych pól
+(`inventory`, `netPPE`, `retainedEarnings`, `currentDebt`) i podpisu jednostki (U10).
+Potem Bramka 4 — redesign, od R0, po review przez coworka.
+
+
 ## 2026-09-20 — Poprawki po przeglądzie: wydajność, CI, SEO
 
 Komputer: `MacBook-Pro-Kamil.local`
