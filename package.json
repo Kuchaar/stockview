@@ -3,11 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "dev:full": "npx wrangler pages dev -- npx vite",
     "update-prices": "node scripts/fetch-stooq.mjs",
+    "import-financials": "node --env-file-if-exists=.env.local scripts/import-financials.mjs",
     "sync": "bash scripts/sync.sh",
     "build": "vite build",
     "postbuild": "node scripts/generate-sitemap.mjs",

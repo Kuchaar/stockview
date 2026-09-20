@@ -9,7 +9,7 @@ export const TICKER_TO_YAHOO = {
   CDR: 'CDR.WA', MOD: 'MDV.WA', DNP: 'DNP.WA', LPP: 'LPP.WA', CPS: 'CPS.WA',
   MBK: 'MBK.WA', JSW: 'JSW.WA', PGE: 'PGE.WA', KRU: 'KRU.WA',
   PCO: 'PCO.WA', ACP: 'ACP.WA', OPL: 'OPL.WA', ALR: 'ALR.WA', KTY: 'KTY.WA',
-  ALE: 'ALE.WA', BDX: 'BDX.WA', EBP: 'SPL.WA', TPE: 'TPE.WA', ZAB: 'ZAB.WA',
+  ALE: 'ALE.WA', BDX: 'BDX.WA', EBP: 'EBP.WA', TPE: 'TPE.WA', ZAB: 'ZAB.WA',
 };
 
 export const sectors = {
@@ -1329,7 +1329,7 @@ export const wig20Companies = [
     id: 'erste',
     ticker: 'EBP',
     tvSymbol: 'GPW:EBP',
-    yahooSymbol: 'SPL.WA',
+    yahooSymbol: 'EBP.WA',
     name: 'Erste Bank Polska S.A.',
     shortName: 'Erste',
     sector: 'banking',
