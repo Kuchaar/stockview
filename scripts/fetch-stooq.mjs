@@ -13,28 +13,11 @@ const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'public', 'data');
 const HISTORY_DIR = join(DATA_DIR, 'history');
 
-// WIG20 ticker → Yahoo Finance symbol mapping
-const STOCKS = [
-  { ticker: 'PKO', yahoo: 'PKO.WA' },
-  { ticker: 'PKN', yahoo: 'PKN.WA' },
-  { ticker: 'KGH', yahoo: 'KGH.WA' },
-  { ticker: 'PZU', yahoo: 'PZU.WA' },
-  { ticker: 'PEO', yahoo: 'PEO.WA' },
-  { ticker: 'CDR', yahoo: 'CDR.WA' },
-  { ticker: 'MOD', yahoo: 'MDV.WA' },
-  { ticker: 'DNP', yahoo: 'DNP.WA' },
-  { ticker: 'LPP', yahoo: 'LPP.WA' },
-  { ticker: 'CPS', yahoo: 'CPS.WA' },
-  { ticker: 'MBK', yahoo: 'MBK.WA' },
-  { ticker: 'JSW', yahoo: 'JSW.WA' },
-  { ticker: 'PGE', yahoo: 'PGE.WA' },
-  { ticker: 'KRU', yahoo: 'KRU.WA' },
-  { ticker: 'PCO', yahoo: 'PCO.WA' },
-  { ticker: 'ACP', yahoo: 'ACP.WA' },
-  { ticker: 'OPL', yahoo: 'OPL.WA' },
-  { ticker: 'ALR', yahoo: 'ALR.WA' },
-  { ticker: 'KTY', yahoo: 'KTY.WA' },
-];
+// Lista spółek pochodzi wprost z TICKER_TO_YAHOO w src/data/wig20.js.
+// Wcześniej była tu kopia, która rozjechała się z indeksem: 19 pozycji zamiast 24,
+// przez co ALE, BDX, EBP, TPE i ZAB nie miały historii, a wykres był pusty.
+const { TICKER_TO_YAHOO } = await import('../src/data/wig20.js');
+const STOCKS = Object.entries(TICKER_TO_YAHOO).map(([ticker, yahoo]) => ({ ticker, yahoo }));
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

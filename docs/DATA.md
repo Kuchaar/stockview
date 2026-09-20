@@ -85,10 +85,13 @@ zawierają wyłącznie `.gitkeep`; nie ma ani jednego `data.json`. Gdy Yahoo zwr
 2024/2025 z kolumną prognozy „2024E". Środkowy poziom jest zaimplementowany i przetestowany,
 ale pusty.
 
-**U2 — 5 spółek bez historii cen.** `STOCKS` w `scripts/fetch-stooq.mjs` ma 19 pozycji, a WIG20
-liczy 24. Bez pliku w `public/data/history/` zostają: **ALE, BDX, EBP, TPE, ZAB** — na ich
-stronach wykres jest pusty (404 → `[]`, bez komunikatu). Dodatkowo leży tam osierocony
-`ccc.json` — CCC nie ma już w `TICKER_TO_YAHOO`.
+**U2 — 5 spółek bez historii cen.** ✅ **naprawione 2026-09-20.**
+`STOCKS` w `scripts/fetch-stooq.mjs` miało 19 pozycji, a WIG20 liczy 24 — bez pliku w
+`public/data/history/` zostawały **ALE, BDX, EBP, TPE, ZAB** (pusty wykres, 404 → `[]`,
+bez komunikatu), a obok leżał osierocony `ccc.json` po spółce, której nie ma już w indeksie.
+Lista pochodzi teraz wprost z `TICKER_TO_YAHOO`, więc nie ma jak się rozjechać: skrypt zawsze
+pobiera dokładnie te spółki, które pokazuje aplikacja. Po przebiegu 24/24 plików,
+ZAB ma 478 sesji (debiut w 2025), reszta ok. 1250.
 
 **U3 — sprawozdania z poziomu 1 nie miały dat.** ✅ **naprawione 2026-09-20 (D1a).**
 Yahoo zwraca `endDate` raz jako `{ raw, fmt }`, raz jako samą liczbę unix; `transformStatements()`
