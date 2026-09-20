@@ -16,10 +16,28 @@ const BLOCKS = [
   { key: 'cashFlow', column: 'cash_flow' },
 ];
 
+/**
+ * Liczba wpisana po ludzku → liczba dla bazy.
+ * Przyjmuje „12,5", „1 234" i „1 234,5" (także ze spacją niełamliwą, którą wkleja Excel).
+ * Zwraca null dla pustego pola i NaN dla tekstu, który liczbą nie jest.
+ */
+function parseNumber(raw) {
+  if (raw == null) return null;
+  const cleaned = String(raw).replace(/[\s\u00A0\u202F]/g, '').replace(',', '.');
+  if (cleaned === '') return null;
+  return Number(cleaned);
+}
+
+/** Czy w polu jest coś, czego nie da się odczytać jako liczby. */
+function isInvalid(raw) {
+  const n = parseNumber(raw);
+  return n != null && Number.isNaN(n);
+}
+
 /** Skrócony podgląd kwoty: 29466000000 → „29,47 mld". */
-function preview(value, lang) {
-  const n = Number(value);
-  if (value === '' || value == null || Number.isNaN(n)) return null;
+function preview(raw, lang) {
+  const n = parseNumber(raw);
+  if (n == null || Number.isNaN(n)) return null;
   const abs = Math.abs(n);
   const unit = abs >= 1e9 ? ['mld', 'B', 1e9] : abs >= 1e6 ? ['mln', 'M', 1e6] : null;
   if (!unit) return null;
@@ -74,12 +92,20 @@ export default function AdminFinancialsPage() {
     [rows, selectedEnd],
   );
 
+  const hasErrors = useMemo(
+    () => BLOCKS.some(({ key }) => Object.values(values[key]).some(isInvalid)),
+    [values],
+  );
+
   function pickPeriod(row) {
     setSelectedEnd(row.period_end);
+    const asText = (obj) => Object.fromEntries(
+      Object.entries(obj || {}).map(([k, v]) => [k, String(v)]),
+    );
     setValues({
-      income: { ...(row.income || {}) },
-      balance: { ...(row.balance || {}) },
-      cashFlow: { ...(row.cash_flow || {}) },
+      income: asText(row.income),
+      balance: asText(row.balance),
+      cashFlow: asText(row.cash_flow),
     });
     setVerified(row.verified);
     setMessage(null);
@@ -93,23 +119,27 @@ export default function AdminFinancialsPage() {
     setMessage(null);
   }
 
+  // W stanie trzymamy to, co użytkownik wpisał — inaczej „12," znikałoby w trakcie pisania.
+  // Konwersja na liczby dzieje się przy zapisie.
   function setField(block, field, raw) {
     setValues((prev) => {
       const next = { ...prev, [block]: { ...prev[block] } };
       if (raw === '') delete next[block][field];
-      else next[block][field] = Number(raw);
+      else next[block][field] = raw;
       return next;
     });
   }
 
   async function save() {
-    if (!selectedEnd) return;
+    if (!selectedEnd || hasErrors) return;
     setSaving(true);
     setMessage(null);
 
     // Puste pola nie trafiają do bazy — null znaczy „brak danych", nie „zero".
     const clean = (obj) => Object.fromEntries(
-      Object.entries(obj).filter(([, v]) => v != null && !Number.isNaN(v)),
+      Object.entries(obj)
+        .map(([k, v]) => [k, parseNumber(v)])
+        .filter(([, v]) => v != null && !Number.isNaN(v)),
     );
 
     const payload = {
@@ -288,24 +318,36 @@ export default function AdminFinancialsPage() {
                   <h2 className="section-title">{t(`admin.${key}`)}</h2>
                   {fields.map((field) => {
                     const raw = values[key][field] ?? '';
+                    const bledne = isInvalid(raw);
                     const hint = preview(raw, lang);
                     return (
                       <label key={field} className="block">
                         <span className="metric-label">{t(`admin.fields.${field}`)}</span>
                         <span className="flex items-baseline gap-2">
+                          {/* type="text": przy type="number" przeglądarka oddaje pusty
+                              string dla „12,5" i nie da się tego poprawić. */}
                           <input
-                            type="number"
-                            step="any"
+                            type="text"
+                            inputMode="decimal"
                             value={raw}
                             onChange={(e) => setField(key, field, e.target.value)}
-                            className="w-full bg-transparent border border-surface-200/70 dark:border-surface-800/70
-                                       rounded-lg px-2 py-1 text-sm font-mono tabular-nums
-                                       focus:border-brand-500 focus:outline-none"
+                            aria-invalid={bledne}
+                            className={`w-full bg-transparent border rounded-lg px-2 py-1 text-sm font-mono tabular-nums
+                                       focus:outline-none ${
+                                         bledne
+                                           ? 'border-red-500 dark:border-red-400 focus:border-red-500'
+                                           : 'border-surface-200/70 dark:border-surface-800/70 focus:border-brand-500'
+                                       }`}
                           />
                           {hint && (
                             <span className="text-xs text-surface-400 whitespace-nowrap">{hint}</span>
                           )}
                         </span>
+                        {bledne && (
+                          <span className="block text-xs text-red-500 dark:text-red-400 mt-0.5">
+                            {t('admin.invalidNumber')}
+                          </span>
+                        )}
                       </label>
                     );
                   })}
@@ -315,8 +357,14 @@ export default function AdminFinancialsPage() {
           </div>
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-surface-500">{t('admin.exportHint')}</p>
-            <button onClick={save} disabled={saving} className="btn-primary inline-flex items-center gap-2">
+            <p className={`text-xs ${hasErrors ? 'text-red-500 dark:text-red-400' : 'text-surface-500'}`}>
+              {hasErrors ? t('admin.fixErrors') : t('admin.exportHint')}
+            </p>
+            <button
+              onClick={save}
+              disabled={saving || hasErrors}
+              className="btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {saving ? t('admin.saving') : t('admin.save')}
             </button>

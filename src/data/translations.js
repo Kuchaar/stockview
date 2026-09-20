@@ -222,6 +222,8 @@ export const translations = {
       saving: 'Zapisywanie…',
       saved: 'Zapisano',
       saveError: 'Nie udało się zapisać',
+      invalidNumber: 'To nie jest liczba',
+      fixErrors: 'Popraw pola zaznaczone na czerwono, żeby zapisać.',
       loading: 'Wczytywanie…',
       exportHint: 'Zmiany trafią na stronę po najbliższym eksporcie (npm run export-financials).',
       fields: {
@@ -504,6 +506,8 @@ export const translations = {
       saving: 'Saving…',
       saved: 'Saved',
       saveError: 'Could not save',
+      invalidNumber: 'Not a valid number',
+      fixErrors: 'Fix the fields marked in red to save.',
       loading: 'Loading…',
       exportHint: 'Changes reach the site after the next export (npm run export-financials).',
       fields: {
