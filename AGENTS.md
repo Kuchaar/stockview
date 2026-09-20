@@ -33,7 +33,13 @@ Framer Motion · react-helmet-async · Supabase JS · Cloudflare Pages Functions
 ### Routes
 
 All routes are declared in `src/App.jsx`, each wrapped in `ErrorBoundary`, inside
-`Layout` and an `AnimatePresence` page transition.
+`Layout` and an `AnimatePresence` page transition. Only `HomePage` is imported eagerly —
+every other route is a `React.lazy` chunk behind a `Suspense` fallback, so it downloads on
+first visit instead of riding along in the main bundle.
+
+Private routes (`/watchlist`, `/admin/*`) are kept out of search results in **two places**:
+an `X-Robots-Tag` header in `public/_headers` (works for crawlers that never run JS) and a
+`noindex` meta tag injected in `src/App.jsx` (second layer). Change both or neither.
 
 | Path | Page | What it does |
 |---|---|---|
@@ -71,7 +77,10 @@ All three shapes go through `normalizeFinancials()` in `src/data/financialSchema
 **OHLCV history** — `useHistoricalPrices` / `useHistoricalData` read
 `public/data/history/{ticker}.json` (~1250 sessions, 5 years), cache TTL 30–60 min.
 `.github/workflows/update-prices.yml` runs `scripts/fetch-stooq.mjs` every weekday at
-18:00 UTC and commits `public/data/` straight to `main`.
+18:00 UTC and commits the price files straight to `main`. Financial statements have their own
+weekly job, `.github/workflows/update-financials.yml` (Saturday 06:00 UTC): it imports from
+Yahoo into Supabase and exports `public/data/financials/`, because statements change
+quarterly and there is nothing to gain from running that daily.
 
 ### Pages Functions
 

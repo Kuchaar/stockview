@@ -106,6 +106,14 @@ To się nie skaluje i cicho starzeje.
   *Gotowe, gdy:* Orlen pokazuje w Przeglądzie FY2022–FY2025 z bazy, a nie 2021–2024E z kodu,
   i nigdzie nie ma zer udających dane. Szczegóły: U8 w `docs/DATA.md`.
 
+- [ ] **D8 — skąd wziąć bilans i przepływy** (~40 min) ⚠️ **blokuje część wskaźników**
+  Yahoo zwraca dla wszystkich 24 spółek tylko przychody i zysk netto — bilansu ani
+  przepływów nie ma wcale (U6 w `docs/DATA.md`), więc ROE, C/WK, dług do kapitału
+  i wskaźniki płynności nie mają z czego powstać.
+  Do rozważenia: (a) płatny dostawca danych, np. EODHD za 59,99 USD/mc, (b) import
+  z ESPI/GPW, (c) ręczne wprowadzanie przez `/admin/financials` z flagą `verified`.
+  *Gotowe, gdy:* decyzja wraz z kosztem jest zapisana w `docs/DATA.md`, a co najmniej
+  jedna spółka ma w bazie wypełniony bilans.
 ---
 
 ## Bramka 2 — Konta i portfel
