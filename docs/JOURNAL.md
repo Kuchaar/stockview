@@ -2,6 +2,25 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-09-20 — Domknięcie testu synchronizacji Mac ↔ PC
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- `npm run sync` ściągnął z `origin/main` 2 commity z PC (`8452384..e92c7a9`), w tym
+  `docs/SYNC-TEST.md` — wymiana Mac ↔ PC przez GitHub potwierdzona, test zamknięty.
+- Usunięty `docs/SYNC-TEST.md` (`git rm`).
+- `npm run build` zielony, sitemapa 25 URL-i.
+
+**Do sprawdzenia przy okazji.** Warunek akceptacji F5 (PR z zepsutym importem → czerwony
+status CI) nadal nieprzetestowany.
+
+**Następne:** D1 — audyt źródeł (Bramka 1). Wyjść od `normalizeFinancials()` w
+`src/data/financialSchema.js` i trzech poziomów `useFinancials`, spisać do nowego
+`docs/DATA.md` tabelę „pole → źródło → częstotliwość → kto aktualizuje".
+
+
 ## 2026-09-20 — Test synchronizacji Mac ↔ PC
 
 Komputer: `KamilAMD`
