@@ -46,8 +46,10 @@ export function buildStockJsonLd(stock, { lang = 'pl' } = {}) {
     alternateName: stock.shortName,
     description: profile.description?.[lang],
     tickerSymbol: stock.ticker,
-    url: pageUrl,
-    sameAs: profile.website,
+    // schema.org: `url` opisuje sam podmiot, więc to strona spółki, a nie nasza podstrona.
+    // Podstronę wskazuje `mainEntityOfPage`. Gdy spółka nie ma strony, zostaje nasz adres.
+    url: profile.website || pageUrl,
+    mainEntityOfPage: pageUrl,
     foundingDate: profile.founded ? String(profile.founded) : undefined,
     numberOfEmployees: profile.employees
       ? { '@type': 'QuantitativeValue', value: profile.employees }
