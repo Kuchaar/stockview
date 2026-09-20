@@ -115,3 +115,90 @@ Wybierany dostawca musi domknąć dwie luki, których U3 nie tyka: **pokrycie 24
 i **dane na tyle świeże, żeby poziom 3 przestał być realnym źródłem** (U4). Punktem odniesienia
 przy porównaniu jest dzisiejsze Yahoo po poprawce z D1a: 4 roczniki i 4 kwartały na spółkę,
 z kompletnymi etykietami okresów.
+
+---
+
+# D2 — skąd brać dane i gdzie je trzymać
+
+Decyzja z **2026-09-20**. To są dwa osobne pytania i warto je rozdzielić:
+**gdzie dane mieszkają** (baza) i **czym ją karmimy** (dostawca). Cel: własna baza wyników
+finansowych spółek, z której korzysta strona — zamiast wpisywania liczb ręcznie do plików.
+
+## Porównanie dostawców
+
+| Źródło | Pokrycie GPW | Limity | Cena | Uwagi |
+|---|---|---|---|---|
+| **Yahoo `v10/quoteSummary`** (używane dziś) | działa dla WIG20 — sprawdzone dla PKO, CDR, KGH, ZAB | brak oficjalnych; wymaga crumb + cookie, 401 przy wygaśnięciu | **0 zł** | 4 roczniki + 4 kwartały wstecz. Kształt odpowiedzi potrafi się zmienić bez zapowiedzi (U3 to dokładnie taki przypadek). Brak SLA i brak umowy — to nieoficjalne API. Pola bankowe (`deposits`, `loans`, `netInterestIncome`) często puste |
+| **EODHD — Fundamentals Data Feed** | giełda WAR wspierana, 612 aktywnych tickerów; `PKO.WAR` ma dane (Net Revenue 29 138 mln zgadza się z tym, co zwraca Yahoo) | 100 000 zapytań/dobę, 1000/min | **59,99 USD/mc** (~220 zł). Fundamenty spoza USA zaczynają się dopiero od tego planu; plan darmowy to 20 zapytań/dobę i tylko USA | Historia od 2000 r. Tańszy plan EOD (19,99 USD) daje tylko ceny, bez sprawozdań |
+| **Financial Modeling Prep** | globalne pokrycie dopiero w planie Ultimate; Premium obejmuje USA, UK i Kanadę — GPW poza zasięgiem tańszych planów | darmowy plan 250 zapytań/dobę | nie udało się potwierdzić (strona cennika odrzuca automaty — HTTP 403) | Odpada już na kryterium pokrycia, bez wchodzenia w cenę |
+| **Raporty okresowe (ESPI, strony spółek)** | 100%, dane u samego źródła | — | **0 zł** | Jedyne źródło w pełni zgodne z tym, co spółka faktycznie raportuje. Koszt to praca: 24 spółki × 4 raporty ≈ 96 wpisów rocznie, każdy do przepisania ręcznie |
+
+## Decyzja
+
+1. **Dane mieszkają w Supabase**, w tabeli `financials` — to jest ta „wielka baza".
+2. **Karmimy ją z Yahoo** (0 zł) plus ręczne poprawki tam, gdzie Yahoo kłamie albo milczy.
+   Płatny dostawca wchodzi dopiero, gdy Yahoo przestanie wystarczać.
+3. **Strona nie czyta z Supabase na żywo.** Bot eksportuje bazę do
+   `public/data/financials/{companyId}/data.json`, czyli dokładnie na **poziom 2**, który już
+   jest w kodzie i czeka pusty od początku (U1).
+
+## Dlaczego tak
+
+- **Baza daje historię, której dostawca nie da.** Yahoo pokazuje 4 ostatnie roczniki i tyle.
+  Jeśli co kwartał zapiszemy to, co widzimy, po trzech latach mamy 7 roczników — bez płacenia.
+  Tego argumentu nie da się kupić później: historii, której się nie zbierało, nie da się odtworzyć.
+- **Ręczne wpisy i import nie gryzą się.** Kolumna `source` mówi, skąd wiersz pochodzi, a flaga
+  `verified` chroni go przed nadpisaniem: importer aktualizuje tylko to, czego człowiek nie tknął.
+  Dzięki temu ręczne wpisywanie danych, od którego chciałeś zacząć, nie idzie do kosza — staje się
+  najwyższą warstwą wiarygodności, a nie jedyną metodą.
+- **Statyczny eksport zostawia stronę bez zależności runtime.** Supabase może paść, wyczerpać
+  darmowy limit albo uśpić projekt — dane i tak się pokażą, z CDN Cloudflare, za darmo.
+- **Zero zmian w kliencie.** `useFinancials` czyta poziom 2 w formacie kanonicznym od samego
+  początku. Nie trzeba nowego endpointu ani przepinania UI — wystarczy, że katalogi przestaną
+  być puste.
+- **60 USD/mc za 24 spółki to ~3000 zł rocznie** na serwisie, który jest darmowy. Yahoo + własna
+  baza kosztują 0 zł i dają ten sam efekt, dopóki nie wejdziemy na 400 spółek.
+
+## Kiedy wrócić do płatnego dostawcy
+
+Wyzwalacze, nie terminy:
+
+- rozszerzenie poza WIG20 (mWIG40, sWIG80) — ręcznej korekty 400 spółek nikt nie udźwignie;
+- Yahoo znów zmieni kształt odpowiedzi albo zacznie blokować crumb na poważnie;
+- potrzeba danych sprzed 2022 r. do wykresów wieloletnich.
+
+Wtedy wchodzi **EODHD Fundamentals (59,99 USD/mc)** — jako **drugi importer do tej samej tabeli**,
+a nie jako przebudowa aplikacji. To jest główna korzyść z trzymania bazy u siebie: zmiana dostawcy
+to podmiana skryptu, nie migracja.
+
+## Schemat tabeli (wejście do D3)
+
+```sql
+create table public.financials (
+  id            bigint generated always as identity primary key,
+  company_id    text not null,          -- 'pkobp', zgodne z src/data/wig20.js
+  period_type   text not null check (period_type in ('annual', 'quarterly')),
+  period_end    date not null,          -- 2025-12-31
+  period_label  text not null,          -- 'FY2025' albo 'Q4 2025'
+  income        jsonb not null default '{}'::jsonb,
+  balance       jsonb not null default '{}'::jsonb,
+  cash_flow     jsonb not null default '{}'::jsonb,
+  currency      text not null default 'PLN',
+  source        text not null,          -- 'yahoo' | 'manual' | 'eodhd'
+  verified      boolean not null default false,
+  updated_at    timestamptz not null default now(),
+  unique (company_id, period_type, period_end)
+);
+```
+
+Dwie decyzje warte wyjaśnienia:
+
+- **`jsonb` zamiast 40 kolumn.** Zestaw pól już jest opisany w `src/data/financialSchema.js`
+  i różni się dla banków (`deposits`, `loans`) i dla reszty (`grossProfit`, `ebitda`). Trzymanie
+  go w `jsonb` oznacza, że dodanie pola to zmiana w jednym pliku JS, a nie migracja bazy.
+  Cena: baza nie sprawdzi typów za nas — robi to `normalizeFinancials()` przy odczycie.
+- **`unique (company_id, period_type, period_end)`** daje `upsert` za darmo: importer wrzuca
+  ten sam okres ile razy chce i nie robi duplikatów.
+
+RLS: publiczny `select` (dane i tak lądują w statycznym pliku), `insert`/`update` tylko dla konta
+admina — tak jak przy tabeli `dividends`.

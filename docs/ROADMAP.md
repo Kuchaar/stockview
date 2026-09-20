@@ -49,23 +49,34 @@ To się nie skaluje i cicho starzeje.
   Spisz dla każdego pola (przychód, EBITDA, bilans, `ratios`), skąd dziś pochodzi i jak
   często się zmienia.
   *Gotowe, gdy:* tabela „pole → źródło → częstotliwość → kto aktualizuje" jest w `docs/DATA.md`.
-  Wynik: [`docs/DATA.md`](DATA.md) — pięć ustaleń (U1–U5), z czego U3 blokuje sensowne D3.
+  Wynik: [`docs/DATA.md`](DATA.md) — pięć ustaleń (U1–U5); U3 naprawione w D1a.
 - [x] **D1a — naprawa dat w `/api/financials`** (~20 min) — wyszło z audytu D1
   Yahoo zwraca `endDate` jako liczbę, `transformStatements()` czeka na `.fmt` — przez to
   `date`/`period` są `null`, a `latest()` bierze najstarszy rocznik zamiast najnowszego.
   *Gotowe, gdy:* `/api/financials?symbol=PKO.WA` ma `date` i `period` w każdym wierszu,
   a wskaźniki na stronie spółki liczą się z ostatniego rocznika.
   Sprawdzone na `wrangler pages dev` dla PKO, CDR, KGH i ZAB: 0 wierszy bez daty.
-- [ ] **D2 — wybór dostawcy danych fundamentalnych** (~40 min)
+- [x] **D2 — wybór dostawcy danych fundamentalnych** (~40 min)
   Porównaj 2–3 źródła pod kątem pokrycia GPW, limitów i ceny.
-  *Gotowe, gdy:* decyzja z uzasadnieniem zapisana w `docs/DATA.md`, klucz testowy działa.
-- [ ] **D3 — endpoint `functions/api/fundamentals.js`** (~40 min)
-  Po wzorze istniejącego `functions/api/financials.js`: cache na krawędzi + fallback.
-  *Gotowe, gdy:* endpoint zwraca dane dla 3 tickerów i nie przekracza limitu dostawcy.
-- [ ] **D4 — podmiana źródła w UI** (~40 min)
-  `useStockData()` czyta z nowego endpointu, statyczne JSON-y zostają jako ostatni fallback.
-  *Gotowe, gdy:* wyłączenie sieci pokazuje dane z fallbacku i baner o źródle, bez błędu.
-- [ ] **D5 — sygnalizacja świeżości** (~40 min)
+  *Gotowe, gdy:* decyzja z uzasadnieniem zapisana w `docs/DATA.md`.
+  Decyzja: własna baza w Supabase, karmiona z Yahoo (0 zł) + ręczne poprawki, eksportowana
+  do poziomu 2. EODHD (59,99 USD/mc) w odwodzie — uzasadnienie w [`docs/DATA.md`](DATA.md).
+  Warunek „klucz testowy działa" odpadł: wybrane źródło nie ma klucza.
+- [ ] **D3 — tabela `financials` w Supabase** (~40 min)
+  Migracja wg schematu z `docs/DATA.md` + RLS: publiczny `select`, zapis tylko dla admina.
+  *Gotowe, gdy:* tabela istnieje, anon ją czyta, ręczny wiersz dla jednej spółki się zapisuje.
+- [ ] **D4 — importer `scripts/import-financials.mjs`** (~40 min)
+  Yahoo → `upsert` do Supabase, z pominięciem wierszy `verified = true`.
+  *Gotowe, gdy:* po przebiegu 24 spółki mają po 4 roczniki, a drugi przebieg niczego nie psuje
+  ani nie duplikuje.
+- [ ] **D5 — eksport na poziom 2** (~40 min)
+  `scripts/export-financials.mjs` → `public/data/financials/{companyId}/data.json`,
+  wpięty w `update-prices.yml`.
+  *Gotowe, gdy:* przy wyłączonym `/api/financials` strona spółki pokazuje dane z `source: 'manual'`.
+- [ ] **D6 — panel `/admin/financials`** (~40 min × 2)
+  Po wzorze `/admin/dividends`: ręczna korekta wiersza i ustawienie flagi `verified`.
+  *Gotowe, gdy:* poprawiona ręcznie liczba przeżywa kolejny przebieg importera.
+- [ ] **D7 — sygnalizacja świeżości** (~40 min)
   Data ostatniej aktualizacji per spółka, widoczna na stronie spółki.
   *Gotowe, gdy:* dane starsze niż kwartał są wizualnie oznaczone.
 
