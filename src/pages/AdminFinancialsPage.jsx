@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { supabase } from '../lib/supabase';
@@ -133,6 +134,8 @@ export default function AdminFinancialsPage() {
     if (!error) loadRows();
   }
 
+  const head = <Helmet><title>{t('seo.adminFinancialsTitle')}</title></Helmet>;
+
   if (!supabase) {
     return <p className="text-center py-20 text-surface-500">{t('admin.noSupabase')}</p>;
   }
@@ -153,6 +156,7 @@ export default function AdminFinancialsPage() {
       transition={{ duration: 0.4 }}
       className="space-y-6"
     >
+      {head}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">{t('admin.financialsTitle')}</h1>
         {message && (

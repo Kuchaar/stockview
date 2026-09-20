@@ -25,6 +25,11 @@ const urls = [
     priority: '0.8',
     changefreq: 'daily',
   })),
+  // Publiczne narzędzia — mają własne tytuły i canonical, więc mogą być indeksowane.
+  // /watchlist i /admin/* celowo pomijamy: są prywatne i oznaczone noindex.
+  { loc: '/screener', priority: '0.7', changefreq: 'weekly' },
+  { loc: '/compare', priority: '0.7', changefreq: 'weekly' },
+  { loc: '/dividends', priority: '0.7', changefreq: 'weekly' },
 ];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>

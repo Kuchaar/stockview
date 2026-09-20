@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
+import { SITE_URL } from '../config/site';
 import useDividends from '../hooks/useDividends';
 import { CalendarDays, Banknote, Info, Search, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -38,6 +40,17 @@ export default function DividendsPage() {
 
   return (
     <div className="space-y-8">
+      <Helmet>
+        <title>{t('seo.dividendsTitle')}</title>
+        <meta name="description" content={t('seo.dividendsDesc')} />
+        <link rel="canonical" href={`${SITE_URL}/dividends`} />
+        <meta property="og:title" content={t('seo.dividendsTitle')} />
+        <meta property="og:description" content={t('seo.dividendsDesc')} />
+        <meta property="og:url" content={`${SITE_URL}/dividends`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content={`${SITE_URL}/og-default.png`} />
+      </Helmet>
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

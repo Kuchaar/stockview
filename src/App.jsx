@@ -12,6 +12,7 @@ import DividendsPage from './pages/DividendsPage';
 import WatchlistPage from './pages/WatchlistPage';
 import AdminDividendsPage from './pages/AdminDividendsPage';
 import AdminFinancialsPage from './pages/AdminFinancialsPage';
+import { Helmet } from 'react-helmet-async';
 import { AnimatePresence, motion } from 'framer-motion';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -33,6 +34,10 @@ function AnimatedRoutes() {
         exit="exit"
         transition={{ duration: 0.2 }}
       >
+        {/* Strony prywatne trzymamy poza indeksem — jedno miejsce zamiast Helmeta w każdej. */}
+        {/^\/(admin|watchlist)/.test(location.pathname) && (
+          <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
+        )}
         <Routes location={location}>
           <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
           <Route path="/stock/:id" element={<ErrorBoundary><StockPage /></ErrorBoundary>} />

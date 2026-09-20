@@ -137,9 +137,13 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
   *Gotowe, gdy:* `grep -rn "pages.dev" src/ public/ functions/ scripts/ index.html` nie
   zwraca nic. Przekierowania 301 ze starej domeny nie wymagamy — `pages.dev` siedzi za
   Cloudflare Access, więc dla robotów i tak jest niedostępna.
-- [ ] **S2 — tytuły i opisy per spółka** (~40 min)
+- [x] **S2 — tytuły i opisy per spółka** (~40 min)
   Unikalny `<title>` i `description` dla 24 stron spółek, z nazwą i tickerem.
   *Gotowe, gdy:* żadne dwie strony nie mają tego samego tytułu.
+  Strony spółek miały to od początku; brakowało Helmeta na `/dividends`, `/watchlist`
+  i obu panelach admina — dziedziczyły tytuł strony głównej. 30 tytułów, 30 unikalnych.
+  Przy okazji: canonical na `/compare` i `/screener`, `noindex` dla stron prywatnych
+  (jedno miejsce w `App.jsx`) i trzy publiczne narzędzia w sitemapie (25 → 28 URL-i).
 - [ ] **S3 — dane strukturalne** (~40 min)
   JSON-LD `Organization` + `FinancialProduct` na stronie spółki.
   *Gotowe, gdy:* walidator Google nie zgłasza błędów dla trzech losowych spółek.

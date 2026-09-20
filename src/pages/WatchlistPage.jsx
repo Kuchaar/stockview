@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
@@ -8,7 +9,7 @@ import { Bookmark, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function WatchlistPage() {
-  const { lang } = useLang();
+  const { lang, t: tr } = useLang();
   const { user } = useAuth();
   const { setOpen } = useAuthModal();
   const { watchlist, loading: watchlistLoading } = useWatchlist();
@@ -33,9 +34,15 @@ export default function WatchlistPage() {
 
   const watchedStocks = companies.filter((c) => watchlist.includes(c.id));
 
+  // Strona prywatna — własny tytuł, żeby nie dublować strony głównej.
+  // Za `noindex` odpowiada App.jsx, wspólnie dla /watchlist i /admin/*.
+  const head = <Helmet><title>{tr('seo.watchlistTitle')}</title></Helmet>;
+
   // Not logged in
   if (!user) {
     return (
+      <>
+      {head}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -54,10 +61,13 @@ export default function WatchlistPage() {
           {t.loginBtn}
         </button>
       </motion.div>
+      </>
     );
   }
 
   return (
+    <>
+    {head}
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -91,5 +101,6 @@ export default function WatchlistPage() {
         </div>
       )}
     </motion.div>
+    </>
   );
 }

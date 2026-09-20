@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
+import { SITE_URL } from '../config/site';
 import {
   wig20Companies, sectors, formatPrice, formatPercent, formatNumber,
 } from '../data/wig20';
@@ -147,6 +148,8 @@ export default function ComparePage() {
     <>
       <Helmet>
         <title>{lang === 'pl' ? 'Porównywarka spółek WIG20 | StockView' : 'Compare WIG20 Stocks | StockView'}</title>
+        <link rel="canonical" href={`${SITE_URL}/compare`} />
+        <meta property="og:url" content={`${SITE_URL}/compare`} />
         <meta name="description" content={lang === 'pl'
           ? 'Porównaj wskaźniki finansowe spółek WIG20 — P/E, ROE, marże, dywidenda i więcej.'
           : 'Compare financial metrics of WIG20 stocks — P/E, ROE, margins, dividend and more.'

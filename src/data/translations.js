@@ -256,6 +256,13 @@ export const translations = {
         dividendsPaid: 'Wypłacone dywidendy',
       },
     },
+    seo: {
+      dividendsTitle: 'Kalendarz dywidend WIG20 2026 | StockView',
+      dividendsDesc: 'Kalendarz dywidend spółek WIG20: dni ustalenia prawa, terminy wypłat, stopa dywidendy i wartość na akcję. Nadchodzące i już wypłacone.',
+      watchlistTitle: 'Obserwowane spółki | StockView',
+      adminDividendsTitle: 'Panel dywidend | StockView',
+      adminFinancialsTitle: 'Panel sprawozdań | StockView',
+    },
     theme: {
       light: 'Jasny',
       dark: 'Ciemny',
@@ -517,6 +524,13 @@ export const translations = {
         financingCashFlow: 'Financing cash flow',
         dividendsPaid: 'Dividends paid',
       },
+    },
+    seo: {
+      dividendsTitle: 'WIG20 Dividend Calendar 2026 | StockView',
+      dividendsDesc: 'Dividend calendar for WIG20 companies: ex-dates, payment dates, dividend yield and amount per share. Upcoming and already paid.',
+      watchlistTitle: 'Watchlist | StockView',
+      adminDividendsTitle: 'Dividends admin | StockView',
+      adminFinancialsTitle: 'Financials admin | StockView',
     },
     theme: {
       light: 'Light',

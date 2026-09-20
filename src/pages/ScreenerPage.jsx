@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
+import { SITE_URL } from '../config/site';
 import {
   wig20Companies, sectors, formatPrice, formatPercent, formatNumber,
 } from '../data/wig20';
@@ -180,6 +181,8 @@ export default function ScreenerPage() {
     <>
       <Helmet>
         <title>{lang === 'pl' ? 'Screener spółek WIG20 | StockView' : 'WIG20 Stock Screener | StockView'}</title>
+        <link rel="canonical" href={`${SITE_URL}/screener`} />
+        <meta property="og:url" content={`${SITE_URL}/screener`} />
         <meta name="description" content={lang === 'pl'
           ? 'Filtruj spółki WIG20 po P/E, ROE, stopie dywidendy, kapitalizacji i innych wskaźnikach. Znajdź spółki wartościowe, dywidendowe i jakościowe.'
           : 'Filter WIG20 stocks by P/E, ROE, dividend yield, market cap and other metrics. Find value, dividend, and quality stocks.'

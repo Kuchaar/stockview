@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { supabase } from '../lib/supabase';
@@ -24,7 +25,7 @@ const EMPTY_ROW = {
 
 export default function AdminDividendsPage() {
   const { user } = useAuth();
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,9 +44,12 @@ export default function AdminDividendsPage() {
       });
   }, []);
 
+  const head = <Helmet><title>{t('seo.adminDividendsTitle')}</title></Helmet>;
+
   if (!user || !isAdmin) {
     return (
       <div className="text-center py-20">
+        {head}
         <ShieldAlert className="w-12 h-12 mx-auto mb-4 text-red-400" />
         <p className="text-surface-500 text-lg">
           {lang === 'pl' ? 'Brak dostępu. Tylko administrator może zarządzać dywidendami.' : 'Access denied. Admin only.'}
@@ -122,6 +126,7 @@ export default function AdminDividendsPage() {
       transition={{ duration: 0.4 }}
       className="space-y-6"
     >
+      {head}
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">
