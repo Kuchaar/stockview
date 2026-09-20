@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+      - 'public/data/**'
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'public/data/**'
+      - 'docs/**'
+      - '**/*.md'
+
+# Nowy push na tę samą gałąź anuluje poprzedni, jeszcze trwający build
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build

@@ -1,5 +1,7 @@
 # StockView — analiza spółek WIG20
 
+[![CI](https://github.com/Kuchaar/stockview/actions/workflows/ci.yml/badge.svg)](https://github.com/Kuchaar/stockview/actions/workflows/ci.yml)
+
 Darmowa platforma do analizy spółek z indeksu WIG20: dane finansowe, wskaźniki,
 wykresy i narzędzia do porównywania firm. Bez rejestracji dla większości funkcji.
 
