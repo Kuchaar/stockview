@@ -21,17 +21,22 @@ zaczyna się od odtwarzania kontekstu.
 - [x] **F2 — pamięć projektu w repo**
   Dziennik, roadmapa, instrukcja setupu, archiwum promptów, mockup w `docs/design/`.
   *Gotowe, gdy:* na świeżym komputerze da się postawić projekt wyłącznie z `docs/SETUP.md`.
-- [ ] **F3 — rytuał sesji** (~40 min)
-  Spisany start i koniec sesji: `git pull --rebase` → praca → wpis do dziennika → commit → push.
-  Do tego skrót na sprawdzenie, czy drugi komputer czegoś nie zostawił.
-  *Gotowe, gdy:* `docs/SESSION.md` istnieje i przechodzi test „obcy człowiek wykonuje kroki
-  bez pytania o nic".
-- [ ] **F4 — `AGENTS.md`** (~40 min)
+- [x] **F3 — rytuał sesji** · [`719f1ec`](https://github.com/Kuchaar/stockview/commit/719f1ec)
+  Rytuał jest wykonywalny, nie do czytania: `scripts/sync.sh` (`npm run sync`) plus skille
+  `/sv-start` i `/sv-koniec`. Zamiast zapowiadanego `docs/SESSION.md` — instrukcja do
+  czytania starzeje się w ciszy, skrypt albo przechodzi, albo krzyczy.
+  *Gotowe, gdy:* `npm run sync` przechodzi na obu komputerach, a `/sv-start` i `/sv-koniec`
+  są w `.claude/skills/`.
+- [x] **F4 — `AGENTS.md`** · [`6fe18ec`](https://github.com/Kuchaar/stockview/commit/6fe18ec)
   Instrukcja dla Claude Code i innych agentów: konwencje, czego nie ruszać, jak testować.
-  *Gotowe, gdy:* `AGENTS.md` w katalogu głównym, a `CLAUDE.md` nie duplikuje jego treści.
-- [ ] **F5 — CI na pull requestach** (~40 min)
-  Workflow, który na PR odpala `npm ci && npm run build` na Node z `.nvmrc`.
-  *Gotowe, gdy:* PR z celowo zepsutym importem dostaje czerwony status przed mergem.
+  *Gotowe, gdy:* `AGENTS.md` w katalogu głównym, a `CLAUDE.md` nie duplikuje jego treści —
+  importuje go przez `@AGENTS.md`.
+- [x] **F5 — CI na każdy push i PR** · [`5821d2a`](https://github.com/Kuchaar/stockview/commit/5821d2a)
+  `.github/workflows/ci.yml` odpala `npm ci && npm run build` na Node z `.nvmrc`, z
+  `paths-ignore` na commity bota i dokumentację. Akcje w obu workflow podbite v4 → v7.
+  *Gotowe, gdy:* push daje zielony run w Actions — ✅ run 35503133576 na `node v22.23.2`.
+  ⚠️ Pierwotny warunek (PR z zepsutym importem dostaje czerwony status) **nieprzetestowany**
+  — ścieżka `pull_request` jest w workflow, zweryfikuje ją pierwszy prawdziwy PR.
 
 ---
 

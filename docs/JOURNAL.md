@@ -2,6 +2,53 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-09-20 — Foundation domknięta: rytuał sesji, AGENTS.md, CI
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **F3 — rytuał sesji.** `scripts/sync.sh` (`npm run sync`): fetch --prune, pull --rebase
+  --autostash, warunkowe `npm ci`, kontrola wersji Node, przypomnienie z dziennika i
+  roadmapy. Do tego skille `/sv-start` i `/sv-koniec` w `.claude/skills/`. Commit
+  [`719f1ec`](https://github.com/Kuchaar/stockview/commit/719f1ec).
+- **F4 — AGENTS.md.** Wspólny kontekst dla Codeksa i Claude Code: architektura, trasy,
+  trzypoziomowy przepływ danych, konwencje, workflow. `CLAUDE.md` importuje go przez
+  `@AGENTS.md` i dokłada tylko notatki specyficzne dla Claude'a, bez duplikacji treści.
+  Commit [`6fe18ec`](https://github.com/Kuchaar/stockview/commit/6fe18ec).
+- **F5 — CI.** Nowy `.github/workflows/ci.yml`: `npm ci` + `npm run build` na każdy push
+  i PR, `paths-ignore` na `public/data/**`, `docs/**`, `**/*.md`, `concurrency` z
+  `cancel-in-progress`, `node-version-file: .nvmrc`, `cache: npm`, `permissions: contents: read`.
+  W obu workflow `checkout` i `setup-node` podbite z v4 na v7. Badge CI w README.
+  Commit [`5821d2a`](https://github.com/Kuchaar/stockview/commit/5821d2a).
+  Weryfikacja: run 35503133576 zielony w 24 s na `node v22.23.2`; ręczny dispatch bota
+  (run 35503165573) zielony w 25 s, też na v22.23.2, commit `e6aa953` wypchnięty.
+  Commit bota z `public/data/**` **nie** odpalił CI — `paths-ignore` działa.
+- **Sprzątanie gałęzi.** Usunięte `claude/xenodochial-elgamal` i `rescue/pc`; na GitHubie
+  została sama `main`.
+- **README.** Wiersz o `AGENTS.md` obiecywał plik „w F4", a ten istnieje — zamieniony na
+  link. Commit [`0f3afdd`](https://github.com/Kuchaar/stockview/commit/0f3afdd).
+
+**Decyzje.**
+
+- F3 zrealizowany jako skrypt + skille zamiast zapowiadanego `docs/SESSION.md`. Instrukcja
+  do czytania starzeje się w ciszy; `npm run sync` albo przechodzi, albo krzyczy. Warunek
+  „gotowe, gdy" w roadmapie poprawiony pod to, co faktycznie powstało.
+- Akcje podbite od razu na v7 (checkout v7.0.1, setup-node v7.0.0), nie na v5. Przejrzałem
+  changelogi majorów po drodze: v5 przenosi runner na Node 24, checkout v6 trzyma
+  credentiale w osobnym pliku, setup-node v5/v6 zmienia automatyczne cache'owanie. Żadna
+  z tych zmian nas nie dotyczy — push bota działa, `cache: npm` ustawiamy jawnie.
+- CI ma `permissions: contents: read`. Build niczego nie zapisuje, a workflow odpala się
+  też z PR-ów.
+
+**Do sprawdzenia przy okazji.** Warunek akceptacji F5 — PR z celowo zepsutym importem
+dostaje czerwony status — nie został przetestowany. Ścieżka `pull_request` jest w
+workflow, ale pierwszy PR pokaże, czy faktycznie blokuje merge.
+
+**Następne:** D1 — audyt źródeł (Bramka 1). Wyjść od `normalizeFinancials()` w
+`src/data/financialSchema.js` i trzech poziomów `useFinancials`, spisać do nowego
+`docs/DATA.md` tabelę „pole → źródło → częstotliwość → kto aktualizuje".
+
 ## 2026-09-20 — Foundation: spójne środowisko Mac/PC + pamięć projektu
 
 Komputer: `MacBook-Pro-Kamil.local` (macOS, zsh)
