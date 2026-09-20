@@ -13,50 +13,26 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
-          cache: npm
 
-      # Skrypty od sprawozdań używają @supabase/supabase-js
-      - name: Install dependencies
-        run: npm ci
-
+      # Skrypt nie ma zależności — czyta tylko src/data/wig20.js i Yahoo.
       - name: Fetch latest prices from Yahoo Finance
         run: node scripts/fetch-stooq.mjs
-
-      # Yahoo → tabela `financials` w Supabase. Wymaga sekretu service_role;
-      # bez niego krok się pomija, zamiast wywalać cały przebieg.
-      - name: Import financials into Supabase
-        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
-        run: node scripts/import-financials.mjs
-
-      - name: Skip import (no service_role secret)
-        if: env.SUPABASE_SERVICE_ROLE_KEY == ''
-        run: echo "Brak SUPABASE_SERVICE_ROLE_KEY — pomijam import do Supabase."
-
-      # Baza → public/data/financials/*/data.json (poziom 2 dla strony).
-      # Wystarczy klucz publiczny: tabela ma politykę publicznego odczytu.
-      - name: Export financials to static files
-        if: env.SUPABASE_ANON_KEY != ''
-        run: node scripts/export-financials.mjs
 
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data/
+          git add public/data/history public/data/latest-prices.json
           if git diff --staged --quiet; then
-            echo "No data changes detected"
+            echo "No price changes detected"
           else
-            git commit -m "chore: update stock data $(date -u +%Y-%m-%d)"
+            git commit -m "chore: update stock prices $(date -u +%Y-%m-%d)"
             git pull --rebase origin main
             git push
           fi

@@ -1,0 +1,64 @@
+name: Update financials
+
+# Sprawozdania zmieniają się kwartalnie, więc codzienny przebieg nic nie wnosi.
+# Raz w tygodniu wystarczy, żeby nowy raport trafił na stronę w kilka dni po publikacji.
+on:
+  schedule:
+    # Sobota, 06:00 UTC — poza sesją giełdową
+    - cron: '0 6 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  financials:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      # Oba skrypty używają @supabase/supabase-js
+      - name: Install dependencies
+        run: npm ci
+
+      # Yahoo → tabela `financials` w Supabase. Wymaga sekretu service_role;
+      # bez niego krok się pomija, zamiast wywalać cały przebieg.
+      - name: Import financials into Supabase
+        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
+        run: node scripts/import-financials.mjs
+
+      - name: Skip import (no service_role secret)
+        if: env.SUPABASE_SERVICE_ROLE_KEY == ''
+        run: echo "Brak SUPABASE_SERVICE_ROLE_KEY — pomijam import do Supabase."
+
+      # Baza → public/data/financials/*/data.json (poziom 2 dla strony).
+      # Wystarczy klucz publiczny: tabela ma politykę publicznego odczytu.
+      - name: Export financials to static files
+        if: env.SUPABASE_ANON_KEY != ''
+        run: node scripts/export-financials.mjs
+
+      - name: Skip export (no anon key)
+        if: env.SUPABASE_ANON_KEY == ''
+        run: echo "Brak SUPABASE_ANON_KEY — pomijam eksport na poziom 2."
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/financials
+          if git diff --staged --quiet; then
+            echo "No financial data changes detected"
+          else
+            git commit -m "chore: update financial statements $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main
+            git push
+          fi
