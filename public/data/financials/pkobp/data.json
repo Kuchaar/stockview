@@ -1,0 +1,71 @@
+{
+  "ticker": "PKO",
+  "sector": "banking",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 29466000000,
+        "netIncome": 10682000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 27273000000,
+        "netIncome": 9304000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 22944000000,
+        "netIncome": 5502000000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 16764000000,
+        "netIncome": 3333000000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 7331000000,
+        "netIncome": 2522000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 7393000000,
+        "netIncome": 2715000000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 7409000000,
+        "netIncome": 2837000000
+      },
+      {
+        "date": "2025-06-30",
+        "period": "Q2 2025",
+        "revenue": 7429000000,
+        "netIncome": 2661000000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

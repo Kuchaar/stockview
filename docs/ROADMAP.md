@@ -81,10 +81,13 @@ To się nie skaluje i cicho starzeje.
   *Gotowe, gdy:* na stronie PKO i CDR nie ma zer udających dane, a banki są rozpoznawane.
   `grossProfit`/`operatingIncome`/`ebitda` wracają jako `null`, `IncomeStatement` chowa całe
   puste wiersze, a `isBank()` idzie po sektorze ze `src/data/wig20.js`.
-- [ ] **D5 — eksport na poziom 2** (~40 min)
+- [x] **D5 — eksport na poziom 2** (~40 min)
   `scripts/export-financials.mjs` → `public/data/financials/{companyId}/data.json`,
   wpięty w `update-prices.yml`.
   *Gotowe, gdy:* przy wyłączonym `/api/financials` strona spółki pokazuje dane z `source: 'manual'`.
+  24 pliki (108 kB). Sprawdzone na serwerze dev bez `/api/*`: PKO, CDR i ZAB schodzą na
+  `source: 'manual'` z okresami FY2025–FY2022 zamiast na zaszyte dane z 2024 r.
+  Bot wymaga trzech sekretów w repo — patrz `docs/DATA.md`.
 - [ ] **D6 — panel `/admin/financials`** (~40 min × 2)
   Po wzorze `/admin/dividends`: ręczna korekta wiersza i ustawienie flagi `verified`.
   *Gotowe, gdy:* poprawiona ręcznie liczba przeżywa kolejny przebieg importera.

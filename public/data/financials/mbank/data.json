@@ -1,0 +1,71 @@
+{
+  "ticker": "MBK",
+  "sector": "banking",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 12466400000,
+        "netIncome": 3543540000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 11560907000,
+        "netIncome": 2243245000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 10789379000,
+        "netIncome": 24054000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 9176500000,
+        "netIncome": -702691000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 3127000000,
+        "netIncome": 1060000000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 3094000000,
+        "netIncome": 953000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 3059800000,
+        "netIncome": 1041489000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 3179294000,
+        "netIncome": 836990000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

@@ -1,0 +1,71 @@
+{
+  "ticker": "PZU",
+  "sector": "insurance",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 30882000000,
+        "netIncome": 6699000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 29423000000,
+        "netIncome": 5342000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 26868000000,
+        "netIncome": 5766000000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 26710000000,
+        "netIncome": 3374000000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 7876000000,
+        "netIncome": 1647000000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 7776000000,
+        "netIncome": 1362000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 7753000000,
+        "netIncome": 1474000000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 7903000000,
+        "netIncome": 1995000000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

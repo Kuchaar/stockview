@@ -1,0 +1,71 @@
+{
+  "ticker": "KRU",
+  "sector": "finance",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 3180217000,
+        "netIncome": 1085008000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 2897600000,
+        "netIncome": 1073954000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 2570966000,
+        "netIncome": 1012755000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 2139234000,
+        "netIncome": 804982000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 788874000,
+        "netIncome": 292326000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 785215000,
+        "netIncome": 262290000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 786352000,
+        "netIncome": 208388000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 798369000,
+        "netIncome": 292602000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

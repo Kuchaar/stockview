@@ -1,0 +1,71 @@
+{
+  "ticker": "BDX",
+  "sector": "construction",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 9438558000,
+        "netIncome": 748014000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 9117843000,
+        "netIncome": 615922000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 9801515000,
+        "netIncome": 738196000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 8619054000,
+        "netIncome": 534443000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 2766383000,
+        "netIncome": 163389000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 1496564000,
+        "netIncome": 86277000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 3029592000,
+        "netIncome": 307025000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 2461683000,
+        "netIncome": 170506000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

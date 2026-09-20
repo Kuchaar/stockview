@@ -1,7 +1,7 @@
-# Manual Financial Data
+# Financial Data (tier 2)
 
-This folder contains manually maintained financial data for WIG20 companies.
-It serves as the **second-tier fallback** when Yahoo Finance API is unavailable.
+Generated from the `financials` table in Supabase by `scripts/export-financials.mjs`.
+Serves as the **second-tier fallback** when the Yahoo Finance API is unavailable.
 
 ## Fallback order
 
@@ -11,9 +11,16 @@ It serves as the **second-tier fallback** when Yahoo Finance API is unavailable.
 
 ## How to add data
 
-1. Copy `TEMPLATE.json` into the company folder as `data.json`
-2. Fill in the values following the rules below
-3. Commit and deploy
+**Do not edit `data.json` by hand — these files are generated.** `scripts/export-financials.mjs`
+rewrites them from the `financials` table in Supabase on every bot run, so manual edits are lost.
+
+To correct a number:
+
+1. Change the row in Supabase (panel `/admin/financials`, docelowo zadanie D6, albo SQL).
+2. Set `verified = true` on that row — `scripts/import-financials.mjs` then leaves it alone.
+3. The next export (or `npm run export-financials`) writes it into this folder.
+
+`TEMPLATE.json` stays as documentation of the canonical shape.
 
 ## Format rules
 

@@ -1,0 +1,71 @@
+{
+  "ticker": "ALE",
+  "sector": "retail",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 11675726000,
+        "netIncome": 1517081000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 10939955000,
+        "netIncome": 1034561000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 10185317000,
+        "netIncome": 284058000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 9004916000,
+        "netIncome": -1916796000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 3339500000,
+        "netIncome": 529300000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 2951800000,
+        "netIncome": 341100000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 3140326000,
+        "netIncome": 438600000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 2941300000,
+        "netIncome": 396200000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

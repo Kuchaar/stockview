@@ -1,0 +1,71 @@
+{
+  "ticker": "ALR",
+  "sector": "banking",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 6040600000,
+        "netIncome": 2367000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 6060000000,
+        "netIncome": 2445000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 5632200000,
+        "netIncome": 2030100000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 4381600000,
+        "netIncome": 683100000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 1362900000,
+        "netIncome": 366600000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 1469381000,
+        "netIncome": 403186000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 1505000000,
+        "netIncome": 687700000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 1530000000,
+        "netIncome": 562800000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

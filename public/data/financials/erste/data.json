@@ -1,0 +1,71 @@
+{
+  "ticker": "EBP",
+  "sector": "banking",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 15651343000,
+        "netIncome": 6478814000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 16782680000,
+        "netIncome": 5212731000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 15832901000,
+        "netIncome": 4831107000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 12411262000,
+        "netIncome": 2799098000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 3869374000,
+        "netIncome": 1173010000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 3835000000,
+        "netIncome": 1028000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 3905697000,
+        "netIncome": 1838393000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 3920091000,
+        "netIncome": 1888827000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

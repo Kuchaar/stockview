@@ -1,0 +1,67 @@
+{
+  "ticker": "PCO",
+  "sector": "retail",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-09-30",
+        "period": "FY2025",
+        "revenue": 4523463000,
+        "netIncome": 171395000
+      },
+      {
+        "date": "2024-09-30",
+        "period": "FY2024",
+        "revenue": 6166749000,
+        "netIncome": -710169000
+      },
+      {
+        "date": "2023-09-30",
+        "period": "FY2023",
+        "revenue": 5649000000,
+        "netIncome": 102244000
+      },
+      {
+        "date": "2022-09-30",
+        "period": "FY2022",
+        "revenue": 4822819000,
+        "netIncome": 173605000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 1027338000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 1092000000
+      },
+      {
+        "date": "2025-06-30",
+        "period": "Q2 2025",
+        "revenue": 1424000000
+      },
+      {
+        "date": "2024-09-30",
+        "period": "Q3 2024",
+        "revenue": 1486000000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

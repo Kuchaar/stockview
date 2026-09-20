@@ -11,6 +11,7 @@
     "dev:full": "npx wrangler pages dev -- npx vite",
     "update-prices": "node scripts/fetch-stooq.mjs",
     "import-financials": "node --env-file-if-exists=.env.local scripts/import-financials.mjs",
+    "export-financials": "node --env-file-if-exists=.env.local scripts/export-financials.mjs",
     "sync": "bash scripts/sync.sh",
     "build": "vite build",
     "postbuild": "node scripts/generate-sitemap.mjs",

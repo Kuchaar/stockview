@@ -1,0 +1,71 @@
+{
+  "ticker": "OPL",
+  "sector": "telecom",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 13133000000,
+        "netIncome": 762000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 12732000000,
+        "netIncome": 913000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 12970000000,
+        "netIncome": 818000000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 12488000000,
+        "netIncome": 724000000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 3500000000,
+        "netIncome": 281000000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 3183000000,
+        "netIncome": 295000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 3493000000,
+        "netIncome": 69000000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 3329000000,
+        "netIncome": 228000000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

@@ -1,0 +1,71 @@
+{
+  "ticker": "PKN",
+  "sector": "energy",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 267329000000,
+        "netIncome": 11248000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 296947000000,
+        "netIncome": 7980000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 372640000000,
+        "netIncome": 27565000000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 278509000000,
+        "netIncome": 35331000000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 76471000000,
+        "netIncome": 7680000000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 75769000000,
+        "netIncome": 8079000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 72128000000,
+        "netIncome": 3154000000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 61007000000,
+        "netIncome": 2135000000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

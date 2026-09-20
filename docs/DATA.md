@@ -261,7 +261,34 @@ trzyma się wyłącznie dla przychodu i zysku netto. Bilans i przepływy trzeba 
 albo z EODHD (59,99 USD/mc), albo wpisać ręcznie przez panel z D6 — czyli dokładnie tak, jak
 planowałeś na początku, tyle że raz, do bazy, zamiast w kółko do plików.
 
-Dwie rzeczy do zapamiętania na D5:
+## Stan po D5 (2026-09-20)
+
+`scripts/export-financials.mjs` przepisuje tabelę do `public/data/financials/{companyId}/data.json`
+(24 pliki, 108 kB) w formacie kanonicznym — czyli na **poziom 2**, który `useFinancials` czyta
+od początku. Po stronie klienta nie trzeba było zmieniać ani linijki.
+
+Sprawdzone na serwerze dev, gdzie `/api/*` nie istnieje: PKO, CDR i ZAB schodzą na
+`source: 'manual'` z okresami FY2025–FY2022 i przychodem zgodnym z bazą — zamiast lądować
+na zaszytych danych z 2024 r. Eksport czyta przez klucz publiczny (`anon`), bo tabela ma
+politykę publicznego odczytu; sekret jest potrzebny wyłącznie do importu.
+
+**Pliki w `public/data/financials/` są generowane** — ręczna edycja przepada przy najbliższym
+przebiegu bota. Poprawki wprowadza się w bazie i oznacza `verified = true`.
+
+### Sekrety, których potrzebuje bot
+
+`.github/workflows/update-prices.yml` robi teraz: ceny → import do Supabase → eksport na poziom 2
+→ commit. W ustawieniach repozytorium (Settings → Secrets and variables → Actions) muszą być:
+
+| Sekret | Do czego | Jeśli go nie ma |
+|---|---|---|
+| `SUPABASE_URL` | import i eksport | oba kroki się nie wykonają |
+| `SUPABASE_SERVICE_ROLE_KEY` | import (omija RLS) | import pominięty, eksport i ceny działają |
+| `SUPABASE_ANON_KEY` | eksport (klucz publiczny) | eksport pominięty |
+
+Kroki są warunkowe, więc brak sekretu pomija krok, a nie wywala całego przebiegu.
+
+Dwie rzeczy do zapamiętania na D6:
 
 - **Importer nie może używać klucza `anon`** — RLS go zablokuje. Skrypt w GitHub Actions
   będzie potrzebował klucza `service_role` w sekrecie repozytorium (nigdy w repo, nigdy w `.env`

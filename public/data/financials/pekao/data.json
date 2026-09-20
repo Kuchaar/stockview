@@ -1,0 +1,71 @@
+{
+  "ticker": "PEO",
+  "sector": "banking",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 17154000000,
+        "netIncome": 7015000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 13612000000,
+        "netIncome": 6376000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 14709000000,
+        "netIncome": 6578000000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 11051012000,
+        "netIncome": 1717570000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 4420000000,
+        "netIncome": 1516000000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 4121000000,
+        "netIncome": 1232000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 4354000000,
+        "netIncome": 1824000000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 4309000000,
+        "netIncome": 1905000000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

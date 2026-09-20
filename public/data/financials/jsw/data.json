@@ -1,0 +1,71 @@
+{
+  "ticker": "JSW",
+  "sector": "mining",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 9408100000,
+        "netIncome": -6214600000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 11325800000,
+        "netIncome": -7242300000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 15338460880,
+        "netIncome": 993868700
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 20198500000,
+        "netIncome": 7561400000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 2096950960,
+        "netIncome": -611519680
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 2398800000,
+        "netIncome": -3330700000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 2294500000,
+        "netIncome": -796300000
+      },
+      {
+        "date": "2025-06-30",
+        "period": "Q2 2025",
+        "revenue": 2277200000,
+        "netIncome": -711600000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

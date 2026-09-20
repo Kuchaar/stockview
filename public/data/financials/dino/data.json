@@ -1,0 +1,71 @@
+{
+  "ticker": "DNP",
+  "sector": "retail",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 33634155000,
+        "netIncome": 1558360000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 29273780000,
+        "netIncome": 1506562000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 25666255000,
+        "netIncome": 1405327000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 19801622000,
+        "netIncome": 1132087000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 9531000000,
+        "netIncome": 400078000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 8439000000,
+        "netIncome": 316298000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 8896051000,
+        "netIncome": 367723000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 8761234000,
+        "netIncome": 481868000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

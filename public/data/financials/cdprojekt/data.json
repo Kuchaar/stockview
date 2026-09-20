@@ -1,0 +1,71 @@
+{
+  "ticker": "CDR",
+  "sector": "gaming",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 866989000,
+        "netIncome": 594708000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 985030000,
+        "netIncome": 469874000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 1230199000,
+        "netIncome": 481105000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 952576000,
+        "netIncome": 347093000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "revenue": 244201000,
+        "netIncome": 142907000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 191107000,
+        "netIncome": 106200000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 74877000,
+        "netIncome": 246278000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 349072000,
+        "netIncome": 193492000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

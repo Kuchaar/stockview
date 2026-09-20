@@ -1,0 +1,71 @@
+{
+  "ticker": "ACP",
+  "sector": "it",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "revenue": 16779800000,
+        "netIncome": 1138700000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "revenue": 17132000000,
+        "netIncome": 519900000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "revenue": 16896500000,
+        "netIncome": 482800000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "revenue": 17370100000,
+        "netIncome": 502700000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "revenue": 4399400000,
+        "netIncome": 228400000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "revenue": 4525300000,
+        "netIncome": 685500000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "revenue": 4267500000,
+        "netIncome": 171100000
+      },
+      {
+        "date": "2025-06-30",
+        "period": "Q2 2025",
+        "revenue": 4460600000,
+        "netIncome": 145900000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

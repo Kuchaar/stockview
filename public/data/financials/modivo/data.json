@@ -1,0 +1,70 @@
+{
+  "ticker": "MOD",
+  "sector": "retail",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2026-01-31",
+        "period": "FY2026",
+        "revenue": 10895700000,
+        "netIncome": 21800000
+      },
+      {
+        "date": "2025-01-31",
+        "period": "FY2025",
+        "revenue": 10302800000,
+        "netIncome": 956900000
+      },
+      {
+        "date": "2024-01-31",
+        "period": "FY2024",
+        "revenue": 9440300000,
+        "netIncome": -56100000
+      },
+      {
+        "date": "2023-01-31",
+        "period": "FY2023",
+        "revenue": 9123200000,
+        "netIncome": -417600000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-07-31",
+        "period": "Q3 2026",
+        "revenue": 3046000000
+      },
+      {
+        "date": "2026-04-30",
+        "period": "Q2 2026",
+        "revenue": 2439300000,
+        "netIncome": -24100000
+      },
+      {
+        "date": "2026-01-31",
+        "period": "Q1 2026",
+        "revenue": 2681600000,
+        "netIncome": -270300000
+      },
+      {
+        "date": "2025-10-31",
+        "period": "Q4 2025",
+        "revenue": 2966000000,
+        "netIncome": 118200000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}

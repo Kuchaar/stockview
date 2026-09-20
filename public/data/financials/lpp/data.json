@@ -1,0 +1,71 @@
+{
+  "ticker": "LPP",
+  "sector": "retail",
+  "lastUpdated": "2026-09-20",
+  "sources": [
+    "yahoo"
+  ],
+  "incomeStatement": {
+    "annual": [
+      {
+        "date": "2026-01-31",
+        "period": "FY2026",
+        "revenue": 23109000000,
+        "netIncome": 1500000000
+      },
+      {
+        "date": "2025-01-31",
+        "period": "FY2025",
+        "revenue": 20194000000,
+        "netIncome": 1747000000
+      },
+      {
+        "date": "2024-01-31",
+        "period": "FY2024",
+        "revenue": 17406000000,
+        "netIncome": 1607100000
+      },
+      {
+        "date": "2023-01-31",
+        "period": "FY2023",
+        "revenue": 15926504000,
+        "netIncome": 1095163000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-07-31",
+        "period": "Q3 2026",
+        "revenue": 6577000000,
+        "netIncome": 768000000
+      },
+      {
+        "date": "2026-04-30",
+        "period": "Q2 2026",
+        "revenue": 5472000000,
+        "netIncome": 475000000
+      },
+      {
+        "date": "2026-01-31",
+        "period": "Q1 2026",
+        "revenue": 6460000000,
+        "netIncome": 714000000
+      },
+      {
+        "date": "2025-10-31",
+        "period": "Q4 2025",
+        "revenue": 6141000000,
+        "netIncome": 800000000
+      }
+    ]
+  },
+  "balanceSheet": {
+    "annual": [],
+    "quarterly": []
+  },
+  "cashFlow": {
+    "annual": [],
+    "quarterly": []
+  },
+  "keyStats": null
+}
