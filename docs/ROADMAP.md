@@ -144,9 +144,14 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
   i obu panelach admina — dziedziczyły tytuł strony głównej. 30 tytułów, 30 unikalnych.
   Przy okazji: canonical na `/compare` i `/screener`, `noindex` dla stron prywatnych
   (jedno miejsce w `App.jsx`) i trzy publiczne narzędzia w sitemapie (25 → 28 URL-i).
-- [ ] **S3 — dane strukturalne** (~40 min)
+- [x] **S3 — dane strukturalne** (~40 min)
   JSON-LD `Organization` + `FinancialProduct` na stronie spółki.
   *Gotowe, gdy:* walidator Google nie zgłasza błędów dla trzech losowych spółek.
+  `src/data/structuredData.js` buduje graf: `Corporation` (nazwa, ticker, ISIN, siedziba,
+  zatrudnienie, rok założenia, strona), `FinancialProduct` wskazujący na nią przez `@id`
+  i `BreadcrumbList`. Sprawdzone skryptem na 48 wariantach (24 spółki × 2 języki): poprawny
+  JSON, brak `null`, komplet pól wymaganych, adresy absolutne.
+  **Do potwierdzenia w walidatorze Google** po wdrożeniu — patrz niżej.
 - [ ] **S4 — treść pod frazy** (~40 min)
   Sekcja tekstowa na stronie głównej pod „analiza spółek WIG20", „wskaźniki finansowe GPW".
   *Gotowe, gdy:* strona główna ma min. 300 słów sensownej treści, nie wypełniacza.

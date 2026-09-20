@@ -12,6 +12,7 @@ import { SITE_URL } from '../config/site';
 import useFinancials from '../hooks/useFinancials';
 import { calculateAllRatios } from '../data/ratioCalculator';
 import { toLegacyTable } from '../data/financialSchema';
+import { buildStockJsonLd } from '../data/structuredData';
 import TradingViewChart from '../components/TradingViewChart';
 import FinancialTable from '../components/FinancialTable';
 import DataFreshness from '../components/DataFreshness';
@@ -114,13 +115,9 @@ export default function StockPage() {
       <meta name="twitter:title" content={`${stock.name} (${stock.ticker}) | StockView`} />
       <meta name="twitter:description" content={pageDesc} />
       <meta name="twitter:image" content={`${SITE_URL}/og-default.png`} />
-      <script type="application/ld+json">{JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "Corporation",
-        "name": stock.name,
-        "tickerSymbol": stock.ticker,
-        "url": pageUrl,
-      })}</script>
+      <script type="application/ld+json">
+        {JSON.stringify(buildStockJsonLd(stock, { lang }))}
+      </script>
     </Helmet>
     <motion.div
       initial={{ opacity: 0 }}
