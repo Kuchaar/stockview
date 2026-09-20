@@ -6,6 +6,7 @@ import { SITE_URL } from '../config/site';
 import useStockData from '../hooks/useStockData';
 import DataSourceBanner from '../components/DataSourceBanner';
 import StockCard from '../components/StockCard';
+import HomeContent from '../components/HomeContent';
 import TradingViewChart from '../components/TradingViewChart';
 const TickerTape = lazy(() => import('../components/TickerTape'));
 import { Link } from 'react-router-dom';
@@ -333,6 +334,8 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      <HomeContent />
     </div>
     </>
   );

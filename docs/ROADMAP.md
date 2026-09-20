@@ -152,9 +152,13 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
   i `BreadcrumbList`. Sprawdzone skryptem na 48 wariantach (24 spółki × 2 języki): poprawny
   JSON, brak `null`, komplet pól wymaganych, adresy absolutne.
   **Do potwierdzenia w walidatorze Google** po wdrożeniu — patrz niżej.
-- [ ] **S4 — treść pod frazy** (~40 min)
+- [x] **S4 — treść pod frazy** (~40 min)
   Sekcja tekstowa na stronie głównej pod „analiza spółek WIG20", „wskaźniki finansowe GPW".
   *Gotowe, gdy:* strona główna ma min. 300 słów sensownej treści, nie wypełniacza.
+  `HomeContent` na dole strony: czym jest WIG20 i jak jest skoncentrowany, jak czytać C/Z,
+  C/WK, ROE, dług/EBITDA i stopę dywidendy, skąd pochodzą dane, zastrzeżenie.
+  433 słowa po polsku, 485 po angielsku — z faktami o indeksie (rewizja roczna po styczniu,
+  korekty kwartalne, banki ok. 1/3 wartości), nie z wypełniaczem.
 - [x] **S5 — Search Console** (~40 min)
   Weryfikacja domeny, zgłoszenie `sitemap.xml`, sprawdzenie pokrycia.
   *Gotowe, gdy:* wszystkie 25 URL-i z sitemapy jest zgłoszonych do indeksacji.
