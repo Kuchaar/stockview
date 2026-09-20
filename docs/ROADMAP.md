@@ -45,10 +45,16 @@ zaczyna się od odtwarzania kontekstu.
 Dziś dane finansowe spółek siedzą w ręcznie utrzymywanych plikach JSON i w `src/data/wig20.js`.
 To się nie skaluje i cicho starzeje.
 
-- [ ] **D1 — audyt źródeł** (~40 min)
+- [x] **D1 — audyt źródeł** (~40 min)
   Spisz dla każdego pola (przychód, EBITDA, bilans, `ratios`), skąd dziś pochodzi i jak
   często się zmienia.
   *Gotowe, gdy:* tabela „pole → źródło → częstotliwość → kto aktualizuje" jest w `docs/DATA.md`.
+  Wynik: [`docs/DATA.md`](DATA.md) — pięć ustaleń (U1–U5), z czego U3 blokuje sensowne D3.
+- [ ] **D1a — naprawa dat w `/api/financials`** (~20 min) ⚠️ **wyszło z audytu D1**
+  Yahoo zwraca `endDate` jako liczbę, `transformStatements()` czeka na `.fmt` — przez to
+  `date`/`period` są `null`, a `latest()` bierze najstarszy rocznik zamiast najnowszego.
+  *Gotowe, gdy:* `/api/financials?symbol=PKO.WA` ma `date` i `period` w każdym wierszu,
+  a wskaźniki na stronie spółki liczą się z ostatniego rocznika.
 - [ ] **D2 — wybór dostawcy danych fundamentalnych** (~40 min)
   Porównaj 2–3 źródła pod kątem pokrycia GPW, limitów i ceny.
   *Gotowe, gdy:* decyzja z uzasadnieniem zapisana w `docs/DATA.md`, klucz testowy działa.
@@ -104,9 +110,10 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
 - [ ] **S4 — treść pod frazy** (~40 min)
   Sekcja tekstowa na stronie głównej pod „analiza spółek WIG20", „wskaźniki finansowe GPW".
   *Gotowe, gdy:* strona główna ma min. 300 słów sensownej treści, nie wypełniacza.
-- [ ] **S5 — Search Console** (~40 min)
+- [x] **S5 — Search Console** (~40 min)
   Weryfikacja domeny, zgłoszenie `sitemap.xml`, sprawdzenie pokrycia.
   *Gotowe, gdy:* wszystkie 25 URL-i z sitemapy jest zgłoszonych do indeksacji.
+  Domena `stockview.org` zweryfikowana, sitemapa zgłoszona 2026-09-20 (razem z S1).
 
 ---
 

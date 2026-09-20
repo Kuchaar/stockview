@@ -157,6 +157,7 @@ decisions.
 | File | What's in it |
 |---|---|
 | [docs/JOURNAL.md](docs/JOURNAL.md) | Session log, newest entry first, each ends with `Następne:` |
+| [docs/DATA.md](docs/DATA.md) | Data-source audit: field → source → refresh rate → who updates it |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Gates and ~40-minute tasks with "done when…" conditions |
 | [docs/SETUP.md](docs/SETUP.md) | Setting the project up from scratch on macOS or WSL |
 | [docs/prompts/](docs/prompts/README.md) | Archive of the prompts that built the app, mapped to commits |
