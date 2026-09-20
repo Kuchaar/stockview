@@ -2,6 +2,57 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-09-20 — Bramka 1 (Dane) i Bramka 3 (SEO) domknięte
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **S1** (`047dc95`) — `stockview.org` jedyną domeną kanoniczną. Nowy `src/config/site.js`
+  z `SITE_URL`, poprawione canonical/OG, sitemapa, `robots.txt`, CSP i CORS.
+  DNS `www` + 301 skonfigurowane ręcznie w Cloudflare, zweryfikowane `curl`-em.
+- **D1** (`b5e0533`) — audyt źródeł w nowym `docs/DATA.md`: tabela „pole → źródło →
+  częstotliwość → kto aktualizuje" plus ustalenia U1–U8.
+- **D1a** (`fd0b82f`) — Yahoo podaje `endDate` raz jako `{raw, fmt}`, raz jako liczbę;
+  przez to `date`/`period` były `null`, a `latest()` liczyło wskaźniki z **najstarszego**
+  rocznika (PKO: 2022 zamiast 2025).
+- **D2** (`3e0e0b9`) — porównane Yahoo (0 zł), EODHD (59,99 USD/mc), FMP (GPW dopiero
+  w Ultimate) i ręczne przepisywanie z ESPI.
+- **D3–D7** (`9cd41e6`, `59abea1`, `e89738f`, `b54de11`, `a07dce8`) — tabela `financials`
+  w Supabase z RLS, importer z Yahoo (189 wierszy, 24 spółki), eksport na poziom 2,
+  panel `/admin/financials`, sygnalizacja świeżości. Bot robi teraz ceny → import →
+  eksport → commit.
+- **D4a** (`83350b1`) i **`55f1f2c`** — koniec z zerami udającymi dane; trzy komponenty
+  sprawozdań przepięte na kanoniczny kształt (szukały `totalRevenue`, dostawały `revenue`),
+  a zakładka Przegląd wisiała na sztywno na `wig20.js` i pokazywała 2024E.
+- **U2** (`00578c2`) — lista w `fetch-stooq.mjs` wyprowadzona z `TICKER_TO_YAHOO`;
+  ALE, BDX, EBP, TPE i ZAB dostały historię, 24/24.
+- **S2–S4** (`bb5228d`, `6169270`, `871178c`) — unikalne tytuły wszystkich stron
+  (30/30) i `noindex` dla prywatnych, JSON-LD `Corporation` + `FinancialProduct` +
+  `BreadcrumbList`, 433 słowa treści na stronie głównej. Sitemapa 25 → 28 URL-i.
+
+**Decyzje.**
+
+- **Dane mieszkają w Supabase, strona czyta pliki statyczne.** Baza zbiera historię,
+  której dostawca nie da (Yahoo pokazuje 4 roczniki), a eksport na poziom 2 zostawia
+  stronę bez zależności runtime. Klient nie wymagał żadnej zmiany — `useFinancials`
+  czytał ten poziom od początku, katalogi były tylko puste.
+- **Yahoo zostaje, EODHD w odwodzie** — 60 USD/mc za 24 spółki to ~3000 zł rocznie na
+  darmowy serwis. Wyzwalacze zmiany zapisane w `docs/DATA.md`.
+- **`verified = true` chroni ręczne poprawki** przed importerem — dzięki temu ręczne
+  wpisywanie danych jest warstwą wiarygodności, a nie jedyną metodą.
+
+**Do sprawdzenia.** Nic nie oglądałem w przeglądarce — Chrome w tej sesji nie łączył
+się z localhostem. Do review: zakładka Sprawozdania (PKO, Orlen), panel
+`/admin/financials` po zalogowaniu, pasek świeżości w obu motywach, wygląd
+`HomeContent` na telefonie. JSON-LD do potwierdzenia w Rich Results Test.
+
+**Następne:** Bramka 4 — redesign, zaczynając od **R0 (zamrożenie zakresu)** po review
+przez coworka; wcześniej można zrobić **R1** (inwentaryzacja klas z `@layer components`
+w `src/index.css`), bo to analiza kodu, nie wygląd. Otwarte z audytu: **U6** — Yahoo
+nie daje bilansu ani przepływów, więc te tabele są puste do czasu wpisów przez D6.
+
+
 ## 2026-09-20 — Domknięcie testu synchronizacji Mac ↔ PC
 
 Komputer: `MacBook-Pro-Kamil.local`
