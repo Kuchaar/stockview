@@ -1,0 +1,70 @@
+# Dziennik StockView
+
+<!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
+
+## 2026-09-20 — Foundation: spójne środowisko Mac/PC + pamięć projektu
+
+Komputer: `MacBook-Pro-Kamil.local` (macOS, zsh)
+
+**F1 — środowisko.** Projekt budował się różnie na Macu, na PC i na Cloudflare, bo nic nie
+pinowało wersji Node ani końców linii. Domknięte:
+
+- `.nvmrc` → `22` i `"engines": { "node": ">=22" }` w `package.json`.
+- `.github/workflows/update-prices.yml` czyta teraz `node-version-file: '.nvmrc'` zamiast
+  pinować Node 20 (EOL 30.04.2026) — CI, Cloudflare i oba komputery mają jedno źródło prawdy.
+- `.gitattributes` (`* text=auto eol=lf` + binaria) i `.editorconfig`. `git add --renormalize .`
+  nie zmienił ani jednego pliku — repo i tak było całe na LF.
+- `.gitignore`: `.claude/settings.local.json`, `.claude/worktrees/`, `CLAUDE.local.md`, `*.log`,
+  `.vscode/*` z wyjątkiem `extensions.json`, oraz `* 2.*` na duplikaty od iCloud/Findera.
+- `.claude/settings.local.json` wypadł ze śledzenia (`git rm --cached`, plik został na dysku),
+  a wspólny `.claude/settings.json` wszedł do repo — plugin `frontend-design` plus allowlista
+  poleceń. Bez `git push`, `git reset`, `npm install` i `curl` — te mają dalej pytać o zgodę.
+- Lockfile przeliczony: zniknęło martwe drzewo po `react-snap` (puppeteer, express, cheerio…),
+  **−1678 linii**. To był realny błąd, nie kosmetyka: root lockfile wciąż trzymał `react-snap`
+  w devDependencies, którego nie ma w `package.json`, więc **`npm ci` padało**. Teraz przechodzi.
+- Usunięty Homebrew `node` 25.8.2 z `/usr/local/bin`. Był liściem, nic od niego nie zależało,
+  a wygrywał wszędzie tam, gdzie nie wykonuje się `.zshrc` — w skryptach `sh`, cronie i
+  narzędziach odpalanych z GUI. fnm jest teraz jedynym źródłem Node na Macu.
+
+Commit: [`1f55db9`](https://github.com/Kuchaar/stockview/commit/1f55db9)
+
+**F2 — pamięć projektu.** Wszystko, czego potrzeba, żeby wrócić do pracy na dowolnym
+komputerze, wjechało do repo: ten dziennik, `docs/ROADMAP.md`, `docs/SETUP.md`,
+archiwum promptów w `docs/prompts/` i mockup w `docs/design/`.
+
+Przy okazji wyszła rzecz do naprawy: cała aplikacja — canonical, OG, CSP w `public/_headers`,
+`BASE_URL` w `scripts/generate-sitemap.mjs` — wskazuje na `stockview.pages.dev`, a docelowa
+domena to `stockview.org`. Dopóki się to nie zgadza, Google indeksuje domenę techniczną.
+Zadanie wylądowało w Bramce 3.
+
+**Następne:** F3 — rytuał sesji (jak zaczynać i kończyć pracę na dowolnym z dwóch komputerów,
+żeby dziennik i roadmapa nie rozjeżdżały się z kodem).
+
+---
+
+## 2026-04-29 … 2026-05-01 — Wpis historyczny: od stabilizacji do screenera
+
+Spisane wstecz z `git log`, żeby dziennik nie zaczynał się w próżni.
+
+**29.04 — gaszenie pożaru.** `react-snap` wywalał build w Cloudflare Pages i blokował
+wszystkie deploye przez 21 dni — wyleciał z builda ([`f077c4f`](https://github.com/Kuchaar/stockview/commit/f077c4f)).
+Tego samego dnia error boundaries, zabezpieczenia przed `null`, baner ze źródłem danych
+i porządki wokół Supabase ([`718520d`](https://github.com/Kuchaar/stockview/commit/718520d)).
+Ogon po tym usuwaniu — osierocone wpisy w `package-lock.json` — domknęliśmy dopiero w F1.
+
+**30.04 — dane.** Pipeline danych finansowych z trzypoziomowym fallbackiem, kanonicznym
+formatem i konwerterem CSV ([`08833f1`](https://github.com/Kuchaar/stockview/commit/08833f1)),
+a na nim silnik wskaźników z panelem `MetricsPanel` ([`6044b92`](https://github.com/Kuchaar/stockview/commit/6044b92)).
+
+**01.05 — cztery funkcje w jeden dzień.** Własny wykres SVG zamiast widgetu TradingView
+plus 5 brakujących spółek → 24 ([`ce948bf`](https://github.com/Kuchaar/stockview/commit/ce948bf)),
+wskaźniki AT na tym wykresie: SMA, EMA, RSI, MACD, Bollinger ([`8fb631d`](https://github.com/Kuchaar/stockview/commit/8fb631d)),
+profile spółek z zakładką „O spółce" ([`66de261`](https://github.com/Kuchaar/stockview/commit/66de261)),
+porównywarka ([`346bf2d`](https://github.com/Kuchaar/stockview/commit/346bf2d))
+i screener z filtrami, presetami i sortowalną tabelą ([`3166385`](https://github.com/Kuchaar/stockview/commit/3166385)).
+
+Prompty do tych zadań: [`docs/prompts/`](prompts/README.md).
+
+**Następne:** kolejne funkcje analityczne — tak to wtedy wyglądało. W praktyce przez cztery
+miesiące repo dostawało wyłącznie automatyczne commity z cenami, stąd F1 i F2: powrót do pracy
+nie ma się zaczynać od odtwarzania kontekstu.
