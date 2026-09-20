@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:full": "npx wrangler pages dev -- npx vite",
     "update-prices": "node scripts/fetch-stooq.mjs",
+    "sync": "bash scripts/sync.sh",
     "build": "vite build",
     "postbuild": "node scripts/generate-sitemap.mjs",
     "preview": "vite preview"
