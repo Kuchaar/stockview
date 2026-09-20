@@ -2,6 +2,49 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-09-20 — Poprawki po przeglądzie: wydajność, CI, SEO
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Zera w imporcie** (`ea76e46`) — `stripMeta()` wyrzucało każde zero, a klient robi to
+  tylko dla pól z `YAHOO_ZERO_MEANS_MISSING`. Stała jest teraz eksportowana i używana po
+  obu stronach, więc prawdziwe zero (np. zerowy dług) przestanie znikać z bazy.
+- **Leniwe trasy** (`0de684b`) — `React.lazy` dla wszystkich stron poza `HomePage`,
+  `Suspense` z zastępnikiem bez własnego tła. Główny chunk 744,0 → 602,9 kB, wydzieliło
+  się 10 plików (największy `StockPage`, 85,3 kB).
+- **Liczby w panelu** (`8612758`) — `Number("12,5")` dawało `NaN` i wpisana wartość cicho
+  ginęła. Nowe `parseNumber()` radzi sobie z przecinkiem i spacjami (też niełamliwą
+  i wąską, jakie wkleja Excel); błędne pole dostaje czerwoną ramkę i blokuje zapis.
+  Input musiał przejść z `type="number"` na `type="text"` + `inputMode="decimal"`.
+- **noindex nagłówkiem** (`59edcba`) — `X-Robots-Tag` dla `/watchlist` i `/admin/*`
+  w `public/_headers`; meta z `App.jsx` zostaje jako druga warstwa.
+- **Rozdzielone workflow** (`87df15a`) — sprawozdania mają własny tygodniowy
+  `update-financials.yml` (sobota 06:00 UTC), `update-prices.yml` wrócił do samych
+  notowań, bez `npm ci`.
+- **Dane strukturalne** (`27c20ab`) — `url` w `Corporation` to teraz strona spółki,
+  podstronę wskazuje `mainEntityOfPage`, `sameAs` usunięte jako duplikat.
+- **Dokumentacja** (`d0d0834`) — D8 w roadmapie, trzy fakty w `AGENTS.md`.
+
+**Decyzje.**
+
+- **Sprawozdania raz w tygodniu, nie codziennie** — zmieniają się kwartalnie, a codzienny
+  przebieg to tylko ryzyko dla danych i zużycie limitów.
+- **`noindex` w dwóch miejscach celowo** — nagłówek dla robotów bez JS, meta jako
+  zabezpieczenie. W `AGENTS.md` jest notatka, żeby zmieniać oba albo żaden.
+
+**Do sprawdzenia.** Główny chunk ma 602,9 kB, czyli powyżej progu 537 kB z promptu — ta
+liczba pochodziła ze starszego stanu repo. Zejście niżej wymaga `manualChunks` albo
+dociągania klienta Supabase dopiero przy logowaniu; czeka na decyzję. Wzrokowo nadal nic
+nie sprawdzone (Chrome nie łączy się z localhostem): spinner `Suspense` i czerwona ramka
+w panelu, oba motywy.
+
+**Następne:** **D8 — skąd wziąć bilans i przepływy**: wybrać między płatnym dostawcą
+(EODHD 59,99 USD/mc), importem z ESPI a ręcznym wpisywaniem przez `/admin/financials`.
+Potem Bramka 4 — redesign, od R0, po review przez coworka.
+
+
 ## 2026-09-20 — Bramka 1 (Dane) i Bramka 3 (SEO) domknięte
 
 Komputer: `MacBook-Pro-Kamil.local`
