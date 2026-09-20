@@ -201,4 +201,28 @@ Dwie decyzje warte wyjaśnienia:
   ten sam okres ile razy chce i nie robi duplikatów.
 
 RLS: publiczny `select` (dane i tak lądują w statycznym pliku), `insert`/`update` tylko dla konta
-admina — tak jak przy tabeli `dividends`.
+admina — ten sam identyfikator co `ADMIN_ID` w `src/pages/AdminDividendsPage.jsx`.
+
+## Stan po D3 (2026-09-20)
+
+Migracja leży w [`supabase/migrations/20260920120000_financials.sql`](../supabase/migrations/20260920120000_financials.sql)
+i jest zastosowana na projekcie `StockView` (region `eu-west-1`). Sprawdzone:
+
+- `upsert` na ten sam okres nie robi duplikatu (dwa przebiegi → 1 wiersz);
+- trigger `financials_touch_updated_at` podbija `updated_at` przy każdej zmianie;
+- `anon` czyta tabelę, `anon` nie może do niej pisać;
+- doradca bezpieczeństwa Supabase nie zgłasza żadnych uwag.
+
+**Uwaga niezwiązana z D3:** schemat `public` był przed migracją **całkiem pusty** — nie ma tabel
+`dividends` ani `watchlist`, a kod ich używa (`src/hooks/useDividends.js`, `src/hooks/useWatchlist.js`,
+`src/pages/AdminDividendsPage.jsx`). Dopóki nie powstaną, kalendarz dywidend i lista obserwowanych
+nie zadziałają nawet po zalogowaniu.
+
+Dwie rzeczy do zapamiętania na D4:
+
+- **Importer nie może używać klucza `anon`** — RLS go zablokuje. Skrypt w GitHub Actions
+  będzie potrzebował klucza `service_role` w sekrecie repozytorium (nigdy w repo, nigdy w `.env`
+  commitowanym do gita).
+- **Projekt Supabase na darmowym planie zasypia** po tygodniu bez ruchu. Zastaliśmy go uśpionego —
+  przy uśpionym projekcie logowanie, watchlist i dywidendy na produkcji po prostu nie działają.
+  Codzienny przebieg importera przy okazji utrzyma projekt przy życiu.

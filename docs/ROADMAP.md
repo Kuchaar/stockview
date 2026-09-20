@@ -62,9 +62,12 @@ To się nie skaluje i cicho starzeje.
   Decyzja: własna baza w Supabase, karmiona z Yahoo (0 zł) + ręczne poprawki, eksportowana
   do poziomu 2. EODHD (59,99 USD/mc) w odwodzie — uzasadnienie w [`docs/DATA.md`](DATA.md).
   Warunek „klucz testowy działa" odpadł: wybrane źródło nie ma klucza.
-- [ ] **D3 — tabela `financials` w Supabase** (~40 min)
+- [x] **D3 — tabela `financials` w Supabase** (~40 min)
   Migracja wg schematu z `docs/DATA.md` + RLS: publiczny `select`, zapis tylko dla admina.
   *Gotowe, gdy:* tabela istnieje, anon ją czyta, ręczny wiersz dla jednej spółki się zapisuje.
+  Migracja: `supabase/migrations/20260920120000_financials.sql`, zastosowana na projekcie
+  StockView. Sprawdzone: upsert bez duplikatów, trigger `updated_at`, odczyt przez `anon`,
+  zapis przez `anon` odrzucony (42501).
 - [ ] **D4 — importer `scripts/import-financials.mjs`** (~40 min)
   Yahoo → `upsert` do Supabase, z pominięciem wierszy `verified = true`.
   *Gotowe, gdy:* po przebiegu 24 spółki mają po 4 roczniki, a drugi przebieg niczego nie psuje
