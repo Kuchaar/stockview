@@ -2,6 +2,26 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-09-20 — Test synchronizacji Mac ↔ PC
+
+Komputer: `KamilAMD`
+
+**Zrobione.**
+
+- Start sesji: `npm run sync` przeszedł bez ostrzeżeń, `main` zgodna z `origin/main`, brak gałęzi `wip/*`.
+- Dodany `docs/SYNC-TEST.md` (commit `f9b9ed8`, wypchnięty na `main`) — plik testowy do sprawdzenia
+  wymiany przez GitHub między PC a Makiem.
+- `npm run build` zielony, sitemapa 25 URL-i.
+
+**Do sprawdzenia przy okazji.** Na Macu `npm run sync` powinien ściągnąć `docs/SYNC-TEST.md`
+i `git log --oneline -1` pokazać `f9b9ed8`. Po potwierdzeniu usunąć plik (`git rm docs/SYNC-TEST.md`).
+Warunek akceptacji F5 (PR z zepsutym importem → czerwony status) nadal nieprzetestowany.
+
+**Następne:** D1 — audyt źródeł (Bramka 1). Wyjść od `normalizeFinancials()` w
+`src/data/financialSchema.js` i trzech poziomów `useFinancials`, spisać do nowego
+`docs/DATA.md` tabelę „pole → źródło → częstotliwość → kto aktualizuje". Na Macu najpierw
+potwierdzić test synchronizacji i usunąć `docs/SYNC-TEST.md`.
+
 ## 2026-09-20 — Foundation domknięta: rytuał sesji, AGENTS.md, CI
 
 Komputer: `MacBook-Pro-Kamil.local`
