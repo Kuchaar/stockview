@@ -106,14 +106,16 @@ To się nie skaluje i cicho starzeje.
   *Gotowe, gdy:* Orlen pokazuje w Przeglądzie FY2022–FY2025 z bazy, a nie 2021–2024E z kodu,
   i nigdzie nie ma zer udających dane. Szczegóły: U8 w `docs/DATA.md`.
 
-- [ ] **D8 — skąd wziąć bilans i przepływy** (~40 min) ⚠️ **blokuje część wskaźników**
-  Yahoo zwraca dla wszystkich 24 spółek tylko przychody i zysk netto — bilansu ani
-  przepływów nie ma wcale (U6 w `docs/DATA.md`), więc ROE, C/WK, dług do kapitału
-  i wskaźniki płynności nie mają z czego powstać.
-  Do rozważenia: (a) płatny dostawca danych, np. EODHD za 59,99 USD/mc, (b) import
-  z ESPI/GPW, (c) ręczne wprowadzanie przez `/admin/financials` z flagą `verified`.
+- [x] **D8 — skąd wziąć bilans i przepływy** (~40 min)
+  Yahoo zdawał się nie mieć bilansu ani przepływów (U6), przez co ROE, C/WK, dług do
+  kapitału i płynność nie miały z czego powstać.
   *Gotowe, gdy:* decyzja wraz z kosztem jest zapisana w `docs/DATA.md`, a co najmniej
   jedna spółka ma w bazie wypełniony bilans.
+  Okazało się, że dane były przez cały czas — pod innym endpointem: `quoteSummary` jest
+  wypatroszony, a `fundamentals-timeseries` oddaje komplet i nie wymaga nawet crumba
+  (U9 w `docs/DATA.md`). Wybrane źródło: Yahoo timeseries, **koszt 0 zł**, EODHD odrzucone.
+  Po imporcie: 189 → **243 wiersze**, 218 z bilansem, 212 z przepływami, wszystkie 24 spółki,
+  najnowszy okres `2026-07-31` zamiast `2026-03-31`. Przy okazji U10: Pepco raportuje w EUR.
 ---
 
 ## Bramka 2 — Konta i portfel

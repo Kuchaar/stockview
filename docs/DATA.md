@@ -39,8 +39,8 @@ poziom 3  src/data/wig20.js wartości wpisane ręcznie, aktualizowane tylko prze
 
 | Pole | Źródło | Częstotliwość | Kto aktualizuje |
 |---|---|---|---|
-| rachunek wyników: `revenue`, `costOfRevenue`, `grossProfit`, `operatingExpenses`, `operatingIncome`, `ebitda`, `interestExpense`, `netIncome`, `eps` + bankowe `netInterestIncome`, `netFeeIncome`, `provisionForCreditLosses` | 1. `/api/financials` → Yahoo `v10/quoteSummary` (crumb + cookie), `source: 'yahoo'` | kwartalnie u źródła; cache odpowiedzi na krawędzi 1 h, crumb 30 min, `sessionStorage` 1 h | automat |
-| bilans: `totalAssets`, `currentAssets`, `cash`, `totalLiabilities`, `currentLiabilities`, `longTermDebt`, `totalDebt`, `totalEquity`, `bookValuePerShare` + bankowe `deposits`, `loans` | jw. | jw. | automat |
+| rachunek wyników: `revenue`, `costOfRevenue`, `grossProfit`, `operatingExpenses`, `operatingIncome`, `ebitda`, `interestExpense`, `netIncome`, `eps` + bankowe `netInterestIncome`, `netFeeIncome`, `provisionForCreditLosses` | 1. `/api/financials` → Yahoo `ws/fundamentals-timeseries` (bez crumba), `source: 'yahoo'`; `keyStats` dalej z `v10/quoteSummary` | kwartalnie u źródła; cache odpowiedzi na krawędzi 1 h, crumb 30 min, `sessionStorage` 1 h | automat |
+| bilans: `totalAssets`, `currentAssets`, `cash`, `inventory`, `netPPE`, `totalLiabilities`, `currentLiabilities`, `currentDebt`, `longTermDebt`, `totalDebt`, `totalEquity`, `retainedEarnings`, `bookValuePerShare`, `sharesOutstanding` + bankowe `deposits`, `loans` | jw. | jw. | automat |
 | przepływy: `operatingCashFlow`, `capitalExpenditure`, `freeCashFlow`, `investingCashFlow`, `financingCashFlow`, `dividendsPaid` | jw. | jw. | automat |
 | te same pola, gdy Yahoo zwróci `source: 'unavailable'` | 2. `public/data/financials/{companyId}/data.json`, `source: 'manual'` — format już kanoniczny, wzór w `TEMPLATE.json` | ręcznie, po publikacji raportu | człowiek |
 | te same pola, ostatnia linia obrony | 3. `financials` w `src/data/wig20.js`, `source: 'hardcoded'` — **wartości w mln PLN**, `normalizeFinancials` mnoży ×1 000 000; tylko roczne `revenue`/`netIncome`/`ebitda`/`operatingIncome`/`totalAssets`/`totalDebt`/`equity`/`freeCashFlow` + kwartalne `revenue`/`netIncome` | nigdy — kolumny kończą się na „2024E" | człowiek |
@@ -112,7 +112,10 @@ o odświeżeniu i nic tego nie waliduje.
 z Yahoo w PLN; `financials` w `wig20.js` są w mln, kanoniczny format — w PLN. Dziś pilnuje tego
 `normalizeFinancials`, ale przy nowym dostawcy to pierwsze miejsce, gdzie łatwo o błąd rzędu 10⁶.
 
-**U6 — Yahoo oddaje dziś tylko przychód i zysk netto.** Wyszło przy pierwszym imporcie (D4).
+**U6 — Yahoo oddaje dziś tylko przychód i zysk netto.** ❌ **NIEAKTUALNE — patrz U9.**
+Diagnoza była błędna: problem nie leżał w danych Yahoo, tylko w endpoincie, z którego korzystaliśmy.
+Poniższy opis zostaje, bo tłumaczy, skąd wzięły się D4a i decyzja z D2.
+Wyszło przy pierwszym imporcie (D4).
 W module `balanceSheetHistory` są wyłącznie `date` i `maxAge`, w `cashflowStatementHistory` sam
 `netIncome`, a w rachunku wyników realne są tylko `totalRevenue` i `netIncome` — `costOfRevenue`,
 `grossProfit`, `totalOperatingExpenses`, `ebit` i `incomeTaxExpense` przychodzą jako **0**.
@@ -144,6 +147,24 @@ Osobno: zakładka „Przegląd" była na sztywno wpięta w `stock.financials` z 
 niezależnie od bazy pokazywała kolumny `2021–2024E`.
 Naprawione: klucze kanoniczne w trzech komponentach, sortowanie po `date`, a „Przegląd" bierze
 dane z `toLegacyTable(liveFinancials)` i schodzi na `wig20.js` dopiero, gdy nie ma nic innego.
+
+**U9 — to nie Yahoo nie miał danych, tylko my pytaliśmy nie ten endpoint.** (2026-09-20, D8)
+Moduły `*History` w `v10/quoteSummary` Yahoo wypatroszył — i to one dały fałszywy obraz z U6.
+`ws/fundamentals-timeseries/v1/finance/timeseries/{symbol}` oddaje komplet: rachunek wyników,
+bilans i przepływy, rocznie i kwartalnie, w dodatku **bez crumba i cookie** — wystarczy nagłówek
+`User-Agent`. Sprawdzone lokalnie dla PKO, CDR i PKN: po 4 roczniki do FY2025 i 5–7 kwartałów,
+najnowszy okres w bazie przesunął się z `2026-03-31` na `2026-07-31`.
+Kształt: `timeseries.result[]`, każdy element ma `meta.type[0]` z nazwą pola i tablicę o tej samej
+nazwie, w której wiersze to `{asOfDate, periodType, currencyCode, reportedValue:{raw, fmt}}`.
+Pole, którego spółka nie raportuje, **nie przychodzi wcale** — nie przychodzi jako zero. Dlatego
+bank nie ma marży brutto, a CD Projekt nie ma pozycji długu, i w obu przypadkach zostaje `null`.
+Skutek w bazie: 189 → 243 wiersze, z czego 218 ma bilans i 212 przepływy, wszystkie 24 spółki.
+
+**U10 — Pepco raportuje w euro.** Wyszło dopiero wtedy, gdy zaczęliśmy przenosić `currencyCode`
+z Yahoo do kolumny `currency` (D8). W bazie są dwie waluty: 23 spółki w PLN i **PCO w EUR**
+(przychód 5,6 mld EUR). To poprawne — Pepco Group publikuje sprawozdania w euro — ale tabele
+na stronie spółki są podpisane „mln PLN", więc dla tej jednej spółki jednostka jest myląca.
+Dane są w bazie opisane walutą; brakuje użycia tego opisu w UI. Do zrobienia osobno.
 
 ## Co z tego wynika dla D2
 
@@ -266,15 +287,15 @@ potem cokolwiek zapisywać.
 W tabeli jest **189 wierszy z 24 spółek**: 93 roczne i 96 kwartalnych, okresy od `2022-09-30`
 do `2026-07-31` (ZAB ma jeden rocznik — krótko po debiucie). Wszystkie mają przychód, 184 mają
 zysk netto, **żaden nie ma bilansu ani przepływów** — z powodu U6, nie z powodu importera.
+(Po D8 to już nieaktualne: bilans i przepływy są, patrz „Stan po D8" niżej.)
 
 Sprawdzone: drugi przebieg nie tworzy duplikatów (189 → 189, zero powtórzonych kluczy),
 a wiersz oznaczony `verified = true` przechodzi przebieg nietknięty (`updated_at` bez zmian,
 pozostałe wiersze odświeżone).
 
-**Co z tego wynika dla decyzji z D2.** Założenie „Yahoo wystarczy, płatny dostawca później"
-trzyma się wyłącznie dla przychodu i zysku netto. Bilans i przepływy trzeba wziąć skądinąd:
-albo z EODHD (59,99 USD/mc), albo wpisać ręcznie przez panel z D6 — czyli dokładnie tak, jak
-planowałeś na początku, tyle że raz, do bazy, zamiast w kółko do plików.
+**Co z tego wynika dla decyzji z D2.** ~~Założenie „Yahoo wystarczy, płatny dostawca później"
+trzyma się wyłącznie dla przychodu i zysku netto.~~ — nieaktualne po D8. Założenie z D2 okazało
+się słuszne w całości: brakowało nie danych, tylko właściwego endpointu (U9).
 
 ## Stan po D5 (2026-09-20)
 
@@ -343,3 +364,44 @@ Dwie rzeczy do zapamiętania przy rozwoju:
 - **Projekt Supabase na darmowym planie zasypia** po tygodniu bez ruchu, a wtedy logowanie,
   watchlist i dywidendy na produkcji nie działają. Codzienny przebieg importera przy okazji
   utrzyma projekt przy życiu — to argument za codzienną częstotliwością, nie kwartalną.
+
+---
+
+# D8 — skąd wziąć bilans i przepływy
+
+Decyzja z **2026-09-20**.
+
+## Rozważane drogi
+
+| Droga | Koszt | Pokrycie | Dlaczego tak / nie |
+|---|---|---|---|
+| **Yahoo `fundamentals-timeseries`** | **0 zł** | 24/24 spółki, 4 roczniki + 5–7 kwartałów, bilans i przepływy | **Wybrane.** Te same dane, których szukaliśmy, były dostępne przez cały czas — pod innym endpointem (U9) |
+| EODHD Fundamentals | 59,99 USD/mc (~3000 zł rocznie) | WAR wspierane, historia od 2000 r. | Odrzucone: płacenie za dane, które dostajemy za darmo. Zostaje jako plan awaryjny, gdyby Yahoo znów coś zmienił |
+| Import z ESPI/GPW | 0 zł, ale duży nakład pracy | 100%, u źródła | Odrzucone na teraz: raporty to PDF-y i XML-e w niejednolitych formatach, parser byłby projektem samym w sobie |
+| Ręczne wpisywanie przez `/admin/financials` | 0 zł, ok. 96 wpisów rocznie | tyle, ile się wpisze | Zostaje jako **uzupełnienie**, nie podstawa — do poprawiania tego, czego Yahoo nie ma lub ma źle, z flagą `verified` |
+
+## Decyzja
+
+Źródłem bilansu i przepływów jest **Yahoo `fundamentals-timeseries`**, koszt **0 zł**.
+EODHD odrzucone — nie ma za co płacić, dopóki to działa. Ręczny panel zostaje do korekt.
+
+Wyzwalacze powrotu do płatnego dostawcy bez zmian względem D2: wyjście poza WIG20, kolejna
+zmiana kształtu odpowiedzi po stronie Yahoo albo potrzeba danych sprzed 2022 r.
+
+## Stan po D8 (2026-09-20)
+
+| | Przed | Po |
+|---|---|---|
+| Wierszy w tabeli `financials` | 189 | **243** |
+| Wierszy z bilansem | 0 | **218** |
+| Wierszy z przepływami | 0 | **212** |
+| Spółek z bilansem | 0 | **24** |
+| Najnowszy okres | `2026-03-31` | `2026-07-31` |
+
+Sprawdzone przy okazji importu: drugi przebieg nie tworzy duplikatów (243 → 243), a wiersz
+oznaczony `verified = true` przeszedł nietknięty — celowo zaznaczony PKO FY2024 został pominięty
+(„Pominiętych jako verified: 1") i jako jedyny nie dostał bilansu, dopóki flagi nie zdjęto.
+
+Czego **nie** ma po tej zmianie: `costOfRevenue`, `operatingExpenses` i `dividendsPaid` — nie były
+w zamówionej liście pól. `dividendsPaid` da się dobrać (`annualCashDividendsPaid`), jeśli będzie
+potrzebne do wskaźników dywidendowych.
