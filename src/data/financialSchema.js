@@ -5,6 +5,20 @@
 
 const BANK_SECTORS = ['banking', 'insurance'];
 
+/** Czy spółka z tego sektora rozlicza się jak bank (brak marży brutto, inne wskaźniki płynności). */
+export function isBankSector(sector) {
+  return BANK_SECTORS.includes(sector);
+}
+
+// Yahoo v10 wypełnia zerami pozycje, których nie podaje: bank z przychodem 29 mld
+// dostaje costOfRevenue: 0, a spółka z zyskiem 595 mln — ebit: 0. Dla tych pól 0 znaczy
+// „brak danych", nie „zero złotych", więc nie trafia do kanonicznego wiersza.
+// Szczegóły: U6 w docs/DATA.md.
+const YAHOO_ZERO_MEANS_MISSING = new Set([
+  'costOfRevenue', 'grossProfit', 'operatingExpenses', 'operatingIncome',
+  'ebitda', 'interestExpense',
+]);
+
 /**
  * Create an empty income statement row with all fields set to null
  */
@@ -113,9 +127,10 @@ function mapYahooRow(raw, fieldMap, emptyFn, isQuarterly) {
   row.period = raw.period || derivePeriod(row.date, isQuarterly);
 
   for (const [yahooKey, canonKey] of Object.entries(fieldMap)) {
-    if (raw[yahooKey] != null) {
-      row[canonKey] = raw[yahooKey];
-    }
+    const val = raw[yahooKey];
+    if (val == null) continue;
+    if (val === 0 && YAHOO_ZERO_MEANS_MISSING.has(canonKey)) continue;
+    row[canonKey] = val;
   }
   return row;
 }
@@ -217,6 +232,7 @@ function normalizeYahoo(data, meta) {
 
   return {
     ticker: meta.ticker || data.symbol?.replace(/\.WA$/, '') || null,
+    sector: meta.sector ?? null,
     lastUpdated: new Date().toISOString().slice(0, 10),
     source: 'yahoo',
     incomeStatement: {
@@ -249,6 +265,7 @@ function normalizeManual(data, meta) {
 
   return {
     ticker: data.ticker || meta.ticker || null,
+    sector: data.sector ?? meta.sector ?? null,
     lastUpdated: data.lastUpdated || new Date().toISOString().slice(0, 10),
     source: 'manual',
     incomeStatement: {
@@ -273,6 +290,7 @@ function normalizeHardcoded(companyData, meta) {
 
   return {
     ticker: companyData.ticker || meta.ticker || null,
+    sector: companyData.sector ?? meta.sector ?? null,
     lastUpdated: new Date().toISOString().slice(0, 10),
     source: 'hardcoded',
     incomeStatement: {

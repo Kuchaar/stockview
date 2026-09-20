@@ -74,11 +74,13 @@ To się nie skaluje i cicho starzeje.
   ani nie duplikuje.
   189 wierszy z 24 spółek, drugi przebieg 189 → 189 bez duplikatów, wiersz `verified` nietknięty.
   Po drodze: U6 (Yahoo oddaje tylko przychód i zysk) i U7 (EBP na martwym `SPL.WA`) — `docs/DATA.md`.
-- [ ] **D4a — fałszywe zera z Yahoo w UI** (~20 min) ⚠️ **wyszło z D4**
+- [x] **D4a — fałszywe zera z Yahoo w UI** (~20 min) — wyszło z D4
   `normalizeFinancials` kopiuje wypełniacze `0` z Yahoo do pól `grossProfit`, `ebit` itd.,
   więc zakładka Finanse pokazuje „0 zł" tam, gdzie danych po prostu nie ma. Przy okazji
   `isBank()` przestaje rozpoznawać banki, bo sprawdza `grossProfit == null`.
   *Gotowe, gdy:* na stronie PKO i CDR nie ma zer udających dane, a banki są rozpoznawane.
+  `grossProfit`/`operatingIncome`/`ebitda` wracają jako `null`, `IncomeStatement` chowa całe
+  puste wiersze, a `isBank()` idzie po sektorze ze `src/data/wig20.js`.
 - [ ] **D5 — eksport na poziom 2** (~40 min)
   `scripts/export-financials.mjs` → `public/data/financials/{companyId}/data.json`,
   wpięty w `update-prices.yml`.

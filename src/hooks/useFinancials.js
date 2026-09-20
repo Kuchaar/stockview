@@ -40,6 +40,8 @@ export default function useFinancials(yahooSymbol, companyId) {
       return;
     }
 
+    const company = wig20Companies.find(c => c.id === companyId);
+
     try {
       setLoading(true);
       setError(null);
@@ -52,7 +54,9 @@ export default function useFinancials(yahooSymbol, companyId) {
             const result = await resp.json();
             if (result.source !== 'unavailable') {
               const ticker = yahooSymbol.replace(/\.WA$/, '');
-              const normalized = normalizeFinancials(result, 'yahoo', { ticker, companyId });
+              const normalized = normalizeFinancials(result, 'yahoo', {
+                ticker, companyId, sector: company?.sector,
+              });
               setData(normalized);
               setCache(companyId, normalized);
               return;
@@ -66,7 +70,9 @@ export default function useFinancials(yahooSymbol, companyId) {
         const resp = await fetch(`/data/financials/${companyId}/data.json`);
         if (resp.ok) {
           const result = await resp.json();
-          const normalized = normalizeFinancials(result, 'manual', { companyId });
+          const normalized = normalizeFinancials(result, 'manual', {
+            companyId, sector: company?.sector,
+          });
           setData(normalized);
           setCache(companyId, normalized);
           return;
@@ -74,7 +80,6 @@ export default function useFinancials(yahooSymbol, companyId) {
       } catch { /* fall through to tier 3 */ }
 
       // Tier 3: Hardcoded wig20.js data
-      const company = wig20Companies.find(c => c.id === companyId);
       if (company) {
         const normalized = normalizeFinancials(company, 'hardcoded', {
           ticker: company.ticker,

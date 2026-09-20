@@ -1,6 +1,8 @@
 // Comprehensive financial ratio calculator for StockView
 // Operates on the canonical financial data format from financialSchema.js
 
+import { isBankSector } from './financialSchema.js'; // z rozszerzeniem: ten plik czytają też skrypty pod Node
+
 const TAX_RATE_PL = 0.19; // Polish CIT rate
 
 // --- Helpers ---
@@ -35,8 +37,13 @@ function secondLatest(rows) {
   return sorted[1];
 }
 
-/** Detect bank: grossProfit is null in the latest income statement */
+/**
+ * Rozpoznanie banku. Najpewniejszy jest sektor ze `src/data/wig20.js`;
+ * dawna heurystyka („brak marży brutto") przestała działać, bo Yahoo od pewnego czasu
+ * nie podaje `grossProfit` dla żadnej spółki — patrz U6 w docs/DATA.md.
+ */
 function isBank(financialData) {
+  if (financialData?.sector) return isBankSector(financialData.sector);
   const inc = latest(financialData?.incomeStatement?.annual);
   return inc ? inc.grossProfit == null : false;
 }

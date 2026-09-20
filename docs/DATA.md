@@ -120,6 +120,10 @@ Skutki: (1) baza po imporcie ma przychód i zysk, i nic więcej; (2) wskaźniki 
 `ratios`; (3) `isBank()` w `ratioCalculator` rozpoznaje bank po `grossProfit == null`, a dostaje 0,
 więc dla poziomu 1 **żadna spółka nie jest rozpoznawana jako bank**.
 Importer zer nie zapisuje — w bazie `0` znaczyłoby „zero złotych", a to nieprawda.
+Od D4a to samo robi `normalizeFinancials` (lista `YAHOO_ZERO_MEANS_MISSING`), więc strona pokazuje
+kreskę zamiast wyzerowanej pozycji, a rozpoznanie banku poszło na sektor ze `src/data/wig20.js`
+(`isBankSector`) — stara heurystyka „brak marży brutto = bank" po zmianie uznawałaby za bank
+każdą spółkę.
 
 **U7 — EBP wskazywał na martwy symbol.** `TICKER_TO_YAHOO` mapował Erste Bank Polska na `SPL.WA`
 (dawny Santander). Yahoo nie zna tego symbolu ani w cenach (`price: null, source: "error"`),
