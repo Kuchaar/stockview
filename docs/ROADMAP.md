@@ -50,11 +50,12 @@ To się nie skaluje i cicho starzeje.
   często się zmienia.
   *Gotowe, gdy:* tabela „pole → źródło → częstotliwość → kto aktualizuje" jest w `docs/DATA.md`.
   Wynik: [`docs/DATA.md`](DATA.md) — pięć ustaleń (U1–U5), z czego U3 blokuje sensowne D3.
-- [ ] **D1a — naprawa dat w `/api/financials`** (~20 min) ⚠️ **wyszło z audytu D1**
+- [x] **D1a — naprawa dat w `/api/financials`** (~20 min) — wyszło z audytu D1
   Yahoo zwraca `endDate` jako liczbę, `transformStatements()` czeka na `.fmt` — przez to
   `date`/`period` są `null`, a `latest()` bierze najstarszy rocznik zamiast najnowszego.
   *Gotowe, gdy:* `/api/financials?symbol=PKO.WA` ma `date` i `period` w każdym wierszu,
   a wskaźniki na stronie spółki liczą się z ostatniego rocznika.
+  Sprawdzone na `wrangler pages dev` dla PKO, CDR, KGH i ZAB: 0 wierszy bez daty.
 - [ ] **D2 — wybór dostawcy danych fundamentalnych** (~40 min)
   Porównaj 2–3 źródła pod kątem pokrycia GPW, limitów i ceny.
   *Gotowe, gdy:* decyzja z uzasadnieniem zapisana w `docs/DATA.md`, klucz testowy działa.

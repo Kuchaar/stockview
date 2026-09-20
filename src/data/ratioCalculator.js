@@ -21,6 +21,7 @@ function round2(val) {
 function latest(rows) {
   if (!Array.isArray(rows) || rows.length === 0) return null;
   return rows.reduce((a, b) => {
+    if (!a?.date && !b?.date) return a; // brak dat → zostajemy przy pierwszym wierszu
     if (!a?.date) return b;
     if (!b?.date) return a;
     return a.date >= b.date ? a : b;

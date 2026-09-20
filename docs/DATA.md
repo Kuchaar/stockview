@@ -90,14 +90,15 @@ liczy 24. Bez pliku w `public/data/history/` zostają: **ALE, BDX, EBP, TPE, ZAB
 stronach wykres jest pusty (404 → `[]`, bez komunikatu). Dodatkowo leży tam osierocony
 `ccc.json` — CCC nie ma już w `TICKER_TO_YAHOO`.
 
-**U3 — sprawozdania z poziomu 1 nie mają dat.** Yahoo zwraca dziś `endDate` jako liczbę
-(unix), a `transformStatements()` w `functions/api/financials.js:243` czeka na obiekt z polem
-`.fmt`. Efekt: w każdym wierszu `date` i `period` są `null` (sprawdzone na produkcji dla
-`PKO.WA`: 4 roczniki 2022–2025, wszystkie z `date: null`).
-Konsekwencja jest poważniejsza niż puste etykiety: `latest()` w `src/data/ratioCalculator.js:21`
-przy samych `null`-ach zwraca **ostatni** element tablicy, a Yahoo sortuje od najnowszego —
-więc wskaźniki liczą się z **najstarszego** rocznika (dla PKO: przychód 16,8 mld z 2022 zamiast
-29,5 mld z 2025) i są zestawiane z dzisiejszą ceną. Do naprawy przed D3.
+**U3 — sprawozdania z poziomu 1 nie miały dat.** ✅ **naprawione 2026-09-20 (D1a).**
+Yahoo zwraca `endDate` raz jako `{ raw, fmt }`, raz jako samą liczbę unix; `transformStatements()`
+łapało to wcześniejszą gałęzią `'raw' in val`, więc `date` i `period` były `null` w każdym wierszu.
+Konsekwencja była poważniejsza niż puste etykiety: `latest()` w `src/data/ratioCalculator.js`
+przy samych `null`-ach zwracało **ostatni** element tablicy, a Yahoo sortuje od najnowszego —
+więc wskaźniki liczyły się z **najstarszego** rocznika (dla PKO: przychód 16,8 mld z 2022 zamiast
+29,5 mld z 2025) i były zestawiane z dzisiejszą ceną.
+Teraz `endDate` idzie przez `toIsoDate()` przed gałęzią `raw`, a `latest()` przy braku dat
+zostaje przy pierwszym wierszu zamiast brać ostatni.
 
 **U4 — dane awaryjne cicho się starzeją.** Nagłówek `wig20.js` mówi wprost: „Financial data
 approximate as of late 2024 / early 2025". To jednocześnie ostatnia linia obrony dla cen,
@@ -110,7 +111,7 @@ z Yahoo w PLN; `financials` w `wig20.js` są w mln, kanoniczny format — w PLN.
 
 ## Co z tego wynika dla D2
 
-Wybierany dostawca musi domknąć trzy luki naraz: **pokrycie 24 spółek GPW** (U2), **daty okresów
-sprawozdawczych** (U3) i **dane na tyle świeże, żeby poziom 3 przestał być realnym źródłem** (U4).
-Zanim ruszy D3, warto naprawić U3 — poprawka jest jednolinijkowa, a bez niej nie da się porównać
-nowego dostawcy ze stanem obecnym.
+Wybierany dostawca musi domknąć dwie luki, których U3 nie tyka: **pokrycie 24 spółek GPW** (U2)
+i **dane na tyle świeże, żeby poziom 3 przestał być realnym źródłem** (U4). Punktem odniesienia
+przy porównaniu jest dzisiejsze Yahoo po poprawce z D1a: 4 roczniki i 4 kwartały na spółkę,
+z kompletnymi etykietami okresów.

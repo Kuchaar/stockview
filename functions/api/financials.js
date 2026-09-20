@@ -234,14 +234,26 @@ function derivePeriod(dateStr, isQuarterly) {
   return `Q4 ${year}`;
 }
 
+// Yahoo podaje endDate raz jako { raw, fmt }, raz jako samą liczbę (unix w sekundach).
+// Zwraca "YYYY-MM-DD" albo null.
+function toIsoDate(val) {
+  if (val == null) return null;
+  if (typeof val === 'object') return val.fmt || toIsoDate(val.raw);
+  if (typeof val === 'number') return new Date(val * 1000).toISOString().slice(0, 10);
+  if (typeof val === 'string') return val.slice(0, 10) || null;
+  return null;
+}
+
 function transformStatements(statements, isQuarterly) {
   return statements.map((stmt) => {
-    const row = {};
+    const row = { date: null };
     for (const [key, val] of Object.entries(stmt)) {
-      if (val && typeof val === 'object' && 'raw' in val) {
+      // endDate obsługujemy przed gałęzią `raw` — inaczej wpada tam jako liczba,
+      // data przepada, a `period` zostaje null (patrz U3 w docs/DATA.md).
+      if (key === 'endDate') {
+        row.date = toIsoDate(val);
+      } else if (val && typeof val === 'object' && 'raw' in val) {
         row[key] = val.raw;
-      } else if (key === 'endDate' && val?.fmt) {
-        row.date = val.fmt;
       } else if (typeof val === 'string' || typeof val === 'number') {
         row[key] = val;
       }
