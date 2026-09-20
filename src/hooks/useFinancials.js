@@ -6,7 +6,7 @@ const CACHE_TTL = 3_600_000; // 1 hour
 
 function getCached(companyId) {
   try {
-    const raw = sessionStorage.getItem(`sv_fin_v3_${companyId}`);
+    const raw = sessionStorage.getItem(`sv_fin_v4_${companyId}`);
     if (!raw) return null;
     const cached = JSON.parse(raw);
     if (Date.now() - cached._cachedAt > CACHE_TTL) return null;
@@ -18,7 +18,7 @@ function getCached(companyId) {
 
 function setCache(companyId, data) {
   try {
-    sessionStorage.setItem(`sv_fin_v3_${companyId}`, JSON.stringify({
+    sessionStorage.setItem(`sv_fin_v4_${companyId}`, JSON.stringify({
       ...data,
       _cachedAt: Date.now(),
     }));

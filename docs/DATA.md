@@ -130,6 +130,18 @@ każdą spółkę.
 ani w sprawozdaniach (`source: "unavailable"`), więc spółka od dawna leciała po cichu na dane
 zaszyte z 2024 r. Naprawione w D4: `EBP.WA` — cena wraca, sprawozdania FY2022–FY2025 też.
 
+**U8 — tabele sprawozdań czytały inny kształt danych, niż dostawały.** `IncomeStatement`,
+`BalanceSheet` i `CashFlowStatement` powstały dla **surowej** odpowiedzi Yahoo i szukały kluczy
+`totalRevenue`, `totalCurrentAssets`, `totalLiab`, `totalCashFromOperatingActivities`,
+a `useFinancials` podaje im od dawna kształt **kanoniczny**: `revenue`, `currentAssets`,
+`totalLiabilities`, `operatingCashFlow`. Pasowała praktycznie tylko pozycja `netIncome`
+i te pola, które Yahoo wypełniał zerami — stąd tabela „z 2026 roku" złożona z zer.
+Sortowanie szło po nieistniejącym `dateRaw`, więc też nie działało.
+Osobno: zakładka „Przegląd" była na sztywno wpięta w `stock.financials` z `wig20.js`, więc
+niezależnie od bazy pokazywała kolumny `2021–2024E`.
+Naprawione: klucze kanoniczne w trzech komponentach, sortowanie po `date`, a „Przegląd" bierze
+dane z `toLegacyTable(liveFinancials)` i schodzi na `wig20.js` dopiero, gdy nie ma nic innego.
+
 ## Co z tego wynika dla D2
 
 Wybierany dostawca musi domknąć dwie luki, których U3 nie tyka: **pokrycie 24 spółek GPW** (U2)

@@ -349,4 +349,64 @@ function normalizeHardcoded(companyData, meta) {
   };
 }
 
+/**
+ * Kanoniczne dane → kształt, którego oczekuje <FinancialTable> (zakładka „Przegląd”).
+ * Tamta tabela powstała dla danych z `wig20.js`: wartości w **milionach** i kolumny
+ * od najstarszej. Zwraca null, gdy nie ma z czego zbudować tabeli.
+ */
+export function toLegacyTable(data) {
+  if (!data) return null;
+  const mln = (v) => (v == null ? null : v / 1_000_000);
+
+  const build = (periodType) => {
+    const byDate = new Map();
+    const take = (rows, map) => {
+      for (const row of rows || []) {
+        if (!row?.date) continue;
+        if (!byDate.has(row.date)) byDate.set(row.date, { period: row.period });
+        const entry = byDate.get(row.date);
+        for (const [from, to] of map) {
+          if (row[from] != null) entry[to] = mln(row[from]);
+        }
+      }
+    };
+    take(data.incomeStatement?.[periodType], [
+      ['revenue', 'revenue'], ['netIncome', 'netIncome'],
+      ['ebitda', 'ebitda'], ['operatingIncome', 'operatingIncome'],
+    ]);
+    take(data.balanceSheet?.[periodType], [
+      ['totalAssets', 'totalAssets'], ['totalDebt', 'totalDebt'], ['totalEquity', 'equity'],
+    ]);
+    take(data.cashFlow?.[periodType], [['freeCashFlow', 'freeCashFlow']]);
+
+    // od najstarszego — tak samo jak w `wig20.js`
+    return [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
+  };
+
+  const annualRows = build('annual');
+  const quarterlyRows = build('quarterly');
+  if (!annualRows.length && !quarterlyRows.length) return null;
+
+  const column = (rows, key) => rows.map((r) => r[key] ?? null);
+
+  return {
+    annual: {
+      years: annualRows.map((r) => r.period),
+      revenue: column(annualRows, 'revenue'),
+      netIncome: column(annualRows, 'netIncome'),
+      ebitda: column(annualRows, 'ebitda'),
+      operatingIncome: column(annualRows, 'operatingIncome'),
+      totalAssets: column(annualRows, 'totalAssets'),
+      totalDebt: column(annualRows, 'totalDebt'),
+      equity: column(annualRows, 'equity'),
+      freeCashFlow: column(annualRows, 'freeCashFlow'),
+    },
+    quarterly: {
+      quarters: quarterlyRows.map((r) => r.period),
+      revenue: column(quarterlyRows, 'revenue'),
+      netIncome: column(quarterlyRows, 'netIncome'),
+    },
+  };
+}
+
 export { derivePeriod };

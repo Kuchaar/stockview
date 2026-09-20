@@ -1,48 +1,48 @@
 import { useState } from 'react';
 import { useLang } from '../context/LangContext';
 
+// Klucze kanoniczne z src/data/financialSchema.js — nie surowe nazwy z Yahoo.
 const LABELS = {
   pl: {
-    totalRevenue: 'Przychody',
-    costOfRevenue: 'Koszt sprzedaży',
-    grossProfit: 'Zysk brutto',
-    sellingGeneralAdministrative: 'Koszty SG&A',
-    researchDevelopment: 'Badania i rozwój (R&D)',
-    totalOperatingExpenses: 'Koszty operacyjne ogółem',
+    revenue: 'Przychody',
+    costOfRevenue: 'Koszt własny sprzedaży',
+    grossProfit: 'Zysk brutto ze sprzedaży',
+    operatingExpenses: 'Koszty operacyjne',
     operatingIncome: 'Zysk operacyjny (EBIT)',
     interestExpense: 'Koszty odsetkowe',
-    incomeBeforeTax: 'Zysk przed opodatkowaniem',
-    incomeTaxExpense: 'Podatek dochodowy',
+    netInterestIncome: 'Wynik odsetkowy',
+    netFeeIncome: 'Wynik prowizyjny',
+    provisionForCreditLosses: 'Odpisy na ryzyko kredytowe',
     netIncome: 'Zysk netto',
     ebitda: 'EBITDA',
   },
   en: {
-    totalRevenue: 'Revenue',
+    revenue: 'Revenue',
     costOfRevenue: 'Cost of Revenue',
     grossProfit: 'Gross Profit',
-    sellingGeneralAdministrative: 'SG&A Expenses',
-    researchDevelopment: 'R&D Expenses',
-    totalOperatingExpenses: 'Total Operating Expenses',
+    operatingExpenses: 'Operating Expenses',
     operatingIncome: 'Operating Income (EBIT)',
     interestExpense: 'Interest Expense',
-    incomeBeforeTax: 'Income Before Tax',
-    incomeTaxExpense: 'Income Tax',
+    netInterestIncome: 'Net Interest Income',
+    netFeeIncome: 'Net Fee Income',
+    provisionForCreditLosses: 'Provision for Credit Losses',
     netIncome: 'Net Income',
     ebitda: 'EBITDA',
   },
 };
 
+// Wiersze bez danych znikają same (patrz `values.every(v => v == null)` niżej),
+// więc pozycje bankowe mogą tu stać obok zwykłych.
 const ROW_CONFIG = [
-  { key: 'totalRevenue', bold: true },
+  { key: 'revenue', bold: true },
   { key: 'costOfRevenue', indent: true },
   { key: 'grossProfit', bold: true, separator: true },
-  { key: 'sellingGeneralAdministrative', indent: true },
-  { key: 'researchDevelopment', indent: true },
-  { key: 'totalOperatingExpenses' },
+  { key: 'netInterestIncome', indent: true },
+  { key: 'netFeeIncome', indent: true },
+  { key: 'provisionForCreditLosses', indent: true },
+  { key: 'operatingExpenses', indent: true },
   { key: 'operatingIncome', bold: true, separator: true },
   { key: 'interestExpense', indent: true },
-  { key: 'incomeBeforeTax' },
-  { key: 'incomeTaxExpense', indent: true },
   { key: 'netIncome', bold: true, separator: true },
   { key: 'ebitda', bold: true },
 ];
@@ -67,7 +67,8 @@ export default function IncomeStatement({ liveData, fallbackFinancials }) {
   }
 
   // Sort by date descending (newest first) and take up to 4
-  const sorted = [...statements].sort((a, b) => (b.dateRaw || 0) - (a.dateRaw || 0)).slice(0, 4);
+  // kanoniczny wiersz ma `date` jako 'YYYY-MM-DD' — sortowanie leksykalne działa
+  const sorted = [...statements].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 4);
   const headers = sorted.map(s => s.date || '—');
 
   return (

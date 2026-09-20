@@ -11,6 +11,7 @@ import useStockData from '../hooks/useStockData';
 import { SITE_URL } from '../config/site';
 import useFinancials from '../hooks/useFinancials';
 import { calculateAllRatios } from '../data/ratioCalculator';
+import { toLegacyTable } from '../data/financialSchema';
 import TradingViewChart from '../components/TradingViewChart';
 import FinancialTable from '../components/FinancialTable';
 import DataFreshness from '../components/DataFreshness';
@@ -63,6 +64,12 @@ export default function StockPage() {
   // Live financials — only fetch when on financials, overview, or valuation tab
   const financialsSymbol = (tab === 'financials' || tab === 'overview' || tab === 'valuation') ? stock?.yahooSymbol : null;
   const { data: liveFinancials, loading: financialsLoading } = useFinancials(financialsSymbol, stock?.id);
+
+  // Zakładka „Przegląd” pokazuje dane z bazy/API, a zaszyte w kodzie dopiero, gdy tamtych brak.
+  const overviewFinancials = useMemo(
+    () => toLegacyTable(liveFinancials) || stock?.financials || null,
+    [liveFinancials, stock],
+  );
 
   // Comprehensive ratios from live financial data
   const allRatios = useMemo(() => {
@@ -313,10 +320,10 @@ export default function StockPage() {
               )}
             </div>
 
-            {financialSubTab === 'overview' && stock.financials?.annual?.years?.length > 0 && (
-              <FinancialTable financials={stock.financials} />
+            {financialSubTab === 'overview' && overviewFinancials?.annual?.years?.length > 0 && (
+              <FinancialTable financials={overviewFinancials} />
             )}
-            {financialSubTab === 'overview' && !stock.financials?.annual?.years?.length && (
+            {financialSubTab === 'overview' && !overviewFinancials?.annual?.years?.length && (
               <div className="text-sm text-surface-400 text-center py-8">
                 {lang === 'pl' ? 'Brak danych finansowych.' : 'No financial data available.'}
               </div>
@@ -342,7 +349,7 @@ export default function StockPage() {
 
             {liveFinancials && (
               <p className="text-[10px] text-surface-400 mt-4 text-right">
-                {lang === 'pl' ? 'Dane z Yahoo Finance' : 'Data from Yahoo Finance'}
+                {t(`stock.freshness.source_${liveFinancials.source || 'unknown'}`)}
               </p>
             )}
           </div>

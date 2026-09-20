@@ -1,88 +1,50 @@
 import { useState } from 'react';
 import { useLang } from '../context/LangContext';
 
+// Klucze kanoniczne z src/data/financialSchema.js — nie surowe nazwy z Yahoo.
 const LABELS = {
   pl: {
-    // Assets
-    cash: 'Gotówka i ekwiwalenty',
-    shortTermInvestments: 'Inwestycje krótkoterminowe',
-    netReceivables: 'Należności netto',
-    inventory: 'Zapasy',
-    otherCurrentAssets: 'Pozostałe aktywa obrotowe',
-    totalCurrentAssets: 'Aktywa obrotowe ogółem',
-    propertyPlantEquipment: 'Rzeczowe aktywa trwałe',
-    goodWill: 'Wartość firmy',
-    intangibleAssets: 'Wartości niematerialne',
-    longTermInvestments: 'Inwestycje długoterminowe',
-    otherAssets: 'Pozostałe aktywa',
+    cash: 'Środki pieniężne',
+    currentAssets: 'Aktywa obrotowe',
+    loans: 'Kredyty i pożyczki udzielone',
     totalAssets: 'AKTYWA OGÓŁEM',
-    // Liabilities
-    accountsPayable: 'Zobowiązania handlowe',
-    shortLongTermDebt: 'Zadłużenie krótkoterminowe',
-    otherCurrentLiab: 'Pozostałe zob. bieżące',
-    totalCurrentLiabilities: 'Zobowiązania bieżące ogółem',
-    longTermDebt: 'Zadłużenie długoterminowe',
-    otherLiab: 'Pozostałe zobowiązania',
-    totalLiab: 'ZOBOWIĄZANIA OGÓŁEM',
-    // Equity
-    commonStock: 'Kapitał zakładowy',
-    retainedEarnings: 'Zyski zatrzymane',
-    totalStockholderEquity: 'KAPITAŁ WŁASNY',
+    currentLiabilities: 'Zobowiązania krótkoterminowe',
+    deposits: 'Depozyty klientów',
+    longTermDebt: 'Dług długoterminowy',
+    totalDebt: 'Dług ogółem',
+    totalLiabilities: 'ZOBOWIĄZANIA OGÓŁEM',
+    totalEquity: 'KAPITAŁ WŁASNY',
   },
   en: {
     cash: 'Cash & Equivalents',
-    shortTermInvestments: 'Short-term Investments',
-    netReceivables: 'Net Receivables',
-    inventory: 'Inventory',
-    otherCurrentAssets: 'Other Current Assets',
-    totalCurrentAssets: 'Total Current Assets',
-    propertyPlantEquipment: 'Property, Plant & Equipment',
-    goodWill: 'Goodwill',
-    intangibleAssets: 'Intangible Assets',
-    longTermInvestments: 'Long-term Investments',
-    otherAssets: 'Other Assets',
+    currentAssets: 'Current Assets',
+    loans: 'Loans',
     totalAssets: 'TOTAL ASSETS',
-    accountsPayable: 'Accounts Payable',
-    shortLongTermDebt: 'Short-term Debt',
-    otherCurrentLiab: 'Other Current Liabilities',
-    totalCurrentLiabilities: 'Total Current Liabilities',
+    currentLiabilities: 'Current Liabilities',
+    deposits: 'Customer Deposits',
     longTermDebt: 'Long-term Debt',
-    otherLiab: 'Other Liabilities',
-    totalLiab: 'TOTAL LIABILITIES',
-    commonStock: 'Common Stock',
-    retainedEarnings: 'Retained Earnings',
-    totalStockholderEquity: 'TOTAL EQUITY',
+    totalDebt: 'Total Debt',
+    totalLiabilities: 'TOTAL LIABILITIES',
+    totalEquity: 'TOTAL EQUITY',
   },
 };
 
 const SECTIONS = [
   { title: { pl: 'Aktywa', en: 'Assets' }, rows: [
     { key: 'cash', indent: true },
-    { key: 'shortTermInvestments', indent: true },
-    { key: 'netReceivables', indent: true },
-    { key: 'inventory', indent: true },
-    { key: 'otherCurrentAssets', indent: true },
-    { key: 'totalCurrentAssets', bold: true },
-    { key: 'propertyPlantEquipment', indent: true },
-    { key: 'goodWill', indent: true },
-    { key: 'intangibleAssets', indent: true },
-    { key: 'longTermInvestments', indent: true },
-    { key: 'otherAssets', indent: true },
+    { key: 'currentAssets', indent: true },
+    { key: 'loans', indent: true },
     { key: 'totalAssets', bold: true, separator: true },
   ]},
   { title: { pl: 'Zobowiązania', en: 'Liabilities' }, rows: [
-    { key: 'accountsPayable', indent: true },
-    { key: 'shortLongTermDebt', indent: true },
-    { key: 'otherCurrentLiab', indent: true },
-    { key: 'totalCurrentLiabilities', bold: true },
+    { key: 'currentLiabilities', indent: true },
+    { key: 'deposits', indent: true },
     { key: 'longTermDebt', indent: true },
-    { key: 'otherLiab', indent: true },
-    { key: 'totalLiab', bold: true, separator: true },
+    { key: 'totalDebt', indent: true },
+    { key: 'totalLiabilities', bold: true, separator: true },
   ]},
   { title: { pl: 'Kapitał własny', en: 'Equity' }, rows: [
-    { key: 'commonStock', indent: true },
-    { key: 'retainedEarnings', indent: true },
-    { key: 'totalStockholderEquity', bold: true },
+    { key: 'totalEquity', bold: true },
   ]},
 ];
 
@@ -105,7 +67,8 @@ export default function BalanceSheet({ liveData, fallbackFinancials }) {
     );
   }
 
-  const sorted = [...statements].sort((a, b) => (b.dateRaw || 0) - (a.dateRaw || 0)).slice(0, 4);
+  // kanoniczny wiersz ma `date` jako 'YYYY-MM-DD' — sortowanie leksykalne działa
+  const sorted = [...statements].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 4);
   const headers = sorted.map(s => s.date || '—');
 
   return (

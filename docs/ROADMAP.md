@@ -99,6 +99,10 @@ To się nie skaluje i cicho starzeje.
   *Gotowe, gdy:* dane starsze niż kwartał są wizualnie oznaczone.
   `DataFreshness` w zakładce Sprawozdania: okres, data jego końca, poziom źródła i ostrzeżenie
   po 92 dniach. Na dzisiejszych danych: 20 spółek aktualnych, 4 oznaczone (PKO, PEP, ACP, JSW).
+- [x] **D7a — tabele sprawozdań na kanonicznym kształcie** — zgłoszone przez Kamila po D7
+  Trzy komponenty szukały surowych kluczy Yahoo, a „Przegląd" wisiał na `wig20.js`.
+  *Gotowe, gdy:* Orlen pokazuje w Przeglądzie FY2022–FY2025 z bazy, a nie 2021–2024E z kodu,
+  i nigdzie nie ma zer udających dane. Szczegóły: U8 w `docs/DATA.md`.
 
 ---
 

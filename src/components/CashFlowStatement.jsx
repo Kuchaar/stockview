@@ -1,72 +1,40 @@
 import { useState } from 'react';
 import { useLang } from '../context/LangContext';
 
+// Klucze kanoniczne z src/data/financialSchema.js — nie surowe nazwy z Yahoo.
 const LABELS = {
   pl: {
-    // Operating
-    netIncome: 'Zysk netto',
-    depreciation: 'Amortyzacja',
-    changeToNetincome: 'Korekty zysku netto',
-    changeToOperatingActivities: 'Zmiany w kap. obrotowym',
-    totalCashFromOperatingActivities: 'Przepływy z dział. operacyjnej',
-    // Investing
-    capitalExpenditures: 'Nakłady inwestycyjne (CAPEX)',
-    investments: 'Inwestycje',
-    otherCashflowsFromInvestingActivities: 'Pozostałe inwestycyjne',
-    totalCashflowsFromInvestingActivities: 'Przepływy z dział. inwestycyjnej',
-    // Financing
+    operatingCashFlow: 'Przepływy z działalności operacyjnej',
+    capitalExpenditure: 'Nakłady inwestycyjne (CAPEX)',
+    investingCashFlow: 'Przepływy z działalności inwestycyjnej',
     dividendsPaid: 'Dywidendy wypłacone',
-    netBorrowings: 'Zmiana zadłużenia netto',
-    issuanceOfStock: 'Emisja akcji',
-    repurchaseOfStock: 'Skup akcji własnych',
-    otherCashflowsFromFinancingActivities: 'Pozostałe finansowe',
-    totalCashFromFinancingActivities: 'Przepływy z dział. finansowej',
-    // Computed
+    financingCashFlow: 'Przepływy z działalności finansowej',
     freeCashFlow: 'Wolne przepływy pieniężne (FCF)',
-    changeInCash: 'Zmiana gotówki netto',
   },
   en: {
-    netIncome: 'Net Income',
-    depreciation: 'Depreciation & Amortization',
-    changeToNetincome: 'Adjustments to Net Income',
-    changeToOperatingActivities: 'Changes in Working Capital',
-    totalCashFromOperatingActivities: 'Cash from Operations',
-    capitalExpenditures: 'Capital Expenditures (CAPEX)',
-    investments: 'Investments',
-    otherCashflowsFromInvestingActivities: 'Other Investing',
-    totalCashflowsFromInvestingActivities: 'Cash from Investing',
+    operatingCashFlow: 'Cash from Operations',
+    capitalExpenditure: 'Capital Expenditures (CAPEX)',
+    investingCashFlow: 'Cash from Investing',
     dividendsPaid: 'Dividends Paid',
-    netBorrowings: 'Net Borrowings',
-    issuanceOfStock: 'Stock Issuance',
-    repurchaseOfStock: 'Stock Repurchase',
-    otherCashflowsFromFinancingActivities: 'Other Financing',
-    totalCashFromFinancingActivities: 'Cash from Financing',
+    financingCashFlow: 'Cash from Financing',
     freeCashFlow: 'Free Cash Flow (FCF)',
-    changeInCash: 'Net Change in Cash',
   },
 };
 
 const SECTIONS = [
   { title: { pl: 'Działalność operacyjna', en: 'Operating Activities' }, rows: [
-    { key: 'netIncome', indent: true },
-    { key: 'depreciation', indent: true },
-    { key: 'changeToNetincome', indent: true },
-    { key: 'changeToOperatingActivities', indent: true },
-    { key: 'totalCashFromOperatingActivities', bold: true, separator: true },
+    { key: 'operatingCashFlow', bold: true, separator: true },
   ]},
   { title: { pl: 'Działalność inwestycyjna', en: 'Investing Activities' }, rows: [
-    { key: 'capitalExpenditures', indent: true },
-    { key: 'investments', indent: true },
-    { key: 'otherCashflowsFromInvestingActivities', indent: true },
-    { key: 'totalCashflowsFromInvestingActivities', bold: true, separator: true },
+    { key: 'capitalExpenditure', indent: true },
+    { key: 'investingCashFlow', bold: true, separator: true },
   ]},
   { title: { pl: 'Działalność finansowa', en: 'Financing Activities' }, rows: [
     { key: 'dividendsPaid', indent: true },
-    { key: 'netBorrowings', indent: true },
-    { key: 'issuanceOfStock', indent: true },
-    { key: 'repurchaseOfStock', indent: true },
-    { key: 'otherCashflowsFromFinancingActivities', indent: true },
-    { key: 'totalCashFromFinancingActivities', bold: true, separator: true },
+    { key: 'financingCashFlow', bold: true, separator: true },
+  ]},
+  { title: { pl: 'Wyliczone', en: 'Computed' }, rows: [
+    { key: 'freeCashFlow', bold: true },
   ]},
 ];
 
@@ -89,7 +57,8 @@ export default function CashFlowStatement({ liveData, fallbackFinancials }) {
     );
   }
 
-  const sorted = [...statements].sort((a, b) => (b.dateRaw || 0) - (a.dateRaw || 0)).slice(0, 4);
+  // kanoniczny wiersz ma `date` jako 'YYYY-MM-DD' — sortowanie leksykalne działa
+  const sorted = [...statements].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 4);
   const headers = sorted.map(s => s.date || '—');
 
   // Compute FCF and net change for each period
