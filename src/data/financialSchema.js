@@ -28,9 +28,10 @@ export const CANONICAL_FIELDS = {
     bank: ['netInterestIncome', 'netFeeIncome', 'provisionForCreditLosses'],
   },
   balance: {
-    common: ['totalAssets', 'currentAssets', 'cash', 'totalLiabilities',
-             'currentLiabilities', 'longTermDebt', 'totalDebt', 'totalEquity',
-             'bookValuePerShare'],
+    common: ['totalAssets', 'currentAssets', 'cash', 'inventory', 'netPPE',
+             'totalLiabilities', 'currentLiabilities', 'currentDebt', 'longTermDebt',
+             'totalDebt', 'totalEquity', 'retainedEarnings', 'bookValuePerShare',
+             'sharesOutstanding'],
     bank: ['deposits', 'loans'],
   },
   cashFlow: {
@@ -45,7 +46,7 @@ export const CANONICAL_FIELDS = {
  */
 function emptyIncomeRow() {
   return {
-    date: null, period: null,
+    date: null, period: null, currency: null,
     revenue: null, costOfRevenue: null, grossProfit: null,
     operatingExpenses: null, operatingIncome: null, ebitda: null,
     interestExpense: null, netIncome: null, eps: null,
@@ -59,11 +60,12 @@ function emptyIncomeRow() {
  */
 function emptyBalanceRow() {
   return {
-    date: null, period: null,
+    date: null, period: null, currency: null,
     totalAssets: null, currentAssets: null, cash: null,
     totalLiabilities: null, currentLiabilities: null,
-    longTermDebt: null, totalDebt: null, totalEquity: null,
-    bookValuePerShare: null,
+    longTermDebt: null, currentDebt: null, totalDebt: null, totalEquity: null,
+    bookValuePerShare: null, sharesOutstanding: null,
+    inventory: null, retainedEarnings: null, netPPE: null,
     // Bank-specific
     deposits: null, loans: null,
   };
@@ -74,7 +76,7 @@ function emptyBalanceRow() {
  */
 function emptyCashFlowRow() {
   return {
-    date: null, period: null,
+    date: null, period: null, currency: null,
     operatingCashFlow: null, capitalExpenditure: null, freeCashFlow: null,
     investingCashFlow: null, financingCashFlow: null, dividendsPaid: null,
   };
@@ -125,9 +127,14 @@ const YAHOO_BALANCE_MAP = {
   totalLiab: 'totalLiabilities',
   totalCurrentLiabilities: 'currentLiabilities',
   longTermDebt: 'longTermDebt',
+  currentDebt: 'currentDebt',
   totalDebt: 'totalDebt',
   totalStockholderEquity: 'totalEquity',
   bookValuePerShare: 'bookValuePerShare',
+  sharesOutstanding: 'sharesOutstanding',
+  inventory: 'inventory',
+  retainedEarnings: 'retainedEarnings',
+  netPPE: 'netPPE',
   // Bank-specific
   deposits: 'deposits',
   loans: 'loans',
@@ -146,6 +153,7 @@ function mapYahooRow(raw, fieldMap, emptyFn, isQuarterly) {
   const row = emptyFn();
   row.date = raw.date || null;
   row.period = raw.period || derivePeriod(row.date, isQuarterly);
+  row.currency = raw.currency || null;
 
   for (const [yahooKey, canonKey] of Object.entries(fieldMap)) {
     const val = raw[yahooKey];

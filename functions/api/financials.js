@@ -1,31 +1,80 @@
 // Cloudflare Pages Function — proxy for Yahoo Finance financial statements
 // GET /api/financials?symbol=PKO.WA
 //
-// Yahoo Finance v10/quoteSummary wymaga crumb+cookie dla requestów z serwerów
-// (od ~2023, szczególnie z Cloudflare edge — zwraca 401 "Invalid Crumb" bez nich).
-// Przepływ: 1) fc.yahoo.com → Set-Cookie (A1/A3 session)
-//           2) /v1/test/getcrumb z cookie → plain text crumb
-//           3) /v10/finance/quoteSummary?crumb=... z cookie → dane
-// Crumb cachowany 30 min, odpowiedzi 1h (dane kwartalne).
-// Jeśli Yahoo całkowicie padnie → 200 z source:'unavailable' zamiast 502,
-// żeby frontend mógł użyć hardkodowanych danych z wig20.js bez błędu w UI.
-
-const MODULES = [
-  'incomeStatementHistory',
-  'incomeStatementHistoryQuarterly',
-  'balanceSheetHistory',
-  'balanceSheetHistoryQuarterly',
-  'cashflowStatementHistory',
-  'cashflowStatementHistoryQuarterly',
-  'defaultKeyStatistics',
-  'financialData',
-].join(',');
+// Sprawozdania bierzemy z `ws/fundamentals-timeseries`, bo moduły `*History`
+// w `v10/quoteSummary` Yahoo wypatroszył: dla spółek GPW oddawały tylko przychód
+// i zysk netto, bez bilansu i przepływów (U6 → U9 w docs/DATA.md).
+// Timeseries nie wymaga crumba ani cookie — wystarczy nagłówek User-Agent.
+//
+// `keyStats` dalej pochodzi z quoteSummary (moduły defaultKeyStatistics i financialData),
+// które działają — stąd został tu 3-krokowy flow z crumbem. Jest to jednak pobieranie
+// „w miarę możliwości": gdy padnie, sprawozdania i tak wracają, tylko bez keyStats.
+//
+// Gdy Yahoo całkowicie padnie → 200 z source:'unavailable' zamiast 5xx,
+// żeby klient mógł zejść na niższy poziom danych bez błędu w UI.
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
+// Moduły quoteSummary potrzebne wyłącznie do keyStats.
+const KEY_STATS_MODULES = 'defaultKeyStatistics,financialData';
+
 // Synthetic cache key do przechowywania crumba (niezależny od symbolu)
 const CRUMB_CACHE_URL = 'https://internal.stockview/yahoo-crumb';
+
+// Podbijane przy zmianie kształtu odpowiedzi — stare wpisy w cache na krawędzi
+// przestają wtedy obowiązywać od razu, zamiast dożywać swojej godziny.
+const CACHE_VERSION = 'ts1';
+
+// Timeseries → klucze wierszy, których oczekuje normalizeFinancials() w
+// src/data/financialSchema.js. Lista kandydatów = kolejność pierwszeństwa;
+// pole, którego spółka nie raportuje, nie przychodzi wcale i ma zostać puste.
+const FIELD_MAP = {
+  income: {
+    totalRevenue: ['TotalRevenue'],
+    grossProfit: ['GrossProfit'],
+    operatingIncome: ['OperatingIncome', 'EBIT'],
+    ebitda: ['EBITDA'],
+    netIncome: ['NetIncome', 'NetIncomeCommonStockholders'],
+    interestExpense: ['InterestExpense'],
+    dilutedEPS: ['DilutedEPS', 'BasicEPS'],
+  },
+  balance: {
+    totalAssets: ['TotalAssets'],
+    totalLiab: ['TotalLiabilitiesNetMinorityInterest'],
+    totalStockholderEquity: ['StockholdersEquity', 'TotalEquityGrossMinorityInterest'],
+    totalDebt: ['TotalDebt'],
+    longTermDebt: ['LongTermDebt'],
+    currentDebt: ['CurrentDebt'],
+    cash: ['CashAndCashEquivalents'],
+    totalCurrentAssets: ['CurrentAssets'],
+    totalCurrentLiabilities: ['CurrentLiabilities'],
+    inventory: ['Inventory'],
+    retainedEarnings: ['RetainedEarnings'],
+    netPPE: ['NetPPE'],
+    sharesOutstanding: ['OrdinarySharesNumber', 'ShareIssued'],
+  },
+  cashFlow: {
+    totalCashFromOperatingActivities: ['OperatingCashFlow'],
+    totalCashflowsFromInvestingActivities: ['InvestingCashFlow'],
+    totalCashFromFinancingActivities: ['FinancingCashFlow'],
+    freeCashFlow: ['FreeCashFlow'],
+    capitalExpenditures: ['CapitalExpenditure'],
+  },
+};
+
+// Wszystkie sufiksy bez powtórzeń — z nich budujemy parametr `type`.
+const FIELD_SUFFIXES = [
+  ...new Set(Object.values(FIELD_MAP).flatMap((block) => Object.values(block).flat())),
+];
+
+const PERIODS = [
+  { prefix: 'annual', periodType: '12M', quarterly: false },
+  { prefix: 'quarterly', periodType: '3M', quarterly: true },
+];
+
+// 2015-01-01 — Yahoo i tak oddaje mniej, ale nie obcinamy tego po swojej stronie.
+const PERIOD_START = 1420070400;
 
 export async function onRequestGet(context) {
   const { request, waitUntil } = context;
@@ -42,35 +91,20 @@ export async function onRequestGet(context) {
 
   const cache = caches.default;
 
-  // --- Edge cache odpowiedzi (1h — dane kwartalne) ---
-  const responseCacheKey = new Request(url.toString(), { method: 'GET' });
+  // --- Edge cache odpowiedzi (1h — sprawozdania zmieniają się kwartalnie) ---
+  const responseCacheKey = new Request(
+    `${url.origin}${url.pathname}?symbol=${encodeURIComponent(symbol)}&v=${CACHE_VERSION}`,
+    { method: 'GET' }
+  );
   const cachedResponse = await cache.match(responseCacheKey);
   if (cachedResponse) return cachedResponse;
 
-  // --- Pobierz crumb+cookie (z cache lub świeży) ---
-  let auth = await getCachedCrumb(cache);
-  if (!auth) {
-    auth = await fetchFreshCrumb(cache, waitUntil);
-  }
+  // --- Sprawozdania: fundamentals-timeseries, bez crumba ---
+  const series = await fetchTimeseries(symbol);
 
-  // --- Zapytaj Yahoo v10/quoteSummary ---
-  let raw = null;
-  if (auth) {
-    raw = await fetchQuoteSummary(symbol, auth.crumb, auth.cookie, 'query2');
-
-    // 401 = wygasły/nieprawidłowy crumb → odśwież i spróbuj ponownie
-    if (raw === null || raw === 401) {
-      await cache.delete(new Request(CRUMB_CACHE_URL));
-      auth = await fetchFreshCrumb(cache, waitUntil);
-      if (auth) {
-        raw = await fetchQuoteSummary(symbol, auth.crumb, auth.cookie, 'query1');
-      }
-    }
-  }
-
-  // --- Graceful fallback gdy Yahoo totalnie padnie ---
-  if (!raw || raw === 401) {
-    const fallback = new Response(
+  if (!series || series.size === 0) {
+    // Nie cachujemy — przy kolejnym request próbujemy znowu.
+    return new Response(
       JSON.stringify({
         symbol,
         source: 'unavailable',
@@ -79,12 +113,14 @@ export async function onRequestGet(context) {
       }),
       { status: 200, headers: corsHeaders('application/json', reqOrigin) }
     );
-    // Nie cachujemy fallbacku — przy kolejnym request próbujemy znowu
-    return fallback;
   }
 
-  const result = raw.quoteSummary?.result?.[0];
-  if (!result) {
+  const statements = buildStatements(series);
+
+  const pusto = ['incomeStatement', 'balanceSheet', 'cashFlow'].every(
+    (blok) => statements[blok].annual.length === 0 && statements[blok].quarterly.length === 0
+  );
+  if (pusto) {
     return new Response(
       JSON.stringify({
         symbol,
@@ -96,14 +132,138 @@ export async function onRequestGet(context) {
     );
   }
 
-  const transformed = transformFinancials(result);
+  // --- keyStats: w miarę możliwości, brak nie blokuje odpowiedzi ---
+  const keyStats = await fetchKeyStats(symbol, cache, waitUntil);
+
   const response = new Response(
-    JSON.stringify({ symbol, ...transformed, source: 'yahoo', timestamp: Date.now() }),
+    JSON.stringify({ symbol, ...statements, keyStats, source: 'yahoo', timestamp: Date.now() }),
     { status: 200, headers: corsHeaders('application/json', reqOrigin) }
   );
 
   waitUntil(cache.put(responseCacheKey, response.clone()));
   return response;
+}
+
+/**
+ * Pobiera szereg czasowy dla wszystkich pól naraz.
+ * Zwraca Map<'annualTotalAssets', [{asOfDate, periodType, currencyCode, reportedValue}]>
+ * albo null, gdy Yahoo nie odpowiedział.
+ */
+async function fetchTimeseries(symbol) {
+  const types = PERIODS.flatMap(({ prefix }) => FIELD_SUFFIXES.map((s) => prefix + s)).join(',');
+  const now = Math.floor(Date.now() / 1000);
+
+  for (const mirror of ['query2', 'query1']) {
+    try {
+      const url =
+        `https://${mirror}.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/` +
+        `${encodeURIComponent(symbol)}?symbol=${encodeURIComponent(symbol)}` +
+        `&type=${types}&period1=${PERIOD_START}&period2=${now}&merge=false`;
+
+      const resp = await fetch(url, {
+        headers: { 'User-Agent': USER_AGENT, 'Accept': 'application/json' },
+      });
+      if (!resp.ok) continue;
+
+      const json = await resp.json();
+      const result = json?.timeseries?.result;
+      if (!Array.isArray(result)) continue;
+
+      const series = new Map();
+      for (const entry of result) {
+        const type = entry?.meta?.type?.[0];
+        if (!type) continue;
+        const rows = (entry[type] || []).filter(Boolean);
+        if (rows.length) series.set(type, rows);
+      }
+      return series;
+    } catch {
+      // spróbuj drugiego mirrora
+    }
+  }
+  return null;
+}
+
+/** Szereg czasowy → kształt odpowiedzi, którego oczekują klient i importer. */
+function buildStatements(series) {
+  const out = {
+    incomeStatement: { annual: [], quarterly: [] },
+    balanceSheet: { annual: [], quarterly: [] },
+    cashFlow: { annual: [], quarterly: [] },
+  };
+
+  const bloki = [
+    ['incomeStatement', FIELD_MAP.income],
+    ['balanceSheet', FIELD_MAP.balance],
+    ['cashFlow', FIELD_MAP.cashFlow],
+  ];
+
+  for (const { prefix, periodType, quarterly } of PERIODS) {
+    for (const [blok, mapa] of bloki) {
+      out[blok][quarterly ? 'quarterly' : 'annual'] = collectRows(series, prefix, periodType, mapa, quarterly);
+    }
+  }
+  return out;
+}
+
+/** Zbiera wiersze jednego sprawozdania dla jednego typu okresu, sklejone po dacie. */
+function collectRows(series, prefix, periodType, fieldMap, isQuarterly) {
+  const byDate = new Map();
+
+  for (const [rowKey, candidates] of Object.entries(fieldMap)) {
+    for (const suffix of candidates) {
+      const rows = series.get(prefix + suffix);
+      if (!rows) continue;
+
+      for (const row of rows) {
+        if (row.periodType !== periodType) continue;
+        const value = row?.reportedValue?.raw;
+        const date = row?.asOfDate;
+        if (value == null || !date) continue;
+
+        if (!byDate.has(date)) byDate.set(date, {});
+        const target = byDate.get(date);
+        // Pierwszy kandydat z listy wygrywa — kolejne to tylko zapas.
+        if (target[rowKey] == null) target[rowKey] = value;
+        if (!target.currency && row.currencyCode) target.currency = row.currencyCode;
+      }
+    }
+  }
+
+  return [...byDate.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0])) // najnowszy okres pierwszy
+    .map(([date, fields]) => ({
+      date,
+      period: derivePeriod(date, isQuarterly),
+      ...fields,
+    }));
+}
+
+/**
+ * keyStats z quoteSummary — wymaga crumba i cookie.
+ * Zwraca null, gdy cokolwiek po drodze zawiedzie; to nie jest błąd krytyczny.
+ */
+async function fetchKeyStats(symbol, cache, waitUntil) {
+  try {
+    let auth = await getCachedCrumb(cache);
+    if (!auth) auth = await fetchFreshCrumb(cache, waitUntil);
+    if (!auth) return null;
+
+    let raw = await fetchQuoteSummary(symbol, auth.crumb, auth.cookie, 'query2');
+    if (raw === 401) {
+      await cache.delete(new Request(CRUMB_CACHE_URL));
+      auth = await fetchFreshCrumb(cache, waitUntil);
+      raw = auth ? await fetchQuoteSummary(symbol, auth.crumb, auth.cookie, 'query1') : null;
+    }
+    if (!raw || raw === 401) return null;
+
+    const result = raw.quoteSummary?.result?.[0];
+    if (!result) return null;
+
+    return extractKeyStats(result.defaultKeyStatistics, result.financialData);
+  } catch {
+    return null;
+  }
 }
 
 // Pobiera crumb+cookie z edge cache (zwraca null gdy brak/wygasły)
@@ -121,13 +281,11 @@ async function getCachedCrumb(cache) {
 // Zapisuje wynik do cache z TTL 30 min i zwraca { crumb, cookie }
 async function fetchFreshCrumb(cache, waitUntil) {
   try {
-    // Krok 1: pobierz session cookie z fc.yahoo.com
     const fcResp = await fetch('https://fc.yahoo.com', {
       headers: { 'User-Agent': USER_AGENT },
       redirect: 'follow',
     });
 
-    // Zbierz Set-Cookie headery (Workers obsługuje getAll dla multi-value headers)
     let cookieHeaders = [];
     if (typeof fcResp.headers.getAll === 'function') {
       cookieHeaders = fcResp.headers.getAll('set-cookie');
@@ -136,15 +294,12 @@ async function fetchFreshCrumb(cache, waitUntil) {
       if (raw) cookieHeaders = [raw];
     }
 
-    // Wyciągnij tylko name=value (bez atrybutów jak Path, Expires...)
     const cookieParts = cookieHeaders
       .map((h) => h.split(';')[0].trim())
       .filter(Boolean);
 
-    // Dołóż też cookies z odpowiedzi samego crumb endpoint jeśli fc.yahoo nie dał
     const cookie = cookieParts.length > 0 ? cookieParts.join('; ') : 'A1=d=AQAB';
 
-    // Krok 2: pobierz crumb używając cookie
     const crumbResp = await fetch(
       'https://query2.finance.yahoo.com/v1/test/getcrumb',
       {
@@ -163,7 +318,6 @@ async function fetchFreshCrumb(cache, waitUntil) {
 
     const auth = { crumb, cookie };
 
-    // Zapisz do cache z TTL 30 min
     const crumbCacheResp = new Response(JSON.stringify(auth), {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=1800' },
     });
@@ -180,7 +334,7 @@ async function fetchQuoteSummary(symbol, crumb, cookie, mirror) {
   try {
     const url =
       `https://${mirror}.finance.yahoo.com/v10/finance/quoteSummary/` +
-      `${encodeURIComponent(symbol)}?modules=${MODULES}&crumb=${encodeURIComponent(crumb)}`;
+      `${encodeURIComponent(symbol)}?modules=${KEY_STATS_MODULES}&crumb=${encodeURIComponent(crumb)}`;
 
     const resp = await fetch(url, {
       headers: {
@@ -204,24 +358,6 @@ export async function onRequestOptions(context) {
   return new Response(null, { status: 204, headers: corsHeaders(null, reqOrigin) });
 }
 
-function transformFinancials(result) {
-  return {
-    incomeStatement: {
-      annual: transformStatements(result.incomeStatementHistory?.incomeStatementHistory || [], false),
-      quarterly: transformStatements(result.incomeStatementHistoryQuarterly?.incomeStatementHistory || [], true),
-    },
-    balanceSheet: {
-      annual: transformStatements(result.balanceSheetHistory?.balanceSheetStatements || [], false),
-      quarterly: transformStatements(result.balanceSheetHistoryQuarterly?.balanceSheetStatements || [], true),
-    },
-    cashFlow: {
-      annual: transformStatements(result.cashflowStatementHistory?.cashflowStatements || [], false),
-      quarterly: transformStatements(result.cashflowStatementHistoryQuarterly?.cashflowStatements || [], true),
-    },
-    keyStats: extractKeyStats(result.defaultKeyStatistics, result.financialData),
-  };
-}
-
 function derivePeriod(dateStr, isQuarterly) {
   if (!dateStr) return null;
   const d = new Date(dateStr);
@@ -232,35 +368,6 @@ function derivePeriod(dateStr, isQuarterly) {
   if (month <= 6) return `Q2 ${year}`;
   if (month <= 9) return `Q3 ${year}`;
   return `Q4 ${year}`;
-}
-
-// Yahoo podaje endDate raz jako { raw, fmt }, raz jako samą liczbę (unix w sekundach).
-// Zwraca "YYYY-MM-DD" albo null.
-function toIsoDate(val) {
-  if (val == null) return null;
-  if (typeof val === 'object') return val.fmt || toIsoDate(val.raw);
-  if (typeof val === 'number') return new Date(val * 1000).toISOString().slice(0, 10);
-  if (typeof val === 'string') return val.slice(0, 10) || null;
-  return null;
-}
-
-function transformStatements(statements, isQuarterly) {
-  return statements.map((stmt) => {
-    const row = { date: null };
-    for (const [key, val] of Object.entries(stmt)) {
-      // endDate obsługujemy przed gałęzią `raw` — inaczej wpada tam jako liczba,
-      // data przepada, a `period` zostaje null (patrz U3 w docs/DATA.md).
-      if (key === 'endDate') {
-        row.date = toIsoDate(val);
-      } else if (val && typeof val === 'object' && 'raw' in val) {
-        row[key] = val.raw;
-      } else if (typeof val === 'string' || typeof val === 'number') {
-        row[key] = val;
-      }
-    }
-    row.period = derivePeriod(row.date, isQuarterly);
-    return row;
-  });
 }
 
 function extractKeyStats(keyStats, financialData) {

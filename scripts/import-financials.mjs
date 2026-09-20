@@ -14,17 +14,21 @@
 //   SUPABASE_URL                 — https://<ref>.supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY    — klucz service_role; anon odbije się od RLS
 
+import { setTimeout as sleep } from 'timers/promises';
 import { createClient } from '@supabase/supabase-js';
 import { wig20Companies } from '../src/data/wig20.js';
 import { normalizeFinancials, YAHOO_ZERO_MEANS_MISSING } from '../src/data/financialSchema.js';
 
 const DRY_RUN = process.argv.includes('--dry-run');
+// Każda spółka to osobne zapytanie do /api/financials, a ono idzie do Yahoo.
+// Spółki lecą po kolei (pętla `for...of`), a między nimi jest krótka przerwa.
+const DELAY_MS = 300;
 const API_BASE = process.env.API_BASE || 'https://stockview.org';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Pola techniczne kanonicznego wiersza — do bazy trafia sama treść sprawozdania.
-const META_FIELDS = ['date', 'period'];
+const META_FIELDS = ['date', 'period', 'currency'];
 
 // Yahoo v10 wypełnia zerami pola, których nie podaje: bank z przychodem 29 mld
 // dostaje costOfRevenue: 0, a spółka z zyskiem 595 mln — ebit: 0 (U6 w docs/DATA.md).
@@ -63,6 +67,7 @@ function toRows(companyId, normalized, periodType) {
       const entry = byDate.get(row.date);
       entry[key] = stripMeta(row);
       entry.period_label ||= row.period;
+      entry.currency ||= row.currency || null;
     }
   };
 
@@ -82,7 +87,7 @@ function toRows(companyId, normalized, periodType) {
       income: entry.income,
       balance: entry.balance,
       cash_flow: entry.cash_flow,
-      currency: 'PLN',
+      currency: entry.currency || 'PLN',
       source: 'yahoo',
     });
   }
@@ -135,7 +140,10 @@ async function main() {
   let pominietychVerified = 0;
   const bledy = [];
 
+  let pierwsza = true;
   for (const company of wig20Companies) {
+    if (!pierwsza) await sleep(DELAY_MS);
+    pierwsza = false;
     try {
       const all = await fetchCompany(company);
       const rows = all.filter((r) => {
