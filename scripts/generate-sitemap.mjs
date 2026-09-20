@@ -9,11 +9,14 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DIST = join(ROOT, 'dist');
-const BASE_URL = 'https://stockview.pages.dev';
+
 const TODAY = new Date().toISOString().split('T')[0];
 
-// Import company IDs directly from the data file (no JSX/React — plain JS)
+// Import company IDs and the canonical domain directly (no JSX/React — plain JS)
 const { wig20Companies } = await import('../src/data/wig20.js');
+const { SITE_URL } = await import('../src/config/site.js');
+
+const BASE_URL = SITE_URL;
 
 const urls = [
   { loc: '/', priority: '1.0', changefreq: 'daily' },

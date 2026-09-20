@@ -2,6 +2,7 @@ import { useState, useMemo, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
 import { formatPercent } from '../data/wig20';
+import { SITE_URL } from '../config/site';
 import useStockData from '../hooks/useStockData';
 import DataSourceBanner from '../components/DataSourceBanner';
 import StockCard from '../components/StockCard';
@@ -82,16 +83,16 @@ export default function HomePage() {
     <Helmet>
       <title>StockView — Analiza spółek WIG20 | GPW</title>
       <meta name="description" content="StockView — analiza fundamentalna i wyceny spółek WIG20. Wykresy TradingView, wskaźniki finansowe, ocena kondycji finansowej w jednym miejscu." />
-      <link rel="canonical" href="https://stockview.pages.dev/" />
+      <link rel="canonical" href={`${SITE_URL}/`} />
       <meta property="og:title" content="StockView — Analiza spółek WIG20 | GPW" />
       <meta property="og:description" content="StockView — analiza fundamentalna i wyceny spółek WIG20. Wykresy TradingView, wskaźniki finansowe, ocena kondycji finansowej w jednym miejscu." />
-      <meta property="og:url" content="https://stockview.pages.dev/" />
+      <meta property="og:url" content={`${SITE_URL}/`} />
       <meta property="og:type" content="website" />
-      <meta property="og:image" content="https://stockview.pages.dev/og-default.png" />
+      <meta property="og:image" content={`${SITE_URL}/og-default.png`} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="StockView — Analiza spółek WIG20 | GPW" />
       <meta name="twitter:description" content="StockView — analiza fundamentalna i wyceny spółek WIG20. Wykresy TradingView, wskaźniki finansowe, ocena kondycji finansowej w jednym miejscu." />
-      <meta name="twitter:image" content="https://stockview.pages.dev/og-default.png" />
+      <meta name="twitter:image" content={`${SITE_URL}/og-default.png`} />
     </Helmet>
     <div className="space-y-10">
       {/* Ticker tape — lazy loaded, doesn't block first paint */}

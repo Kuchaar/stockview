@@ -88,13 +88,13 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
 
 ## Bramka 3 — SEO i ruch z Polski
 
-- [ ] **S1 — ujednolicenie domeny** (~40 min) ⚠️ **blokuje resztę bramki**
-  Dziś `canonical`, OG, CSP w `public/_headers`, `BASE_URL` w `scripts/generate-sitemap.mjs`
-  i CORS w `functions/api/` wskazują na `stockview.pages.dev`, a docelowa domena to
-  `stockview.org`. Google indeksuje przez to domenę techniczną.
-  *Gotowe, gdy:* `grep -rn "pages.dev" src/ public/ functions/ scripts/` nie zwraca nic
-  poza świadomym wpisem na liście dozwolonych originów, a `curl -I` na starą domenę
-  daje przekierowanie 301.
+- [x] **S1 — ujednolicenie domeny** (~40 min)
+  `canonical`, OG, CSP w `public/_headers`, `BASE_URL` w `scripts/generate-sitemap.mjs`
+  i CORS w `functions/api/` wskazywały na `stockview.pages.dev`, a docelowa domena to
+  `stockview.org`. Adres kanoniczny pochodzi teraz z `src/config/site.js` (`SITE_URL`).
+  *Gotowe, gdy:* `grep -rn "pages.dev" src/ public/ functions/ scripts/ index.html` nie
+  zwraca nic. Przekierowania 301 ze starej domeny nie wymagamy — `pages.dev` siedzi za
+  Cloudflare Access, więc dla robotów i tak jest niedostępna.
 - [ ] **S2 — tytuły i opisy per spółka** (~40 min)
   Unikalny `<title>` i `description` dla 24 stron spółek, z nazwą i tickerem.
   *Gotowe, gdy:* żadne dwie strony nie mają tego samego tytułu.

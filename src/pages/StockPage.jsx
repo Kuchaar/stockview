@@ -8,6 +8,7 @@ import {
   calculateHealthScore, calculateSubScores,
 } from '../data/wig20';
 import useStockData from '../hooks/useStockData';
+import { SITE_URL } from '../config/site';
 import useFinancials from '../hooks/useFinancials';
 import { calculateAllRatios } from '../data/ratioCalculator';
 import TradingViewChart from '../components/TradingViewChart';
@@ -88,7 +89,7 @@ export default function StockPage() {
 
   const pageTitle = `${stock.name} (${stock.ticker}) — analiza, wykres, wskaźniki | StockView`;
   const pageDesc = `${stock.name} — analiza fundamentalna, wykres TradingView, P/E ${stock.ratios.pe ?? '–'}, ROE ${stock.ratios.roe ?? '–'}%, dywidenda ${stock.ratios.dividendYield ?? '–'}%. Sprawdź ocenę kondycji finansowej i wycenę na StockView.`;
-  const pageUrl = `https://stockview.pages.dev/stock/${stock.id}`;
+  const pageUrl = `${SITE_URL}/stock/${stock.id}`;
 
   return (
     <>
@@ -100,11 +101,11 @@ export default function StockPage() {
       <meta property="og:description" content={pageDesc} />
       <meta property="og:url" content={pageUrl} />
       <meta property="og:type" content="website" />
-      <meta property="og:image" content="https://stockview.pages.dev/og-default.png" />
+      <meta property="og:image" content={`${SITE_URL}/og-default.png`} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={`${stock.name} (${stock.ticker}) | StockView`} />
       <meta name="twitter:description" content={pageDesc} />
-      <meta name="twitter:image" content="https://stockview.pages.dev/og-default.png" />
+      <meta name="twitter:image" content={`${SITE_URL}/og-default.png`} />
       <script type="application/ld+json">{JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Corporation",
