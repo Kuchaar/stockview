@@ -68,10 +68,17 @@ To się nie skaluje i cicho starzeje.
   Migracja: `supabase/migrations/20260920120000_financials.sql`, zastosowana na projekcie
   StockView. Sprawdzone: upsert bez duplikatów, trigger `updated_at`, odczyt przez `anon`,
   zapis przez `anon` odrzucony (42501). Uwaga o odmrażaniu projektu — w `docs/DATA.md`.
-- [ ] **D4 — importer `scripts/import-financials.mjs`** (~40 min)
+- [x] **D4 — importer `scripts/import-financials.mjs`** (~40 min)
   Yahoo → `upsert` do Supabase, z pominięciem wierszy `verified = true`.
   *Gotowe, gdy:* po przebiegu 24 spółki mają po 4 roczniki, a drugi przebieg niczego nie psuje
   ani nie duplikuje.
+  189 wierszy z 24 spółek, drugi przebieg 189 → 189 bez duplikatów, wiersz `verified` nietknięty.
+  Po drodze: U6 (Yahoo oddaje tylko przychód i zysk) i U7 (EBP na martwym `SPL.WA`) — `docs/DATA.md`.
+- [ ] **D4a — fałszywe zera z Yahoo w UI** (~20 min) ⚠️ **wyszło z D4**
+  `normalizeFinancials` kopiuje wypełniacze `0` z Yahoo do pól `grossProfit`, `ebit` itd.,
+  więc zakładka Finanse pokazuje „0 zł" tam, gdzie danych po prostu nie ma. Przy okazji
+  `isBank()` przestaje rozpoznawać banki, bo sprawdza `grossProfit == null`.
+  *Gotowe, gdy:* na stronie PKO i CDR nie ma zer udających dane, a banki są rozpoznawane.
 - [ ] **D5 — eksport na poziom 2** (~40 min)
   `scripts/export-financials.mjs` → `public/data/financials/{companyId}/data.json`,
   wpięty w `update-prices.yml`.

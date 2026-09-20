@@ -26,10 +26,16 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Pola techniczne kanonicznego wiersza — do bazy trafia sama treść sprawozdania.
 const META_FIELDS = ['date', 'period'];
 
+// Yahoo v10 wypełnia zerami pola, których nie ma: bank z przychodem 29 mld
+// dostaje costOfRevenue: 0, a spółka z zyskiem 595 mln — ebit: 0.
+// Zero to tu „brak danych", nie wartość, więc do bazy nie trafia.
+// Realne liczby zostają tylko w totalRevenue i netIncome — patrz U6 w docs/DATA.md.
 function stripMeta(row) {
   const out = {};
   for (const [k, v] of Object.entries(row)) {
-    if (!META_FIELDS.includes(k) && v != null) out[k] = v;
+    if (META_FIELDS.includes(k)) continue;
+    if (v == null || v === 0) continue;
+    out[k] = v;
   }
   return out;
 }

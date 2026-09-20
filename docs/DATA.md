@@ -109,6 +109,23 @@ o odświeżeniu i nic tego nie waliduje.
 z Yahoo w PLN; `financials` w `wig20.js` są w mln, kanoniczny format — w PLN. Dziś pilnuje tego
 `normalizeFinancials`, ale przy nowym dostawcy to pierwsze miejsce, gdzie łatwo o błąd rzędu 10⁶.
 
+**U6 — Yahoo oddaje dziś tylko przychód i zysk netto.** Wyszło przy pierwszym imporcie (D4).
+W module `balanceSheetHistory` są wyłącznie `date` i `maxAge`, w `cashflowStatementHistory` sam
+`netIncome`, a w rachunku wyników realne są tylko `totalRevenue` i `netIncome` — `costOfRevenue`,
+`grossProfit`, `totalOperatingExpenses`, `ebit` i `incomeTaxExpense` przychodzą jako **0**.
+Sprawdzone na czterech spółkach z różnych branż: PKO (bank, przychód 29,5 mld, `costOfRevenue: 0`),
+CDR (zysk 595 mln, `ebit: 0`), PKN, DNP — wszędzie tak samo.
+Skutki: (1) baza po imporcie ma przychód i zysk, i nic więcej; (2) wskaźniki wymagające bilansu
+(ROE, P/B, dług/kapitał, płynność) nie mają na poziomie 1 z czego się policzyć i lecą z zaszytych
+`ratios`; (3) `isBank()` w `ratioCalculator` rozpoznaje bank po `grossProfit == null`, a dostaje 0,
+więc dla poziomu 1 **żadna spółka nie jest rozpoznawana jako bank**.
+Importer zer nie zapisuje — w bazie `0` znaczyłoby „zero złotych", a to nieprawda.
+
+**U7 — EBP wskazywał na martwy symbol.** `TICKER_TO_YAHOO` mapował Erste Bank Polska na `SPL.WA`
+(dawny Santander). Yahoo nie zna tego symbolu ani w cenach (`price: null, source: "error"`),
+ani w sprawozdaniach (`source: "unavailable"`), więc spółka od dawna leciała po cichu na dane
+zaszyte z 2024 r. Naprawione w D4: `EBP.WA` — cena wraca, sprawozdania FY2022–FY2025 też.
+
 ## Co z tego wynika dla D2
 
 Wybierany dostawca musi domknąć dwie luki, których U3 nie tyka: **pokrycie 24 spółek GPW** (U2)
@@ -225,7 +242,22 @@ snapshot. Pierwsze podejście do tej migracji poszło właśnie tam i wyparował
 projektu trzeba najpierw sprawdzić, czy widać znane tabele** (`dividends`, `watchlist`), a dopiero
 potem cokolwiek zapisywać.
 
-Dwie rzeczy do zapamiętania na D4:
+## Stan po D4 (2026-09-20)
+
+W tabeli jest **189 wierszy z 24 spółek**: 93 roczne i 96 kwartalnych, okresy od `2022-09-30`
+do `2026-07-31` (ZAB ma jeden rocznik — krótko po debiucie). Wszystkie mają przychód, 184 mają
+zysk netto, **żaden nie ma bilansu ani przepływów** — z powodu U6, nie z powodu importera.
+
+Sprawdzone: drugi przebieg nie tworzy duplikatów (189 → 189, zero powtórzonych kluczy),
+a wiersz oznaczony `verified = true` przechodzi przebieg nietknięty (`updated_at` bez zmian,
+pozostałe wiersze odświeżone).
+
+**Co z tego wynika dla decyzji z D2.** Założenie „Yahoo wystarczy, płatny dostawca później"
+trzyma się wyłącznie dla przychodu i zysku netto. Bilans i przepływy trzeba wziąć skądinąd:
+albo z EODHD (59,99 USD/mc), albo wpisać ręcznie przez panel z D6 — czyli dokładnie tak, jak
+planowałeś na początku, tyle że raz, do bazy, zamiast w kółko do plików.
+
+Dwie rzeczy do zapamiętania na D5:
 
 - **Importer nie może używać klucza `anon`** — RLS go zablokuje. Skrypt w GitHub Actions
   będzie potrzebował klucza `service_role` w sekrecie repozytorium (nigdy w repo, nigdy w `.env`
