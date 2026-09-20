@@ -288,7 +288,26 @@ przebiegu bota. Poprawki wprowadza się w bazie i oznacza `verified = true`.
 
 Kroki są warunkowe, więc brak sekretu pomija krok, a nie wywala całego przebiegu.
 
-Dwie rzeczy do zapamiętania na D6:
+## Stan po D6 (2026-09-20)
+
+`/admin/financials` (gated na to samo konto co `/admin/dividends`) pozwala wybrać spółkę,
+typ okresu i konkretny okres, a potem wpisać wartości w trzech sekcjach: rachunek wyników,
+bilans, przepływy. Pozycje bankowe (`deposits`, `loans`, wynik odsetkowy i prowizyjny)
+pokazują się tylko dla sektorów `banking` i `insurance` — panel pyta o to `isBankSector()`,
+tę samą funkcję, której używa kalkulator wskaźników.
+
+Zapis ustawia `source = 'manual'` i domyślnie `verified = true`, więc importer omija ten okres.
+Puste pole nie trafia do bazy — `null` znaczy „brak danych", zero znaczyłoby „zero złotych".
+Lista pól pochodzi z `CANONICAL_FIELDS` w `financialSchema.js`, żeby formularz nie rozjechał się
+ze schematem.
+
+Sprawdzony przepływ: wiersz zapisany jak z panelu (`source: manual`, `verified: true`, uzupełniony
+bilans) → `npm run import-financials` (188 zapisanych, **1 pominięty jako verified**, wartość
+nietknięta) → `npm run export-financials` → plik `public/data/financials/pkobp/data.json`
+z bilansem i `sources: ["manual", "yahoo"]`. Czyli ręczna poprawka dochodzi do strony
+i przeżywa bota.
+
+Dwie rzeczy do zapamiętania na D7:
 
 - **Importer nie może używać klucza `anon`** — RLS go zablokuje. Skrypt w GitHub Actions
   będzie potrzebował klucza `service_role` w sekrecie repozytorium (nigdy w repo, nigdy w `.env`

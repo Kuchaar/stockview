@@ -88,9 +88,12 @@ To się nie skaluje i cicho starzeje.
   24 pliki (108 kB). Sprawdzone na serwerze dev bez `/api/*`: PKO, CDR i ZAB schodzą na
   `source: 'manual'` z okresami FY2025–FY2022 zamiast na zaszyte dane z 2024 r.
   Bot wymaga trzech sekretów w repo — patrz `docs/DATA.md`.
-- [ ] **D6 — panel `/admin/financials`** (~40 min × 2)
+- [x] **D6 — panel `/admin/financials`** (~40 min × 2)
   Po wzorze `/admin/dividends`: ręczna korekta wiersza i ustawienie flagi `verified`.
   *Gotowe, gdy:* poprawiona ręcznie liczba przeżywa kolejny przebieg importera.
+  Sprawdzone na danych: wiersz `verified` przeszedł import nietknięty (188 zapisanych,
+  1 pominięty) i trafił do `public/data/financials/pkobp/data.json` z `sources: [manual, yahoo]`.
+  Wygląd panelu do obejrzenia po zalogowaniu — w tej sesji Chrome nie łączył się z localhostem.
 - [ ] **D7 — sygnalizacja świeżości** (~40 min)
   Data ostatniej aktualizacji per spółka, widoczna na stronie spółki.
   *Gotowe, gdy:* dane starsze niż kwartał są wizualnie oznaczone.

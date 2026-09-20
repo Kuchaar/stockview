@@ -19,6 +19,27 @@ const YAHOO_ZERO_MEANS_MISSING = new Set([
   'ebitda', 'interestExpense',
 ]);
 
+// Pola kanoniczne w kolejności, w jakiej pokazuje je panel /admin/financials.
+// `bank` to pozycje, które mają sens tylko dla banków i ubezpieczycieli.
+export const CANONICAL_FIELDS = {
+  income: {
+    common: ['revenue', 'costOfRevenue', 'grossProfit', 'operatingExpenses',
+             'operatingIncome', 'ebitda', 'interestExpense', 'netIncome', 'eps'],
+    bank: ['netInterestIncome', 'netFeeIncome', 'provisionForCreditLosses'],
+  },
+  balance: {
+    common: ['totalAssets', 'currentAssets', 'cash', 'totalLiabilities',
+             'currentLiabilities', 'longTermDebt', 'totalDebt', 'totalEquity',
+             'bookValuePerShare'],
+    bank: ['deposits', 'loans'],
+  },
+  cashFlow: {
+    common: ['operatingCashFlow', 'capitalExpenditure', 'freeCashFlow',
+             'investingCashFlow', 'financingCashFlow', 'dividendsPaid'],
+    bank: [],
+  },
+};
+
 /**
  * Create an empty income statement row with all fields set to null
  */

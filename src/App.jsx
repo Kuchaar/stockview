@@ -11,6 +11,7 @@ import ScreenerPage from './pages/ScreenerPage';
 import DividendsPage from './pages/DividendsPage';
 import WatchlistPage from './pages/WatchlistPage';
 import AdminDividendsPage from './pages/AdminDividendsPage';
+import AdminFinancialsPage from './pages/AdminFinancialsPage';
 import { AnimatePresence, motion } from 'framer-motion';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -40,6 +41,7 @@ function AnimatedRoutes() {
           <Route path="/dividends" element={<ErrorBoundary><DividendsPage /></ErrorBoundary>} />
           <Route path="/watchlist" element={<ErrorBoundary><WatchlistPage /></ErrorBoundary>} />
           <Route path="/admin/dividends" element={<ErrorBoundary><AdminDividendsPage /></ErrorBoundary>} />
+          <Route path="/admin/financials" element={<ErrorBoundary><AdminFinancialsPage /></ErrorBoundary>} />
         </Routes>
       </motion.div>
     </AnimatePresence>
