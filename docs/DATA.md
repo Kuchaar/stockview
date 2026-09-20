@@ -206,23 +206,30 @@ admina — ten sam identyfikator co `ADMIN_ID` w `src/pages/AdminDividendsPage.j
 ## Stan po D3 (2026-09-20)
 
 Migracja leży w [`supabase/migrations/20260920120000_financials.sql`](../supabase/migrations/20260920120000_financials.sql)
-i jest zastosowana na projekcie `StockView` (region `eu-west-1`). Sprawdzone:
+i jest zastosowana na projekcie `StockView` (region `eu-west-1`). Sprawdzone na działającej bazie:
 
-- `upsert` na ten sam okres nie robi duplikatu (dwa przebiegi → 1 wiersz);
-- trigger `financials_touch_updated_at` podbija `updated_at` przy każdej zmianie;
-- `anon` czyta tabelę, `anon` nie może do niej pisać;
-- doradca bezpieczeństwa Supabase nie zgłasza żadnych uwag.
+- `upsert` na ten sam okres nie robi duplikatu (dwa przebiegi → 1 wiersz, nowa wartość);
+- trigger `financials_touch_updated_at` podbija `updated_at` przy zmianie w osobnej transakcji;
+- `anon` czyta tabelę, `anon` nie może do niej pisać (`42501`);
+- doradca bezpieczeństwa nie ma uwag do RLS (jedyny wpis dotyczy wyłączonej ochrony przed
+  wyciekłymi hasłami w Auth — do włączenia w panelu, niezwiązane z tą tabelą).
 
-**Uwaga niezwiązana z D3:** schemat `public` był przed migracją **całkiem pusty** — nie ma tabel
-`dividends` ani `watchlist`, a kod ich używa (`src/hooks/useDividends.js`, `src/hooks/useWatchlist.js`,
-`src/pages/AdminDividendsPage.jsx`). Dopóki nie powstaną, kalendarz dywidend i lista obserwowanych
-nie zadziałają nawet po zalogowaniu.
+Pozostałe tabele w `public`: **`dividends`** (17 wierszy, kalendarz dywidend) i **`watchlist`**
+(2 wiersze). Obie mają włączone RLS i działają — `dividends` czyta się bez logowania,
+`watchlist` zwraca tylko wiersze zalogowanego użytkownika.
+
+**Pułapka przy odmrażaniu projektu.** Darmowy projekt zasypia po tygodniu bez ruchu; zastaliśmy go
+uśpionego. `restore` wraca etapami: przez kilka minut baza odpowiada, ale jest to stan przejściowy
+z pustym schematem `public`, a zapisy zrobione w tym czasie znikają w chwili podmiany na właściwy
+snapshot. Pierwsze podejście do tej migracji poszło właśnie tam i wyparowało. **Po odmrożeniu
+projektu trzeba najpierw sprawdzić, czy widać znane tabele** (`dividends`, `watchlist`), a dopiero
+potem cokolwiek zapisywać.
 
 Dwie rzeczy do zapamiętania na D4:
 
 - **Importer nie może używać klucza `anon`** — RLS go zablokuje. Skrypt w GitHub Actions
   będzie potrzebował klucza `service_role` w sekrecie repozytorium (nigdy w repo, nigdy w `.env`
   commitowanym do gita).
-- **Projekt Supabase na darmowym planie zasypia** po tygodniu bez ruchu. Zastaliśmy go uśpionego —
-  przy uśpionym projekcie logowanie, watchlist i dywidendy na produkcji po prostu nie działają.
-  Codzienny przebieg importera przy okazji utrzyma projekt przy życiu.
+- **Projekt Supabase na darmowym planie zasypia** po tygodniu bez ruchu, a wtedy logowanie,
+  watchlist i dywidendy na produkcji nie działają. Codzienny przebieg importera przy okazji
+  utrzyma projekt przy życiu — to argument za codzienną częstotliwością, nie kwartalną.

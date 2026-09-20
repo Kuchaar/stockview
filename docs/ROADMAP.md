@@ -67,7 +67,7 @@ To się nie skaluje i cicho starzeje.
   *Gotowe, gdy:* tabela istnieje, anon ją czyta, ręczny wiersz dla jednej spółki się zapisuje.
   Migracja: `supabase/migrations/20260920120000_financials.sql`, zastosowana na projekcie
   StockView. Sprawdzone: upsert bez duplikatów, trigger `updated_at`, odczyt przez `anon`,
-  zapis przez `anon` odrzucony (42501).
+  zapis przez `anon` odrzucony (42501). Uwaga o odmrażaniu projektu — w `docs/DATA.md`.
 - [ ] **D4 — importer `scripts/import-financials.mjs`** (~40 min)
   Yahoo → `upsert` do Supabase, z pominięciem wierszy `verified = true`.
   *Gotowe, gdy:* po przebiegu 24 spółki mają po 4 roczniki, a drugi przebieg niczego nie psuje
