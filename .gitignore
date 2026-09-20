@@ -7,3 +7,16 @@ dist
 .env.production
 !.env.example
 .wrangler/
+
+# Claude Code — pliki osobiste
+.claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md
+
+*.log
+
+.vscode/*
+!.vscode/extensions.json
+
+# duplikaty z iCloud/Findera
+* 2.*
