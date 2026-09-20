@@ -50,6 +50,8 @@ To się nie skaluje i cicho starzeje.
   często się zmienia.
   *Gotowe, gdy:* tabela „pole → źródło → częstotliwość → kto aktualizuje" jest w `docs/DATA.md`.
   Wynik: [`docs/DATA.md`](DATA.md) — pięć ustaleń (U1–U5); U3 naprawione w D1a.
+  Audyt obejmuje też tabelę `financials` w Supabase, która powstała później — opisują ją
+  sekcje „Stan po D3" i „Stan po D5" w tym samym pliku.
 - [x] **D1a — naprawa dat w `/api/financials`** (~20 min) — wyszło z audytu D1
   Yahoo zwraca `endDate` jako liczbę, `transformStatements()` czeka na `.fmt` — przez to
   `date`/`period` są `null`, a `latest()` bierze najstarszy rocznik zamiast najnowszego.

@@ -9,9 +9,8 @@ A web app for analysing the 24 companies of **WIG20**, the main index of the War
 Exchange. Audience: Polish retail investors. Free, no sign-up for most features.
 Production: **stockview.org** on **Cloudflare Pages** (SPA + Pages Functions).
 
-Caveat: `canonical`/OG tags, the `public/_headers` CSP, `scripts/generate-sitemap.mjs` and
-the CORS allowlist in `functions/api/` still say `stockview.pages.dev` — unifying the domain
-is task S1 in `docs/ROADMAP.md`.
+The canonical address comes from `src/config/site.js` (`SITE_URL`), which
+`scripts/generate-sitemap.mjs` imports as well — never hardcode the domain anywhere else.
 
 ## Commands
 
@@ -101,8 +100,17 @@ Nested in `src/App.jsx` in this order: `ThemeProvider` → `LangProvider` → `A
 Supabase, client in `src/lib/supabase.js`. It exports `null` when `VITE_SUPABASE_URL` or
 `VITE_SUPABASE_ANON_KEY` is missing, and every consumer guards on that — the app builds
 and runs without credentials, only auth, watchlist and dividends stop working.
-Tables in use: `watchlist`, `dividends`. Credentials live in `.env.local`
+Tables in use: `watchlist`, `dividends`, `financials`. Credentials live in `.env.local`
 (see `.env.example`).
+
+`financials` holds the company statements — natural key `(company_id, period_type,
+period_end)`, currently ~189 rows, RLS allows public `select` and writes only from the admin
+account. **The app never reads it at runtime.** `scripts/import-financials.mjs` fills it from
+Yahoo (needs a `service_role` key), `scripts/export-financials.mjs` writes it out to
+`public/data/financials/{companyId}/data.json`, and the app reads those static files as tier 2
+of `useFinancials`. Manual corrections go through `/admin/financials`; a row with
+`verified = true` is never overwritten by the importer. Migration:
+`supabase/migrations/20260920120000_financials.sql`.
 
 ### Charts and styling
 

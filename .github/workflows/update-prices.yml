@@ -6,6 +6,10 @@ on:
     - cron: '0 18 * * 1-5'
   workflow_dispatch: # Allow manual trigger
 
+# Bot commituje public/data/ prosto na main — bez tego GITHUB_TOKEN bywa tylko do odczytu.
+permissions:
+  contents: write
+
 jobs:
   update:
     runs-on: ubuntu-latest
