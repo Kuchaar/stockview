@@ -307,7 +307,20 @@ nietknięta) → `npm run export-financials` → plik `public/data/financials/pk
 z bilansem i `sources: ["manual", "yahoo"]`. Czyli ręczna poprawka dochodzi do strony
 i przeżywa bota.
 
-Dwie rzeczy do zapamiętania na D7:
+## Stan po D7 (2026-09-20) — Bramka 1 zamknięta
+
+`src/components/DataFreshness.jsx` w zakładce Sprawozdania pokazuje, **za jaki okres** są liczby
+(a nie kiedy je pobraliśmy — to dla danych z Yahoo zawsze „dzisiaj" i nic nie znaczy), datę końca
+tego okresu, poziom źródła (`dane bieżące` / `baza StockView` / `dane zapasowe w kodzie`)
+i ostrzeżenie, gdy od końca okresu minęły ponad **92 dni**.
+
+Próg to kwartał z zapasem — spółka raportująca kwartalnie nie powinna milczeć dłużej.
+Na dzisiejszych danych wypada to sensownie: **20 spółek aktualnych** (okresy `2026-06-30`
+i `2026-07-31`), **4 oznaczone** — `pkobp`, `pepco`, `assecopol`, `jsw`, wszystkie z ostatnim
+okresem `2026-03-31`, czyli 173 dni temu. Dane zaszyte w kodzie (poziom 3) kończą się na 2024 r.,
+więc wpadają w ostrzeżenie automatycznie, bez żadnego specjalnego przypadku.
+
+Dwie rzeczy do zapamiętania przy rozwoju:
 
 - **Importer nie może używać klucza `anon`** — RLS go zablokuje. Skrypt w GitHub Actions
   będzie potrzebował klucza `service_role` w sekrecie repozytorium (nigdy w repo, nigdy w `.env`

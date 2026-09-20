@@ -94,9 +94,11 @@ To się nie skaluje i cicho starzeje.
   Sprawdzone na danych: wiersz `verified` przeszedł import nietknięty (188 zapisanych,
   1 pominięty) i trafił do `public/data/financials/pkobp/data.json` z `sources: [manual, yahoo]`.
   Wygląd panelu do obejrzenia po zalogowaniu — w tej sesji Chrome nie łączył się z localhostem.
-- [ ] **D7 — sygnalizacja świeżości** (~40 min)
+- [x] **D7 — sygnalizacja świeżości** (~40 min)
   Data ostatniej aktualizacji per spółka, widoczna na stronie spółki.
   *Gotowe, gdy:* dane starsze niż kwartał są wizualnie oznaczone.
+  `DataFreshness` w zakładce Sprawozdania: okres, data jego końca, poziom źródła i ostrzeżenie
+  po 92 dniach. Na dzisiejszych danych: 20 spółek aktualnych, 4 oznaczone (PKO, PEP, ACP, JSW).
 
 ---
 

@@ -32,6 +32,16 @@ export const translations = {
       search: 'Szukaj spółki...',
     },
     stock: {
+      freshness: {
+        latest: 'Ostatnie dane',
+        periodEnd: 'koniec okresu',
+        stale: 'starsze niż kwartał',
+        days: 'dni',
+        source_yahoo: 'źródło: dane bieżące',
+        source_manual: 'źródło: baza StockView',
+        source_hardcoded: 'źródło: dane zapasowe w kodzie',
+        source_unknown: 'źródło nieznane',
+      },
       chart: 'Wykres',
       financials: 'Dane finansowe',
       valuation: 'Wycena',
@@ -284,6 +294,16 @@ export const translations = {
       search: 'Search stock...',
     },
     stock: {
+      freshness: {
+        latest: 'Latest data',
+        periodEnd: 'period end',
+        stale: 'older than a quarter',
+        days: 'days',
+        source_yahoo: 'source: live feed',
+        source_manual: 'source: StockView database',
+        source_hardcoded: 'source: built-in fallback',
+        source_unknown: 'source unknown',
+      },
       chart: 'Chart',
       financials: 'Financials',
       valuation: 'Valuation',

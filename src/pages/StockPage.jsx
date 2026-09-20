@@ -13,6 +13,7 @@ import useFinancials from '../hooks/useFinancials';
 import { calculateAllRatios } from '../data/ratioCalculator';
 import TradingViewChart from '../components/TradingViewChart';
 import FinancialTable from '../components/FinancialTable';
+import DataFreshness from '../components/DataFreshness';
 import BalanceSheet from '../components/BalanceSheet';
 import IncomeStatement from '../components/IncomeStatement';
 import CashFlowStatement from '../components/CashFlowStatement';
@@ -284,6 +285,8 @@ export default function StockPage() {
         {tab === 'financials' && (
           <div className="card">
             <h2 className="section-title mb-4">{t('stock.financials')}</h2>
+
+            <DataFreshness data={liveFinancials} source={liveFinancials?.source} />
 
             {/* Financial sub-tabs */}
             <div className="flex overflow-x-auto scrollbar-hide gap-1 mb-6 pb-1" role="tablist" aria-label={lang === 'pl' ? 'Typ sprawozdania' : 'Statement type'}>
