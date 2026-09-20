@@ -16,7 +16,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { wig20Companies } from '../src/data/wig20.js';
-import { normalizeFinancials } from '../src/data/financialSchema.js';
+import { normalizeFinancials, YAHOO_ZERO_MEANS_MISSING } from '../src/data/financialSchema.js';
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const API_BASE = process.env.API_BASE || 'https://stockview.org';
@@ -26,15 +26,17 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Pola techniczne kanonicznego wiersza — do bazy trafia sama treść sprawozdania.
 const META_FIELDS = ['date', 'period'];
 
-// Yahoo v10 wypełnia zerami pola, których nie ma: bank z przychodem 29 mld
-// dostaje costOfRevenue: 0, a spółka z zyskiem 595 mln — ebit: 0.
-// Zero to tu „brak danych", nie wartość, więc do bazy nie trafia.
-// Realne liczby zostają tylko w totalRevenue i netIncome — patrz U6 w docs/DATA.md.
+// Yahoo v10 wypełnia zerami pola, których nie podaje: bank z przychodem 29 mld
+// dostaje costOfRevenue: 0, a spółka z zyskiem 595 mln — ebit: 0 (U6 w docs/DATA.md).
+// Zero odrzucamy więc dokładnie w tych polach, co klient — lista jest jedna,
+// YAHOO_ZERO_MEANS_MISSING w financialSchema.js. W pozostałych 0 to prawdziwa wartość:
+// spółka bez długu ma totalDebt = 0 i tak ma to zostać zapisane.
 function stripMeta(row) {
   const out = {};
   for (const [k, v] of Object.entries(row)) {
     if (META_FIELDS.includes(k)) continue;
-    if (v == null || v === 0) continue;
+    if (v == null) continue;
+    if (v === 0 && YAHOO_ZERO_MEANS_MISSING.has(k)) continue;
     out[k] = v;
   }
   return out;

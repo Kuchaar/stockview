@@ -14,7 +14,7 @@ export function isBankSector(sector) {
 // dostaje costOfRevenue: 0, a spółka z zyskiem 595 mln — ebit: 0. Dla tych pól 0 znaczy
 // „brak danych", nie „zero złotych", więc nie trafia do kanonicznego wiersza.
 // Szczegóły: U6 w docs/DATA.md.
-const YAHOO_ZERO_MEANS_MISSING = new Set([
+export const YAHOO_ZERO_MEANS_MISSING = new Set([
   'costOfRevenue', 'grossProfit', 'operatingExpenses', 'operatingIncome',
   'ebitda', 'interestExpense',
 ]);
