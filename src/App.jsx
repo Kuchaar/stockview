@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { LangProvider } from './context/LangContext';
@@ -5,16 +6,32 @@ import { AuthProvider } from './context/AuthContext';
 import { AuthModalProvider } from './context/AuthModalContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
-import StockPage from './pages/StockPage';
-import ComparePage from './pages/ComparePage';
-import ScreenerPage from './pages/ScreenerPage';
-import DividendsPage from './pages/DividendsPage';
-import WatchlistPage from './pages/WatchlistPage';
-import AdminDividendsPage from './pages/AdminDividendsPage';
-import AdminFinancialsPage from './pages/AdminFinancialsPage';
 import { Helmet } from 'react-helmet-async';
 import { AnimatePresence, motion } from 'framer-motion';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Strona główna ładuje się od razu — to na nią trafia większość wejść.
+// Reszta tras dociąga się przy pierwszym wejściu, żeby nie ciągnąć ich w głównej paczce.
+const StockPage = lazy(() => import('./pages/StockPage'));
+const ComparePage = lazy(() => import('./pages/ComparePage'));
+const ScreenerPage = lazy(() => import('./pages/ScreenerPage'));
+const DividendsPage = lazy(() => import('./pages/DividendsPage'));
+const WatchlistPage = lazy(() => import('./pages/WatchlistPage'));
+const AdminDividendsPage = lazy(() => import('./pages/AdminDividendsPage'));
+const AdminFinancialsPage = lazy(() => import('./pages/AdminFinancialsPage'));
+
+/**
+ * Zastępnik na czas dociągania strony. Bez własnego tła — dziedziczy je po `body`,
+ * więc w ciemnym motywie nic nie mignie na biało. Stała wysokość trzyma stopkę w miejscu.
+ */
+function RouteFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center" aria-hidden="true">
+      <div className="w-6 h-6 rounded-full border-2 border-surface-300 dark:border-surface-700
+                      border-t-brand-600 dark:border-t-brand-400 animate-spin" />
+    </div>
+  );
+}
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
@@ -38,6 +55,7 @@ function AnimatedRoutes() {
         {/^\/(admin|watchlist)/.test(location.pathname) && (
           <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
         )}
+        <Suspense fallback={<RouteFallback />}>
         <Routes location={location}>
           <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
           <Route path="/stock/:id" element={<ErrorBoundary><StockPage /></ErrorBoundary>} />
@@ -48,6 +66,7 @@ function AnimatedRoutes() {
           <Route path="/admin/dividends" element={<ErrorBoundary><AdminDividendsPage /></ErrorBoundary>} />
           <Route path="/admin/financials" element={<ErrorBoundary><AdminFinancialsPage /></ErrorBoundary>} />
         </Routes>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );
