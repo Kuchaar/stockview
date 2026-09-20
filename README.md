@@ -36,7 +36,7 @@ Cloudflare Pages + Pages Functions
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Bramki i zadania — co jest zrobione, co następne |
 | [docs/JOURNAL.md](docs/JOURNAL.md) | Dziennik: co się działo w każdej sesji, najnowszy wpis na górze |
 | [docs/prompts/](docs/prompts/README.md) | Archiwum promptów do Claude Code + co z nich wyszło |
-| `AGENTS.md` | Konwencje dla agentów — *powstanie w F4* |
+| [AGENTS.md](AGENTS.md) | Wspólny kontekst dla AI: architektura, konwencje, workflow |
 
 Szybki start dla kogoś, kto ma już Node 22 i sklonowane repo:
 
