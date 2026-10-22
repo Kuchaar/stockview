@@ -80,9 +80,15 @@ do skilli**: zapytanie GraphQL o `reviewThreads` zwraca stan 8 wątków (wszystk
 `isResolved: false`, w tym ten, którego uwagę już naprawiłem — dowód, że poprawka sama
 wątku nie zamyka), a `gh pr checks` oddaje stany `pass`/`pending`. **Żaden skill nie
 został odpalony od początku do końca** — `/sv-start` tak, `/sv-koniec` i `/sv-review`
-nie. Nie sprawdzone: `--force-with-lease` (nie było rebase'u), `resolveReviewThread`
-(mutacja wymaga zgody, zrobiona dopiero na koniec sesji), ścieżka „wysokie ryzyko bez
-recenzenta" — nie było takiego PR-a.
+nie. **`resolveReviewThread` sprawdzona** — zamknęła wszystkie 8 wątków
+(`isResolved: true`). Nie sprawdzone: `--force-with-lease` (nie było rebase'u,
+`origin/main` stał na `cfe0aed`) i ścieżka „wysokie ryzyko bez dostępnego recenzenta"
+— nie było takiego PR-a.
+
+**Drobna lekcja z narzędzia.** `gh api graphql ... --jq '...$id...'` wywala się na
+„variable not defined: $id" — to błąd **jq**, nie GraphQL-a: `$id` jest podstawiane przez
+`-F` do zapytania, ale w filtrze `--jq` to niezdefiniowana zmienna jq. Komunikat wygląda
+jak odrzucenie mutacji, a mutacja była w porządku.
 
 **Następne:** merge PR #1 za zgodą Kamila — to domyka F6 i odblokowuje resztę.
 Potem **K3 — schemat portfela w Supabase**: tabele `portfolio` i `transactions` z RLS
