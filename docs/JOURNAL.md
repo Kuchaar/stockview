@@ -62,6 +62,16 @@ Komputer: `MacBook-Pro-Kamil.local`
      czerwone i brak runu, co kazało pendingów nazywać czerwonymi. Dodane „trwa".
   8. **P2 błędna zapowiedź CI w dzienniku** — to samo, co poprawiłem sam w `613d85e`.
 
+- **Krok „rebase" w `/sv-koniec` naprawiony na warunkowy** — instrukcja, którą napisałem
+  godzinę wcześniej, kazała rebase'ować bezwarunkowo przed sprawdzeniami. Na własnym PR-ze
+  wyszło, czym to grozi: `origin/main` ruszył o jeden commit bota (`02250cd`, same pliki
+  w `public/data/`), PR był `MERGEABLE`/`CLEAN`, a rytualny rebase przepisałby cztery
+  opublikowane commity, wymusił `--force-with-lease` i **unieważnił zrecenzowany SHA wraz
+  z ośmioma pozamykanymi wątkami** — żeby wciągnąć pliki cen, które z niczym nie kolidują.
+  Teraz rebase jest obowiązkowy tylko dla gałęzi jeszcze niewypchniętej albo gdy PR
+  przestał być `MERGEABLE`. Ta sama reguła dopisana do `AGENTS.md` → „Workflow", żeby oba
+  dokumenty nie mówiły czegoś innego.
+
 **Decyzje.**
 
 - **Botom zostaje wyjątek od reguły „wszystko przez PR"** — `update-prices.yml`
@@ -89,6 +99,12 @@ nie. **`resolveReviewThread` sprawdzona** — zamknęła wszystkie 8 wątków
 „variable not defined: $id" — to błąd **jq**, nie GraphQL-a: `$id` jest podstawiane przez
 `-F` do zapytania, ale w filtrze `--jq` to niezdefiniowana zmienna jq. Komunikat wygląda
 jak odrzucenie mutacji, a mutacja była w porządku.
+
+Stan na koniec sesji: PR #1 stoi na `a185621`, CI zielone, 0/8 wątków otwartych,
+`mergeStateStatus: CLEAN`. **Aktualnego SHA nie zrecenzował jeszcze nikt** — Codex patrzył
+na `361d3ea`, a po nim weszły `613d85e`, `e5dd3ca` i `a185621`. Według zasad z tego PR-a to
+„czeka na recenzję aktualnego SHA", nie „bez uwag"; drugie przejście odpala komentarz
+`@codex review`. Linia „ostatni SHA zrecenzowany przez GPT" nadal `nieustalony`.
 
 **Następne:** merge PR #1 za zgodą Kamila — to domyka F6 i odblokowuje resztę.
 Potem **K3 — schemat portfela w Supabase**: tabele `portfolio` i `transactions` z RLS

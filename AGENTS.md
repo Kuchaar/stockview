@@ -166,12 +166,15 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
 - Small commits, conventional commits (`feat:` / `fix:` / `chore:` / `docs:`), description
   in Polish.
 - A bot commits `public/data/` to `main` every weekday, so **rebase on `origin/main` before
-  pushing** a branch — and **re-run the checks after a rebase that moved anything**, because
-  a rebase changes the tree and the SHA that the checks were run against; `pull.rebase` and
-  `rebase.autoStash` are set globally.
-- A rebase of a branch that is already pushed rewrites published commits, so the next push
-  needs `--force-with-lease` — never a bare `--force`. Avoid it where you can: a fix round
-  that only adds commits pushes fast-forward, with no rebase and no lease.
+  pushing a branch that is not published yet** — and **re-run the checks after any rebase
+  that moved something**, because a rebase changes the tree and the SHA the checks were run
+  against; `pull.rebase` and `rebase.autoStash` are set globally.
+- **Once a branch is pushed, rebase it only when it has to be rebased** — when the pull
+  request stops being `MERGEABLE`. A rebase rewrites published commits, so the next push
+  needs `--force-with-lease` (never a bare `--force`) and it invalidates the reviewed SHA
+  and every resolved review thread. Those bot commits in `public/data/` do not conflict with
+  anything, and the merge absorbs them by itself: a tidy history is not worth throwing a
+  review away. A fix round that only adds commits pushes fast-forward.
 - Unfinished work → `wip/*` branch, pushed, so the other machine can pick it up.
 - End a session with an entry at the top of `docs/JOURNAL.md` ending in `Następne:`.
 - **Never commit `.env*`** — `.env.example` is the only exception.

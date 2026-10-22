@@ -25,24 +25,33 @@ Zmiany ręczne nie idą na `main` (`AGENTS.md` → „Workflow"). Jeśli jesteś
 
 Jeśli jesteśmy już na gałęzi roboczej — zostajemy na niej.
 
-### 2. Rebase przed sprawdzeniami, nie po
+### 2. Rebase — tylko gdy trzeba, i zawsze przed sprawdzeniami
 
 ```
 git fetch origin
-git rebase origin/main
+gh pr view <nr> --json mergeable,mergeStateStatus   # jeśli PR już istnieje
 ```
 
-**Kolejność ma znaczenie.** Rebase zmienia drzewo i SHA, więc build zrobiony przed nim
-dotyczy innej wersji niż ta, która pójdzie do PR-a: czysty rebase wciąga do gałęzi kod
-z `main`, którego nikt tu nie testował, a rozwiązywanie konfliktu zmienia ją dodatkowo.
-Dlatego rebase idzie **przed** krokiem 3, a jeśli musisz rebase'ować później — **powtórz
-sprawdzenia**.
+**Najpierw rozstrzygnij, czy rebase jest w ogóle potrzebny.** Rebase'uj, gdy:
 
-Przy konflikcie — **zatrzymaj się** i pokaż, co jest w konflikcie.
+- gałąź nie jest jeszcze wypchnięta — wtedy jest darmowy, rób go zawsze;
+- PR przestał być `MERGEABLE` albo `mergeStateStatus` to `DIRTY` — jest konflikt
+  do rozwiązania.
 
-Gałąź już wypchnięta: rebase przepisuje opublikowane commity, więc push wymaga
-`--force-with-lease` (nigdy samego `--force`). Jeśli nie musisz — nie rebase'uj; same nowe
-commity wchodzą fast-forward.
+**Nie rebase'uj**, gdy PR jest `MERGEABLE`/`CLEAN`, a `origin/main` ruszył tylko tam, gdzie
+nie dotykasz — w praktyce w `public/data/` od bota. Rebase przepisałby opublikowane commity,
+wymusił `--force-with-lease`, **unieważnił zrecenzowany SHA i pozamykane wątki**, a wciągnął
+tylko pliki cen, które i tak nie kolidują. Merge załatwi to sam. Porządek w historii nie
+jest wart unieważnienia recenzji.
+
+Jeśli rebase'ujesz, **kolejność ma znaczenie**: rebase zmienia drzewo i SHA, więc build
+zrobiony przed nim dotyczy innej wersji niż ta, która pójdzie do PR-a — czysty rebase wciąga
+kod z `main`, którego nikt tu nie testował, a rozwiązywanie konfliktu zmienia gałąź
+dodatkowo. Dlatego rebase idzie **przed** krokiem 3, a jeśli musisz go zrobić później —
+**powtórz sprawdzenia**. Przy konflikcie — **zatrzymaj się** i pokaż, co jest w konflikcie.
+
+Push po rebase już opublikowanej gałęzi wymaga `--force-with-lease`, nigdy samego `--force`.
+Same nowe commity wchodzą fast-forward i żadnego lease nie potrzebują.
 
 ### 3. Sprawdzenia dobrane do zmiany
 
