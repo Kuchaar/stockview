@@ -2,6 +2,66 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-22 — Jednolity obieg PR i recenzji
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Role zapisane w `AGENTS.md`** — nowa sekcja „Collaboration": ChatGPT przygotowuje
+  zadanie i metodologię, Claude Code implementuje, Codex recenzuje, Kamil zatwierdza merge
+  konkretnego PR-a. Pod tabelą siedem zasad: wszystko przez PR (instrukcje agentów też),
+  zadanie ma cel + zakres + kryteria akceptacji + sposób weryfikacji, w trakcie review autor
+  nie dotyka gałęzi, review celuje w konkretny SHA, po poprawce ponowne sprawdzenie
+  odpowiedniego zakresu, cisza recenzenta to „nierecenzowane", merge decyzją Kamila.
+- **`Code review rules`** — priorytety według skutku błędu. **P1** (blokuje merge): izolacja
+  danych i sekrety, poprawność walut/jednostek/okresów/źródeł, brak danych nie udaje zera
+  ani pozytywnej oceny (klasa D4a), prognoza odróżniona od raportu, operacja zakończona
+  błędem nie raportuje sukcesu. **P2**: tłumaczenia, dark mode, `SITE_URL`, zależności,
+  bash 3.2, `noindex` w dwóch miejscach, migracja bez noty w `DATA.md` — wprost napisane,
+  że naruszenie konwencji **nie jest automatycznie P1**. **P3**: uwagi, autor może odrzucić
+  z uzasadnieniem. Poza zakresem review: metodologia i suwaki DCF nie są potwierdzeniem
+  zgodności prawnej w żadną stronę — KNF i doradztwo idą do Kamila jako pytanie.
+- **`Workflow` przepisany** — każda ręczna zmiana przez gałąź i PR, na `main` pisze wyłącznie
+  bot, nazwy gałęzi niosą typ commita, rebase na `origin/main` przed pushem jako reguła.
+- **`Finishing a task`** — pięciopunktowy raport z zadania (co i dlaczego, wynik sprawdzeń
+  wraz z ograniczeniami, wyjaśnienie programistyczne, wyjaśnienie finansowe gdy dotyczy,
+  jedna rzecz do sprawdzenia przez Kamila).
+- **Skille przestawione na PR-y.** `/sv-start` pokazuje otwarte PR-y, status CI i nierozwiązane
+  uwagi; `/sv-koniec` kończy na PR-ze i ma zakaz `gh pr merge`; nowy **`/sv-review`** zbiera
+  wszystkie trzy rodzaje uwag (ogólne, `reviews`, komentarze do linii), dzieli je na
+  potwierdzone w zakresie → poprawia bez pytania, sporne → uzasadnia, poza zakresem →
+  oddaje Kamilowi, a na koniec uruchamia sprawdzenia dopasowane do zmiany i wskazuje nowy SHA.
+- **`.claude/settings.json`** — do `allow` dopisane **tylko odczytowe** komendy `gh`
+  (`pr list/view/diff/checks`, `run list/view`, `auth status`) plus `git rebase` i
+  `git rev-parse`. `gh pr create` i `gh api` celowo zostały na pytanie za każdym razem.
+- **Roadmapa** — nowe **F6** w Bramce 0, „gotowe, gdy" na pierwszy pełny obieg PR-a; domyka
+  to też nieprzetestowany warunek z F5 (ścieżka `pull_request` w `ci.yml`).
+
+**Decyzje.**
+
+- **Codex CLI nie jest instalowany** — nie ma go na Macu (sprawdzone `PATH`, `npm ls -g`,
+  brew formuły i kaski, `~/.codex`, `~/.config/codex`). Pakiet `@openai/codex` istnieje
+  (0.163.0), ale instalacja wymaga zgody i `codex login`. Do tego czasu rolę recenzenta
+  obsługuje Codex w przeglądarce na diffie z PR-a — `/sv-review` działa niezależnie, bo
+  czyta komentarze przez `gh`, nie przez Codex. **Lokalnego review nie uruchomiono.**
+- **Brak runu CI to brak sprawdzenia, nie zaliczenie.** `ci.yml` ma `paths-ignore` na
+  `docs/**` i `**/*.md`, więc PR wyłącznie z dokumentacją — w tym ten — nie odpali builda.
+  Oba skille mają obowiązek rozróżniać „zielone / czerwone / brak runu".
+
+**Do sprawdzenia.** Cały obieg jest **nieprzetestowany w działaniu**: w tym repo nigdy nie
+było PR-a (`gh pr list --state all` pusty), więc ani ścieżka `pull_request` w CI, ani format
+wyjścia `gh pr checks` na tym repo nie są zaobserwowanymi faktami. `npm run build` przeszedł
+(`28 URLs`, chunk 602,67 kB), ale niczego tu nie dowodzi — zmieniły się tylko `.md`
+i `.claude/`. Żaden skill nie został odpalony.
+
+**Następne:** przejść ten obieg po raz pierwszy na prawdziwym zadaniu — recenzja tego PR-a
+przez Codex, poprawki przez `/sv-review`, merge decyzją Kamila; przy okazji potwierdzi się
+F6 i warunek z F5. Potem z dziennika D8: UI pod nowe dane — `BalanceSheet.jsx`
+i `CashFlowStatement.jsx` pod nowe pola (`inventory`, `netPPE`, `retainedEarnings`,
+`currentDebt`) i podpis jednostki (U10: Pepco w EUR).
+
+
 ## 2026-09-20 — D8: bilans i przepływy jednak są, tylko pod innym endpointem
 
 Komputer: `MacBook-Pro-Kamil.local`
