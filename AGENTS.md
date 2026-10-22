@@ -154,15 +154,129 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
 
 - **GitHub is the only channel between the two machines.** Never move files any other way.
 - Start a session with `npm run sync`.
+- **Every manual change goes through a branch and a pull request** — code, data fixes,
+  documentation and the agent instructions in this file included. Nothing is pushed
+  straight to `main` by a human or an agent. The only writer on `main` is the price and
+  financials bot.
+- Branch names carry the commit type: `feat/*`, `fix/*`, `chore/*`, `docs/*`, and `wip/*`
+  for work handed over mid-task.
+- A pull request gets a Cloudflare preview deployment; use it to check the change in a
+  browser before asking for a merge.
 - Small commits, conventional commits (`feat:` / `fix:` / `chore:` / `docs:`), description
   in Polish.
-- A bot commits `public/data/` to `main` every weekday, so **always `git pull --rebase`
-  before pushing**; `pull.rebase` and `rebase.autoStash` are set globally.
-- Larger change → `feat/*` branch → Cloudflare preview deployment → merge.
+- A bot commits `public/data/` to `main` every weekday, so **always rebase on
+  `origin/main` before pushing** a branch; `pull.rebase` and `rebase.autoStash` are set
+  globally.
 - Unfinished work → `wip/*` branch, pushed, so the other machine can pick it up.
 - End a session with an entry at the top of `docs/JOURNAL.md` ending in `Następne:`.
 - **Never commit `.env*`** — `.env.example` is the only exception.
 - Stage explicit paths. Never `git add -A`.
+- CI (`.github/workflows/ci.yml`) has `paths-ignore` on `docs/**` and `**/*.md`, so a
+  documentation-only pull request gets **no CI run at all**. That is an absent check, not
+  a green one — say which it is.
+
+## Collaboration
+
+Four participants, one lane each. Nobody silently takes over somebody else's lane.
+
+| Who | Owns |
+|---|---|
+| **ChatGPT** | Prepares the task and the methodology: what to build, in what order, how to tell it worked |
+| **Claude Code** | Implements the task, runs the checks, opens the pull request, applies review fixes |
+| **Codex** | Reviews a pull request: reads the diff, reports findings, does not rewrite the branch |
+| **Kamil** | Decides. Approves or rejects the merge of a specific pull request |
+
+Ground rules:
+
+- **Every manual change goes through a pull request**, including changes to the agent
+  instructions themselves (`AGENTS.md`, `CLAUDE.md`, `.claude/skills/`).
+- **One task has four parts: goal, scope, acceptance criteria, verification method.** A task
+  without them is not ready to start — ask for the missing part instead of guessing it.
+  *Goal* = why this change exists. *Scope* = the files and behaviour it may touch, and what
+  it must leave alone. *Acceptance criteria* = the "done when…" condition, phrased so it can
+  be settled without discussion. *Verification method* = the command, page or query that
+  shows the criteria are met.
+- **While a review is in progress the author does not change the reviewed version.** No new
+  commits on the branch, no rebase, no force-push, until the review comes back.
+- **A review always names a target: a specific SHA, or a diff spelled out exactly**
+  (`gh pr diff <n>`, `git diff A..B`, a list of files). "Review the branch" is not a target —
+  the branch moves.
+- **A change made after a review needs the matching range re-checked.** Not the whole task
+  again, but every criterion the change could have broken, re-run, and the new SHA named.
+- **Silence from a review tool is not approval.** No comments from Codex or from a GitHub
+  Action means "not reviewed yet", never "looks fine". Say which one it is.
+- **A merge happens on Kamil's decision about that one pull request.** Approval of an
+  earlier pull request does not carry over to the next one. No agent merges anything.
+
+## Code review rules
+
+Priorities follow the consequence of the mistake, not the size of the diff.
+
+**P1 — blocks the merge.** It reaches a user, leaks data, or states something false.
+
+1. **User data isolation and secrets.** Every table with an owner column has RLS, and a
+   query cannot return another user's rows. A `service_role` key never reaches client code
+   or a `VITE_*` variable. No secret in the repo, in a log line or in an error message;
+   `.env*` is never committed (`.env.example` excepted).
+2. **Correctness of the numbers.** Currency (Pepco reports in EUR — U10 in
+   [docs/DATA.md](docs/DATA.md)), units (mln vs mld, PLN vs EUR), period
+   (`FY` vs quarter, `period_end`) and source tier have to be right, and a ratio may never
+   mix two of them — no dividing a EUR revenue by a PLN market cap, no FY numerator over a
+   quarterly denominator.
+3. **Missing data must not look like a zero or like a positive verdict.** `null` stays
+   `null` all the way to the screen, an empty row is hidden rather than filled with `0`, and
+   a score, health card or rating never awards points for an input that is absent (this is
+   the D4a class of bug).
+4. **A forecast stays distinguishable from a reported figure.** `2024E` is labelled as an
+   estimate wherever it is shown and never slips into a historical series, a chart or an
+   average as if it had been reported.
+5. **An operation that failed must not report success.** A rejected `upsert`, a caught
+   `fetch`, a partial import or an export that wrote nothing each surface an error state the
+   caller can see. `source: 'unavailable'` from `/api/financials` is a legitimate answer, but
+   only because the client then falls through to the next tier — a swallowed error that
+   leaves the UI showing stale numbers as current is a P1.
+
+**P2 — must be fixed, does not block on its own.** It ships and costs later. Judge each one;
+breaking a convention is not automatically a P1.
+
+- A UI string that bypasses `t()`, or a `t()` key missing its `pl` or `en` entry.
+- Dark mode not checked on a new or changed component.
+- The domain hardcoded instead of coming from `SITE_URL` in `src/config/site.js`.
+- A new dependency added without asking, or bundle growth nobody flagged.
+- A shell script that needs bash 4 (`mapfile`, associative arrays, `${var,,}`) — macOS
+  ships bash 3.2.
+- `noindex` changed in only one of its two places (`public/_headers` and `src/App.jsx`).
+- A migration without a matching note in [docs/DATA.md](docs/DATA.md).
+
+**P3 — remarks.** Naming, dead code, structure, duplication, a clearer way to write it. The
+author may decline a P3 with a reason and that closes it.
+
+Out of scope for a review:
+
+- **A documented methodology or a DCF with adjustable sliders is not a compliance finding
+  either way.** It explains how a number was produced; it says nothing about whether the app
+  may publish it. Legal and regulatory questions (investment-advice status, KNF, required
+  disclaimers) are Kamil's call — raise them as a question to him, never as a P1 "resolved"
+  by pointing at the methodology, and never as an approval of legal standing.
+- Rewriting the branch. A reviewer reports; the author fixes.
+
+## Finishing a task
+
+A finished task is reported in these five points. Keep it short — one to three lines each —
+and put the lasting parts in the existing documents (`docs/JOURNAL.md` for what happened,
+`docs/DATA.md` for data findings, `docs/ROADMAP.md` for the "done when…" condition) instead
+of restating the rules from this file.
+
+1. **What changed and why** — files and behaviour, plus the reason, not a diff retelling.
+2. **Check results and the limits of the verification** — the commands that ran and their
+   outcome, and explicitly what was *not* verified (no browser check, no production run,
+   CI skipped because of `paths-ignore`).
+3. **A short programming explanation** — the non-obvious decision, in two or three sentences,
+   because Kamil is learning web development.
+4. **A financial explanation**, when the task touches money — what the number means, which
+   period and currency it is in, and what it does not mean.
+5. **One thing Kamil can check himself** — a single command, URL or page, with the result to
+   expect.
 
 ## Communication
 

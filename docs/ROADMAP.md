@@ -38,6 +38,18 @@ zaczyna się od odtwarzania kontekstu.
   ⚠️ Pierwotny warunek (PR z zepsutym importem dostaje czerwony status) **nieprzetestowany**
   — ścieżka `pull_request` jest w workflow, zweryfikuje ją pierwszy prawdziwy PR.
 
+- [ ] **F6 — jednolity obieg PR i recenzji** (~40 min)
+  Role (ChatGPT przygotowuje zadanie, Claude Code implementuje, Codex recenzuje, Kamil
+  zatwierdza merge), zasady recenzji z priorytetami P1–P3 i pięciopunktowy raport z zadania
+  — wszystko w `AGENTS.md`. Skille `/sv-start`, `/sv-koniec` i nowy `/sv-review` obsługują
+  PR-y przez `gh`.
+  *Gotowe, gdy:* pierwszy prawdziwy PR przechodzi cały obieg — gałąź → PR → recenzja
+  z uwagami → poprawki z nowym SHA → merge zatwierdzony przez Kamila. Domyka to też
+  nieprzetestowany warunek z F5 (ścieżka `pull_request` w `ci.yml`).
+  ⚠️ Recenzja przez Codex CLI **nieuruchomiona** — narzędzia nie ma na Macu (brak w `PATH`,
+  w `npm ls -g` i w brew). Dopóki nie zostanie zainstalowane i zalogowane, recenzja
+  odbywa się ręcznie albo przez Codex w przeglądarce.
+
 ---
 
 ## Bramka 1 — Dane
