@@ -2,6 +2,95 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-22 — Nowy model współpracy i recenzja Codex na PR #1
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Przebudowany podział odpowiedzialności w `AGENTS.md`** — trzy osoby zamiast czterech
+  ról z promptem GPT w pętli: **Kamil** (cele biznesowe, priorytety, kompromisy, zgoda na
+  merge), **Claude Code** (bieżąca praca wg roadmapy, propozycje zadań, implementacja,
+  testy, dokumentacja, PR-y — **bez promptu od GPT do każdego zadania**), **GPT**
+  (okresowe przeglądy, trudne problemy, architektura, metodologia finansowa, kierunek
+  produktu — **nie jest obowiązkowym recenzentem każdego PR-a**). Powód: dostępność GPT
+  przestała blokować projekt.
+- **Nowe `### Review by risk`** — recenzja dobierana do tego, co zmiana może zepsuć:
+  **niskie** (dokumentacja, drobny wygląd, teksty bez znaczenia finansowego i prawnego)
+  → review Claude plus właściwa weryfikacja; **zwykłe** (zmiana funkcjonalna) → review
+  w osobnej sesji Claude, testy pod zachowanie i sprawdzenie przez Kamila; **wysokie**
+  (RLS, uprawnienia, logowanie, sekrety, migracje, import nadpisujący dane, wzory
+  finansowe, waluty, okresy, źródła) → dodatkowy przegląd przed merge i wdrożeniem,
+  najlepiej GPT. Gdy recenzenta nie ma — PR zostaje otwarty, a praca idzie na niezależne
+  zadanie o niższym ryzyku. Wprost zapisane, że **osobna sesja Claude to świeży kontekst,
+  a nie niezależna recenzja innego modelu**.
+- **Nowa sekcja `## GPT review handover`** — kadencja orientacyjnie 3–5 małych PR-ów albo
+  raz w tygodniu, sześć punktów przekazania i jedna linia ze stanem: **ostatni SHA
+  faktycznie zrecenzowany przez GPT — `nieustalony`**. Dwa zakazy: omówienie raportu nie
+  jest przeglądem kodu i nie przesuwa tej linii; przegląd po merge to **audyt**, nie
+  zatwierdzenie przed wdrożeniem.
+- **Raport z zadania skrócony do pięciu krótkich punktów** (co i dlaczego, co sprawdzone
+  i czego nie, jedna lekcja programistyczna, finanse tylko gdy dotyczą, link do PR-a
+  i następny krok). Dopisane: **zielony build jest dowodem o buildzie, nie o poprawności
+  instrukcji**.
+- **F6 w roadmapie poprawione** — warunek „gotowe, gdy" wymagał recenzji *z uwagami*
+  i poprawki, czyli znalezienia błędu. Teraz obieg zalicza też **review zakończone bez
+  uwag**, byle wskazało sprawdzony SHA i ograniczenia weryfikacji.
+- **Osiem ustaleń z recenzji Codex na PR #1 naprawione** (5× P1, 3× P2) — wszystkie
+  w instrukcjach, które sam wczoraj napisałem:
+  1. **P1 `gh api *` w `allowed-tools`** — wildcard przyznawał bezpytaniowy dostęp do
+     każdego uwierzytelnionego wywołania `gh api`, a ono potrafi pisać (`--method`, pola
+     przełączają je na POST). Usunięty z `/sv-start` i `/sv-review`.
+  2. **P1 push po rebase bez lease** — `/sv-review` robił `git rebase origin/main` i potem
+     zwykły `git push`, który na już opublikowanej gałęzi leci jako non-fast-forward
+     i jest odrzucany. Teraz: rebase tylko gdy PR przestał być `MERGEABLE`, push
+     z `--force-with-lease`, nigdy `--force`.
+  3. **P1 build przed rebase** — `/sv-koniec` budował w kroku 2, a rebase'ował w kroku 4,
+     więc do PR-a szła wersja, której nikt nie sprawdził. Rebase przeniesiony **przed**
+     sprawdzenia, z nakazem powtórzenia ich, jeśli gałąź ruszyła później.
+  4. **P1 stary SHA na drugim komputerze** — `git fetch` + `git switch` wchodzi na
+     **lokalną** gałąź, która może być starsza od PR-a. Teraz: czyste drzewo,
+     `git merge --ff-only`, i jawne `HEAD == headRefOid` przed edycją.
+  5. **P1 commit kasował `CHANGES_REQUESTED`** — w `/sv-start` warunek „review nowsze niż
+     ostatni commit" powodował, że **dorzucenie commita** zamykało uwagi i skill mógł
+     zaproponować nowe zadanie. Teraz liczy się to, czy **aktualny `headRefOid`** został
+     zrecenzowany.
+  6. **P2 odpowiedź nie zamyka wątku** — REST nie oddaje stanu rozwiązania; stan siedzi
+     w GraphQL (`reviewThreads.isResolved`), a zamyka go mutacja `resolveReviewThread`.
+     Oba skille dostały zapytanie i mutację.
+  7. **P2 brak stanu „trwa"** — słownik odpowiedzi `/sv-start` miał tylko zielone,
+     czerwone i brak runu, co kazało pendingów nazywać czerwonymi. Dodane „trwa".
+  8. **P2 błędna zapowiedź CI w dzienniku** — to samo, co poprawiłem sam w `613d85e`.
+
+**Decyzje.**
+
+- **Botom zostaje wyjątek od reguły „wszystko przez PR"** — `update-prices.yml`
+  i `update-financials.yml` nadal commitują `public/data/` prosto na `main`. Uzasadnienie
+  w `AGENTS.md`: pliki są generowane maszynowo, nikt nie recenzuje szeregu cen wzrokiem,
+  a te dwa workflow są tam jedynymi piszącymi. Żaden agent nie merguje bez zgody Kamila.
+- **Codex zostaje jako bot wpięty w repo, nie jako CLI.** Komentuje PR przy otwarciu
+  i to się sprawdziło — 8 ustaleń na pierwszym PR-ze. **Nie jest** okresowym przeglądem
+  GPT ani zatwierdzeniem. CLI nieinstalowane i niepotrzebne.
+- **Jeden proces, nie dwa.** Zmiany weszły do istniejących sekcji i skilli; żadnego
+  nowego pliku ani równoległego obiegu.
+
+**Do sprawdzenia.** **Treść reguł jest niesprawdzalna buildem** — zmieniły się tylko
+`.md` i `.claude/`. Zweryfikowałem za to **działanie dwu rzeczy, które wpisałem
+do skilli**: zapytanie GraphQL o `reviewThreads` zwraca stan 8 wątków (wszystkie
+`isResolved: false`, w tym ten, którego uwagę już naprawiłem — dowód, że poprawka sama
+wątku nie zamyka), a `gh pr checks` oddaje stany `pass`/`pending`. **Żaden skill nie
+został odpalony od początku do końca** — `/sv-start` tak, `/sv-koniec` i `/sv-review`
+nie. Nie sprawdzone: `--force-with-lease` (nie było rebase'u), `resolveReviewThread`
+(mutacja wymaga zgody, zrobiona dopiero na koniec sesji), ścieżka „wysokie ryzyko bez
+recenzenta" — nie było takiego PR-a.
+
+**Następne:** merge PR #1 za zgodą Kamila — to domyka F6 i odblokowuje resztę.
+Potem **K3 — schemat portfela w Supabase**: tabele `portfolio` i `transactions` z RLS
+ograniczonym do właściciela. Uwaga: K3 to **wysokie ryzyko** (RLS i uprawnienia), więc
+według nowych zasad PR czeka na dodatkowy przegląd przed merge, a w razie braku
+recenzenta robimy w tym czasie coś o niższym ryzyku.
+
+
 ## 2026-10-22 — Jednolity obieg PR i recenzji
 
 Komputer: `MacBook-Pro-Kamil.local`
@@ -34,7 +123,11 @@ Komputer: `MacBook-Pro-Kamil.local`
   oddaje Kamilowi, a na koniec uruchamia sprawdzenia dopasowane do zmiany i wskazuje nowy SHA.
 - **`.claude/settings.json`** — do `allow` dopisane **tylko odczytowe** komendy `gh`
   (`pr list/view/diff/checks`, `run list/view`, `auth status`) plus `git rebase` i
-  `git rev-parse`. `gh pr create` i `gh api` celowo zostały na pytanie za każdym razem.
+  `git rev-parse`. `gh pr create` został na pytanie za każdym razem.
+  ⚠️ **Sprostowanie (wpis z 2026-10-22, sesja 2):** napisałem tu, że `gh api` też pyta
+  za każdym razem — to było nieprawdą. Nie było go w `settings.json`, ale wstawiłem
+  `Bash(gh api *)` do `allowed-tools` w `/sv-start` i `/sv-review`, a to przyznaje dostęp
+  bez pytania. Codex zgłosił to jako P1; wildcard usunięty z oby dwu skilli.
 - **Roadmapa** — nowe **F6** w Bramce 0, „gotowe, gdy" na pierwszy pełny obieg PR-a; domyka
   to też nieprzetestowany warunek z F5 (ścieżka `pull_request` w `ci.yml`).
 

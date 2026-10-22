@@ -155,18 +155,23 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
 - **GitHub is the only channel between the two machines.** Never move files any other way.
 - Start a session with `npm run sync`.
 - **Every manual change goes through a branch and a pull request** — code, data fixes,
-  documentation and the agent instructions in this file included. Nothing is pushed
-  straight to `main` by a human or an agent. The only writer on `main` is the price and
-  financials bot.
+  documentation and the agent instructions in this file included. Nothing is pushed straight
+  to `main` by a human or an agent. The only writers on `main` are the two data bots,
+  `update-prices.yml` and `update-financials.yml` — see „Collaboration" for why that
+  exception stands.
 - Branch names carry the commit type: `feat/*`, `fix/*`, `chore/*`, `docs/*`, and `wip/*`
   for work handed over mid-task.
 - A pull request gets a Cloudflare preview deployment; use it to check the change in a
   browser before asking for a merge.
 - Small commits, conventional commits (`feat:` / `fix:` / `chore:` / `docs:`), description
   in Polish.
-- A bot commits `public/data/` to `main` every weekday, so **always rebase on
-  `origin/main` before pushing** a branch; `pull.rebase` and `rebase.autoStash` are set
-  globally.
+- A bot commits `public/data/` to `main` every weekday, so **rebase on `origin/main` before
+  pushing** a branch — and **re-run the checks after a rebase that moved anything**, because
+  a rebase changes the tree and the SHA that the checks were run against; `pull.rebase` and
+  `rebase.autoStash` are set globally.
+- A rebase of a branch that is already pushed rewrites published commits, so the next push
+  needs `--force-with-lease` — never a bare `--force`. Avoid it where you can: a fix round
+  that only adds commits pushes fast-forward, with no rebase and no lease.
 - Unfinished work → `wip/*` branch, pushed, so the other machine can pick it up.
 - End a session with an entry at the top of `docs/JOURNAL.md` ending in `Następne:`.
 - **Never commit `.env*`** — `.env.example` is the only exception.
@@ -179,19 +184,29 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
 
 ## Collaboration
 
-Four participants, one lane each. Nobody silently takes over somebody else's lane.
+Three people, one lane each. Nobody silently takes over somebody else's lane.
 
 | Who | Owns |
 |---|---|
-| **ChatGPT** | Prepares the task and the methodology: what to build, in what order, how to tell it worked |
-| **Claude Code** | Implements the task, runs the checks, opens the pull request, applies review fixes |
-| **Codex** | Reviews a pull request: reads the diff, reports findings, does not rewrite the branch |
-| **Kamil** | Decides. Approves or rejects the merge of a specific pull request |
+| **Kamil** | Business goals, priorities, decisions that need a trade-off, and the approval of every merge |
+| **Claude Code** | Runs the day-to-day work off the agreed roadmap: proposes the next task, implements it, tests it, documents it, opens the pull request. **Does not need a prompt from GPT to start a task.** |
+| **GPT** | Periodic review of accumulated change, hard problems, architecture, financial methodology, judgement on where the product is going. **Not a mandatory reviewer of every pull request.** |
+
+The repo also runs tooling that is not a participant: the Codex bot comments on a pull
+request when it is opened, Cloudflare Pages builds a preview, GitGuardian scans for secrets.
+Useful, all three — but none of them is the periodic GPT review and none of them approves
+anything.
 
 Ground rules:
 
-- **Every manual change goes through a pull request**, including changes to the agent
-  instructions themselves (`AGENTS.md`, `CLAUDE.md`, `.claude/skills/`).
+- **Every manual change goes through a branch and a pull request**, including changes to the
+  agent instructions themselves (`AGENTS.md`, `CLAUDE.md`, `.claude/skills/`).
+  **The standing exception is the data bots**: `update-prices.yml` and
+  `update-financials.yml` commit `public/data/` straight to `main`. That stays — the files
+  are machine-generated, nobody reviews a price series by eye, and those two are the only
+  writers there.
+- **No agent merges anything without Kamil saying so for that specific pull request.**
+  Approval of an earlier pull request does not carry over to the next one.
 - **One task has four parts: goal, scope, acceptance criteria, verification method.** A task
   without them is not ready to start — ask for the missing part instead of guessing it.
   *Goal* = why this change exists. *Scope* = the files and behaviour it may touch, and what
@@ -205,14 +220,70 @@ Ground rules:
   the branch moves.
 - **A change made after a review needs the matching range re-checked.** Not the whole task
   again, but every criterion the change could have broken, re-run, and the new SHA named.
-- **Silence from a review tool is not approval.** No comments from Codex or from a GitHub
-  Action means "not reviewed yet", never "looks fine". Say which one it is.
-- **A merge happens on Kamil's decision about that one pull request.** Approval of an
-  earlier pull request does not carry over to the next one. No agent merges anything.
+- **A review may legitimately end with nothing to fix.** A finished review names the SHA it
+  checked and the limits of what it verified; it does not have to produce a finding. No part
+  of this process requires a bug before it counts as done.
+- **Silence is not approval; an empty finding list with a named SHA is.** No answer from a
+  reviewer, a review-tool run nobody read, a 👍 reaction from a bot, and Kamil's merge
+  decision are four different things. Say which one you actually have.
+
+### Review by risk
+
+What review a change gets follows from what it can break, not from how big it is. The tier
+goes in the pull request description, so nobody has to work it out twice.
+
+**Low risk** — documentation, a minor visual tweak, UI text with no financial or legal
+meaning.
+→ Claude's own review plus the verification that fits the change. No second reviewer, no
+waiting.
+
+**Normal functional change** — behaviour in the app that a user can see or rely on.
+→ review in a **separate Claude session**, tests matched to the behaviour, and a check by
+Kamil. A separate session gives fresh context, which is worth something — but it is **not**
+an independent review by a different model, and it shares the same blind spots. Do not
+report it as one.
+
+**High risk** — RLS and permissions, login, secrets, data migrations, an import that
+overwrites existing data, financial formulas, currencies, periods, data sources.
+→ an **additional review before merge and before deployment**. GPT preferred, or another
+competent reviewer. If none is available: open the pull request, say in it that it is waiting
+on a high-risk review, and **go do an independent task of lower risk**. A missing reviewer is
+never a reason to merge a high-risk change.
+
+## GPT review handover
+
+Cadence, roughly: **every 3–5 small pull requests, or once a week**, whichever comes first,
+and subject to GPT being available. It is a cadence, not a gate — work does not stop waiting
+for it, with the one exception of the high-risk changes above.
+
+**Last SHA actually reviewed by GPT: `nieustalony`.**
+
+Move that line only when a review of the code actually happened. A handover is six short
+items:
+
+1. **Last SHA actually checked by GPT** — the line above, or `nieustalony` when there is none.
+2. **The current SHA, and the pull requests since that point** — numbers and one-line titles.
+3. **What the changes were for, what the checks said, and what is not verified.**
+4. **Material changes to finance, data and security** — formulas, currencies, periods,
+   sources, RLS, secrets, migrations. If there were none, one line saying so.
+5. **At most three questions or decisions** for the review. A fourth is a sign the handover
+   waited too long.
+6. **Whether anything is blocked on a high-risk review**, with the pull request numbers.
+
+Two things a handover must never claim:
+
+- **Discussing a report is not a code review.** If GPT read a summary and replied, the
+  reviewed-SHA line does not move.
+- **A review after a merge is an audit, not pre-deployment approval.** Call it an audit of
+  what already shipped; if it finds something, that is a new task, not a retroactive
+  approval of the merge.
 
 ## Code review rules
 
 Priorities follow the consequence of the mistake, not the size of the diff.
+P1–P3 say **what** to look for. **Who** reviews a given change is decided in
+„Review by risk" above, and the high-risk areas listed there cover the same ground as
+P1 — that is deliberate.
 
 **P1 — blocks the merge.** It reaches a user, leaks data, or states something false.
 
@@ -264,21 +335,19 @@ Out of scope for a review:
 
 ## Finishing a task
 
-A finished task is reported in these five points. Keep it short — one to three lines each —
-and put the lasting parts in the existing documents (`docs/JOURNAL.md` for what happened,
-`docs/DATA.md` for data findings, `docs/ROADMAP.md` for the "done when…" condition) instead
-of restating the rules from this file.
+Keep the closing report short — one to three lines per point. The lasting parts belong in
+`docs/JOURNAL.md`, `docs/DATA.md` and `docs/ROADMAP.md`, not in a retelling of the rules from
+this file.
 
-1. **What changed and why** — files and behaviour, plus the reason, not a diff retelling.
-2. **Check results and the limits of the verification** — the commands that ran and their
-   outcome, and explicitly what was *not* verified (no browser check, no production run,
-   CI skipped because of `paths-ignore`).
-3. **A short programming explanation** — the non-obvious decision, in two or three sentences,
+1. **What changed and why.**
+2. **What was checked, and what was not.** Name the limits: no browser check, no production
+   run, no CI run at all. And keep the evidence honest — **a green build is evidence about
+   the build, never proof that an instruction or a rule is correct.**
+3. **One programming lesson worth keeping** — the non-obvious thing, two or three sentences,
    because Kamil is learning web development.
-4. **A financial explanation**, when the task touches money — what the number means, which
-   period and currency it is in, and what it does not mean.
-5. **One thing Kamil can check himself** — a single command, URL or page, with the result to
-   expect.
+4. **A financial explanation, only when the task touches money** — what the number means, for
+   which period and in which currency, and what it does not mean.
+5. **The pull request link and the next step.**
 
 ## Communication
 

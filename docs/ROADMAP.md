@@ -39,19 +39,24 @@ zaczyna się od odtwarzania kontekstu.
   — ścieżka `pull_request` jest w workflow, zweryfikuje ją pierwszy prawdziwy PR.
 
 - [ ] **F6 — jednolity obieg PR i recenzji** (~40 min)
-  Role (ChatGPT przygotowuje zadanie, Claude Code implementuje, Codex recenzuje, Kamil
-  zatwierdza merge), zasady recenzji z priorytetami P1–P3 i pięciopunktowy raport z zadania
-  — wszystko w `AGENTS.md`. Skille `/sv-start`, `/sv-koniec` i nowy `/sv-review` obsługują
-  PR-y przez `gh`.
-  *Gotowe, gdy:* pierwszy prawdziwy PR przechodzi cały obieg — gałąź → PR → recenzja
-  z uwagami → poprawki z nowym SHA → merge zatwierdzony przez Kamila.
-  W trakcie: [PR #1](https://github.com/Kuchaar/stockview/pull/1) — gałąź, PR i CI zrobione,
-  czeka na recenzję. Przy okazji zamknęła się pierwsza połowa warunku z F5: ścieżka
-  `pull_request` w `ci.yml` odpaliła się i jest zielona (33 s). Druga połowa — że PR
-  z zepsutym importem dostaje czerwony status — nadal nieprzetestowana.
-  ⚠️ Recenzja przez Codex CLI **nieuruchomiona** — narzędzia nie ma na Macu (brak w `PATH`,
-  w `npm ls -g` i w brew). Dopóki nie zostanie zainstalowane i zalogowane, recenzja
-  odbywa się ręcznie albo przez Codex w przeglądarce.
+  Podział odpowiedzialności (Kamil — cele i zgoda na merge; Claude Code — bieżąca praca,
+  propozycje zadań, implementacja, testy, PR-y; GPT — okresowe przeglądy, architektura
+  i metodologia finansowa), **dobór recenzji do ryzyka**, zasady P1–P3, sekcja przekazania
+  do przeglądu GPT i krótki raport z zadania — wszystko w `AGENTS.md`. Skille `/sv-start`,
+  `/sv-koniec` i `/sv-review` obsługują PR-y przez `gh`.
+  *Gotowe, gdy:* pierwszy prawdziwy PR przechodzi cały obieg — gałąź → PR → **review
+  zakończone wskazaniem sprawdzonego SHA i ograniczeń weryfikacji (z uwagami albo bez)**
+  → jeśli były uwagi, poprawki z nowym SHA i ponownym sprawdzeniem dotkniętego zakresu
+  → merge za zgodą Kamila. Warunek **nie wymaga znalezienia błędu** — recenzja bez uwag
+  zalicza obieg tak samo.
+  W trakcie: [PR #1](https://github.com/Kuchaar/stockview/pull/1). Zrobione: gałąź, PR,
+  CI zielone, **recenzja Codex z 8 ustaleniami** (5× P1) i poprawki. Został merge.
+  Przy okazji zamknęła się pierwsza połowa warunku z F5: ścieżka `pull_request` w `ci.yml`
+  odpaliła się i jest zielona. Druga połowa — że PR z zepsutym importem dostaje czerwony
+  status — nadal nieprzetestowana.
+  ℹ️ Codex działa jako **bot wpięty w repo** (komentuje PR przy otwarciu), nie jako CLI;
+  CLI nie jest zainstalowane i nie jest potrzebne. Bot nie jest okresowym przeglądem GPT
+  i niczego nie zatwierdza.
 
 ---
 

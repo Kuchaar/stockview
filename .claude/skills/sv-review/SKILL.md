@@ -1,7 +1,7 @@
 ---
 description: Recenzja StockView — zebranie uwag z PR-a, poprawki w zakresie zadania i nowy SHA
 disable-model-invocation: true
-allowed-tools: Bash(npm run build) Bash(git *) Bash(git push *) Bash(gh pr list *) Bash(gh pr view *) Bash(gh pr diff *) Bash(gh pr checks *) Bash(gh api *) Read Edit Write
+allowed-tools: Bash(npm run build) Bash(git *) Bash(git push *) Bash(gh pr list *) Bash(gh pr view *) Bash(gh pr diff *) Bash(gh pr checks *) Read Edit Write
 argument-hint: "[numer PR-a]"
 ---
 
@@ -14,92 +14,124 @@ cichego rozszerzania zakresu zadania.
 (`gh pr view --json number`), a jeśli i tego nie ma, pokaż `gh pr list --state open`
 i spytaj który.
 
+> `gh api` nie jest na liście `allowed-tools` — potrafi pisać, więc każde wywołanie pyta
+> o zgodę. Dotyczy to też mutacji GraphQL w kroku 5.
+
 ## Kroki
 
-### 1. Ustal, czego dotyczy recenzja
+### 1. Stań dokładnie na recenzowanym SHA
 
 ```
 gh pr view <nr> --json number,title,headRefName,headRefOid,baseRefName,body
-git fetch origin && git switch <headRefName> && git log --oneline -1
+git status --porcelain          # musi być pusto
+git fetch origin
+git switch <headRefName>
+git merge --ff-only origin/<headRefName>
+git rev-parse HEAD              # musi równać się headRefOid
 ```
 
-Zapisz **SHA, którego dotyczyły uwagi** (z opisu PR-a albo z `commit_id` komentarzy)
-i porównaj z `headRefOid`. Jeśli gałąź przesunęła się od czasu recenzji, powiedz to —
-część uwag może być nieaktualna i trzeba je sprawdzić względem nowego diffu.
+`git fetch` aktualizuje tylko `origin/*`, a `git switch` wchodzi na **lokalną** gałąź —
+na drugim komputerze może ona być starsza od PR-a i poprawki wylądują na innym SHA niż
+recenzowany. Dlatego: czyste drzewo robocze, fast-forward z `origin/<headRefName>`
+i jawne sprawdzenie, że `HEAD == headRefOid`. Jeśli fast-forward nie przechodzi albo SHA
+się nie zgadza — **zatrzymaj się** i powiedz, co jest rozjechane.
 
-### 2. Zbierz wszystkie trzy rodzaje uwag
+Zapisz też **SHA, którego dotyczyły uwagi** (`commit_id` komentarzy, `commit.oid` review).
+Jeśli jest inny niż `headRefOid`, część uwag może być nieaktualna — sprawdź je względem
+nowego diffu, nie przyjmuj na słowo.
 
-Nie wystarczy jedno źródło — GitHub trzyma je w trzech miejscach:
+### 2. Zbierz uwagi ze wszystkich miejsc
+
+GitHub trzyma je w czterech różnych miejscach i żadne nie zastępuje pozostałych:
 
 ```
-gh pr view <nr> --comments                                        # komentarze ogólne
-gh api repos/{owner}/{repo}/pulls/<nr>/reviews                    # reviews + ich stan
-gh api repos/{owner}/{repo}/pulls/<nr>/comments                   # komentarze do linii
-gh pr checks <nr>                                                 # status CI
+gh pr view <nr> --comments                       # komentarze ogólne
+gh pr checks <nr>                                # status CI
+gh api repos/{owner}/{repo}/pulls/<nr>/reviews   # reviews + stan + commit_id
+gh api graphql -f query='query($owner:String!,$repo:String!,$pr:Int!){
+  repository(owner:$owner,name:$repo){ pullRequest(number:$pr){
+    reviewThreads(first:100){nodes{id isResolved isOutdated
+      comments(first:10){nodes{path line body author{login}}}}}}}}' \
+  -F owner=Kuchaar -F repo=stockview -F pr=<nr>
 ```
 
-Zrób z nich jedną listę: plik, linia, treść uwagi, autor, i priorytet według
-„Code review rules" w `AGENTS.md` (P1 / P2 / P3).
+Ostatnie zapytanie jest niezbędne: **REST nie oddaje stanu rozwiązania wątku**, a to on
+decyduje, co jest jeszcze otwarte.
 
-**Brak komentarzy nie jest akceptacją.** Jeśli nic nie przyszło — napisz „recenzji nie
-ma", nie „recenzja bez uwag", i zatrzymaj się. Nie ma czego poprawiać.
+Zrób jedną listę: plik, linia, treść, autor, `id` wątku i priorytet wg „Code review rules"
+w `AGENTS.md` (P1 / P2 / P3).
+
+**Recenzja bez uwag jest skończoną recenzją.** Rozróżnij trzy sytuacje i nie zwijaj ich
+w jedną:
+- **recenzji nie ma** — nikt nie patrzył. Nie ma czego poprawiać; powiedz to i zatrzymaj
+  się. To nie jest akceptacja.
+- **recenzja była i nie znalazła nic** — recenzent nazwał sprawdzony SHA i ograniczenia
+  weryfikacji (bot Codex przy braku uwag zostawia reakcję 👍). To wynik pełnoprawny:
+  zapisz sprawdzony SHA i ograniczenia, i tyle. Nie szukaj błędu na siłę, żeby „zaliczyć"
+  proces.
+- **są uwagi** — idź do kroku 3.
 
 ### 3. Rozdziel uwagi na trzy kubełki
 
-- **Potwierdzony błąd w zakresie zadania** — sprawdziłeś w kodzie, że uwaga jest
-  prawdziwa, a poprawka mieści się w zakresie z opisu PR-a.
+- **Potwierdzony błąd w zakresie zadania** — sprawdziłeś w kodzie, że uwaga jest prawdziwa,
+  a poprawka mieści się w zakresie z opisu PR-a.
   → **Popraw bez pytania.** Nie pytaj o każdą osobno.
-- **Uwaga sporna** — uwaga jest nieprawdziwa, nieaktualna, albo to P3, który odrzucasz.
-  → **Nie poprawiaj. Uzasadnij.** Jedno–dwa zdania plus odwołanie do kodu albo do reguły.
-  Odpowiedz w wątku komentarza, żeby nie została jako nierozwiązana.
-- **Uwaga wychodząca poza zakres** — słuszna, ale wymaga zmiany innego pliku, migracji,
-  nowej zależności albo dotyka prawa/regulacji.
+- **Uwaga sporna** — nieprawdziwa, nieaktualna, albo P3, który odrzucasz.
+  → **Nie poprawiaj. Uzasadnij** jednym–dwoma zdaniami, z odwołaniem do kodu albo do reguły,
+  odpowiadając w wątku.
+- **Uwaga wychodząca poza zakres** — słuszna, ale wymaga innego pliku, migracji, nowej
+  zależności, albo dotyka prawa i regulacji.
   → **Przedstaw Kamilowi i czekaj.** Napisz, czego dotyczy, czym grozi odłożenie i czy
   proponujesz osobne zadanie w roadmapie. Nie dopisuj tego do tego PR-a na własną rękę.
 
-Recenzent zgłasza, autor poprawia — nie odwrotnie. Nie przepisuj za recenzenta jego uwag
-i nie zamykaj wątku bez odpowiedzi.
+Recenzent zgłasza, autor poprawia — nie odwrotnie.
 
 ### 4. Popraw i sprawdź właściwy zakres
 
-Poprawki w osobnych commitach (`fix:` albo `docs:`), opis po polsku, co uwaga za uwagą.
+Poprawki w osobnych commitach (`fix:` albo `docs:`), opis po polsku, uwaga za uwagą.
 
-Potem uruchom **sprawdzenia odpowiadające temu, co zmieniłeś** — nie cały rytuał
-na ślepo i nie wyłącznie build:
+Potem uruchom sprawdzenia dobrane do tego, co zmieniłeś — tabela jest w `/sv-koniec`,
+krok 3. Zasada z `AGENTS.md`: **zmiana po recenzji wymaga sprawdzenia tego zakresu, który
+mogła zepsuć** — nie całego zadania od zera, ale każdego dotkniętego kryterium.
 
-| Zmiana dotyczy | Co uruchomić |
-|---|---|
-| kod `src/` lub `functions/` | `npm run build` |
-| `/api/*` | `npm run dev:full` i `curl` na konkretny endpoint |
-| teksty w UI | oba języki (`t()` ma wpis `pl` i `en`) i oba motywy |
-| liczby, wskaźniki, waluty | ręczne przeliczenie na jednej spółce, z podaniem okresu |
-| skrypty w `scripts/` | przebieg na jednej spółce, nigdy importer produkcyjny na całości |
-| wyłącznie dokumentacja | nic się nie uruchamia — powiedz to wprost |
+Zielony build nie jest dowodem na poprawność reguły ani instrukcji.
 
-Zasada z `AGENTS.md`: **zmiana po recenzji wymaga ponownego sprawdzenia tego zakresu,
-który mogła zepsuć.** Nie całego zadania od zera, ale każdego kryterium, które dotyczy.
-
-### 5. Wypchnij i wskaż nowy SHA
+### 5. Wypchnij, zamknij wątki, wskaż nowy SHA
 
 ```
-git fetch origin && git rebase origin/main
-git push
+git push                        # same nowe commity wchodzą fast-forward
 git rev-parse HEAD
 ```
 
-Nowy SHA podaj jawnie i dopisz go w komentarzu do PR-a — recenzja dotyczy konkretnej
-wersji, więc kolejne przejście musi wiedzieć, której.
+Rebase rób **tylko wtedy**, gdy PR przestał być `MERGEABLE`. Wtedy po rebase:
+**powtórz sprawdzenia** (rebase zmienia drzewo i SHA) i pushuj z `--force-with-lease` —
+nigdy samym `--force`. Bez lease push po rebase gałęzi już opublikowanej zostanie odrzucony
+jako non-fast-forward i poprawki nigdy nie trafią do PR-a.
 
-**Nie scalaj PR-a.** Merge to decyzja Kamila dotycząca tego jednego PR-a.
+**Odpowiedź w wątku go nie zamyka.** Wątek zamyka dopiero mutacja — zrób to dla każdego
+wątku, który załatwiłeś albo odrzuciłeś z uzasadnieniem:
+
+```
+gh api graphql -f query='mutation($id:ID!){
+  resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -F id=<thread id>
+```
+
+Wątków spornych nie zamykaj, dopóki nie wpiszesz w nie uzasadnienia. Wątków poza zakresem
+nie zamykaj wcale — czekają na decyzję Kamila.
+
+Na koniec dopisz **nowy SHA w komentarzu do PR-a** razem z tym, co ponownie sprawdzono.
+
+**Nie scalaj PR-a.** Merge to zgoda Kamila na ten konkretny PR.
 
 ## Odpowiedź
 
 Po polsku, krótko:
 
 1. **SHA recenzowany → SHA nowy.**
-2. **Poprawione** — lista: uwaga → co zmieniono, z priorytetem (P1/P2/P3).
+2. **Poprawione** — uwaga → co zmieniono, z priorytetem (P1/P2/P3).
 3. **Odrzucone ze sporu** — uwaga → uzasadnienie, jedno zdanie każde.
-4. **Dla Kamila** — uwagi wychodzące poza zakres, z propozycją (osobne zadanie / zmiana
-   zakresu / zostawiamy).
-5. **Wynik sprawdzeń i czego nie sprawdzono.**
-6. Status CI dla nowego SHA, z rozróżnieniem „zielone / czerwone / brak runu".
+4. **Dla Kamila** — uwagi poza zakresem, z propozycją (osobne zadanie / zmiana zakresu /
+   zostawiamy).
+5. **Co sprawdzono ponownie, a czego nie.**
+6. **Stan wątków** (ile zamkniętych, ile otwartych i dlaczego) oraz status CI dla nowego
+   SHA — „zielone / czerwone / trwa / brak runu".
