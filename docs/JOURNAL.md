@@ -106,11 +106,45 @@ na `361d3ea`, a po nim weszły `613d85e`, `e5dd3ca` i `a185621`. Według zasad z
 „czeka na recenzję aktualnego SHA", nie „bez uwag"; drugie przejście odpala komentarz
 `@codex review`. Linia „ostatni SHA zrecenzowany przez GPT" nadal `nieustalony`.
 
-**Następne:** merge PR #1 za zgodą Kamila — to domyka F6 i odblokowuje resztę.
-Potem **K3 — schemat portfela w Supabase**: tabele `portfolio` i `transactions` z RLS
-ograniczonym do właściciela. Uwaga: K3 to **wysokie ryzyko** (RLS i uprawnienia), więc
-według nowych zasad PR czeka na dodatkowy przegląd przed merge, a w razie braku
-recenzenta robimy w tym czasie coś o niższym ryzyku.
+**Druga recenzja Codex, już po napisaniu tego wpisu** — na `a185621`, **6 ustaleń, wszystkie
+P2**, wszystkie w skillach i wszystkie prawdziwe. Jedno jest poważne, bo przewraca regułę,
+którą w tej sesji wprowadzaliśmy:
+
+1. **Zakleszczenie przy wysokim ryzyku** (`/sv-start`) — PR wysokiego ryzyka czekający na
+   recenzenta **z definicji** ma niezrecenzowany `headRefOid`, więc zawsze wpada w punkt 1
+   mojego pierwszeństwa i dostaje `/sv-review`, a ten skill przy braku recenzji się
+   zatrzymuje. Punkt 2 — „weź niezależne zadanie o niższym ryzyku" — nigdy się nie
+   wykona. Czyli instrukcja robi dokładnie to, czemu miała zapobiec: **brak recenzenta
+   blokuje dalszą pracę.** Kolejność trzeba odwrócić.
+2. **Reakcja 👍 nieodczytywana** (`/sv-start`) — sam opisałem, że Codex przy braku uwag
+   zostawia reakcję, ale żadne z moich zapytań jej nie pobiera (`reactionGroups` jest
+   osobno od `--comments`). Recenzja bez uwag byłaby raportowana jako „brak recenzji".
+3. **`CHANGES_REQUESTED` bez wątku** (`/sv-start`) — review w samej treści, bez komentarza
+   do linii, przechodzi mój warunek (review istnieje, 0 otwartych wątków) i skill
+   zaproponowałby nowe zadanie. Trzeba sprawdzać **stan** review, nie samo istnienie.
+4. **`mergeable` niepobierane** (`/sv-review`) — krok 5 każe rebase'ować „tylko gdy PR nie
+   jest `MERGEABLE`", a krok 1 tego pola nie czyta. Poprawki wejdą, PR zostanie
+   skonfliktowany.
+5. **Ukończona praca z `wip/*`** (`/sv-koniec`) — reguła „`wip/*` nie dostaje PR-a" jest
+   bezwarunkowa, więc praca podjęta z `wip/` i **skończona** nigdy nie trafi do obiegu
+   recenzji. Trzeba ją przemianować na docelowy prefiks.
+6. **Skille to nie proza** (`/sv-koniec`) — mój wiersz w tabeli „wyłącznie dokumentacja lub
+   instrukcje → nic się nie uruchamia" dotyczy plików, które **wykonują** polecenia gita
+   i API. A skoro zmiana samych `.md` nie dostaje też runu CI, błąd w komendzie dojedzie
+   nietknięty do następnej sesji. W tej sesji wpadłem w to dwa razy — oba razy
+   „nic nie uruchamiam, bo to dokumentacja".
+
+Ustalenia 1 i 6 są w praktyce najważniejsze: pierwsze wprost przeczy wymaganiu
+„brak recenzenta nie blokuje pracy", drugie podważa sposób, w jaki weryfikowałem
+całą tę sesję.
+
+**Następne:** **`/sv-review` na PR #1** — sześć otwartych ustaleń P2 z drugiej recenzji
+Codex, zaczynając od zakleszczenia przy wysokim ryzyku (punkt 1 wyżej), bo ono przeczy
+zasadzie, którą ten PR wprowadza. **Merge dopiero po tym** — zatwierdzanie reguł
+z zakleszczeniem w środku nie ma sensu. Potem **K3 — schemat portfela w Supabase**: tabele
+`portfolio` i `transactions` z RLS ograniczonym do właściciela. K3 to **wysokie ryzyko**
+(RLS i uprawnienia), więc jego PR czeka na dodatkowy przegląd przed merge — i to będzie
+pierwszy prawdziwy test tej ścieżki.
 
 
 ## 2026-10-22 — Jednolity obieg PR i recenzji
