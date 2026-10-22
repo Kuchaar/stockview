@@ -45,15 +45,25 @@ Komputer: `MacBook-Pro-Kamil.local`
   (0.163.0), ale instalacja wymaga zgody i `codex login`. Do tego czasu rolę recenzenta
   obsługuje Codex w przeglądarce na diffie z PR-a — `/sv-review` działa niezależnie, bo
   czyta komentarze przez `gh`, nie przez Codex. **Lokalnego review nie uruchomiono.**
-- **Brak runu CI to brak sprawdzenia, nie zaliczenie.** `ci.yml` ma `paths-ignore` na
-  `docs/**` i `**/*.md`, więc PR wyłącznie z dokumentacją — w tym ten — nie odpali builda.
-  Oba skille mają obowiązek rozróżniać „zielone / czerwone / brak runu".
+- **Brak runu CI to brak sprawdzenia, nie zaliczenie.** Oba skille mają obowiązek
+  rozróżniać „zielone / czerwone / brak runu". Przy okazji poprawka mojej własnej
+  pomyłki: zapowiedziałem, że ten PR nie dostanie runu, a dostał i jest zielony.
+  `paths-ignore` pomija build tylko wtedy, gdy **wszystkie** zmienione pliki pasują do
+  wzorca — a tu zmienił się też `.claude/settings.json`, który nie jest `.md`. Zasada
+  w `AGENTS.md` została doprecyzowana.
 
-**Do sprawdzenia.** Cały obieg jest **nieprzetestowany w działaniu**: w tym repo nigdy nie
-było PR-a (`gh pr list --state all` pusty), więc ani ścieżka `pull_request` w CI, ani format
-wyjścia `gh pr checks` na tym repo nie są zaobserwowanymi faktami. `npm run build` przeszedł
-(`28 URLs`, chunk 602,67 kB), ale niczego tu nie dowodzi — zmieniły się tylko `.md`
-i `.claude/`. Żaden skill nie został odpalony.
+**Sprawdzone na żywo.** **PR #1 — pierwszy w tym repo** (`gh pr list --state all` był
+pusty). Ścieżka `pull_request` w `ci.yml` **działa**: oba runy (`push` i `pull_request`)
+zielone, 47 s i 33 s. Poza CI odezwały się dwa sprawdzenia, o których nie wiedziałem, że są
+na repo wpięte: **Cloudflare Pages** (deployment podglądowy, `pass`) i **GitGuardian Security
+Checks** (`pass`). `npm run build` lokalnie przeszedł (`28 URLs`, chunk 602,67 kB).
+
+**Do sprawdzenia.** Druga połowa warunku z F5 — że PR z zepsutym importem dostaje czerwony
+status — nadal **nieprzetestowana**; zielone CI na zmianie dokumentacyjnej tego nie dowodzi.
+Recenzji na PR #1 nie ma (0 `reviews`, 0 komentarzy do linii), czyli obieg jest przejechany
+w połowie: gałąź → PR → CI. Brakuje recenzji, poprawek i merge'a. Żaden skill nie został
+odpalony — kroki wykonałem ręcznie, więc sama treść `/sv-start` i `/sv-review` jest
+niesprawdzona w boju.
 
 **Następne:** przejść ten obieg po raz pierwszy na prawdziwym zadaniu — recenzja tego PR-a
 przez Codex, poprawki przez `/sv-review`, merge decyzją Kamila; przy okazji potwierdzi się

@@ -44,8 +44,11 @@ zaczyna się od odtwarzania kontekstu.
   — wszystko w `AGENTS.md`. Skille `/sv-start`, `/sv-koniec` i nowy `/sv-review` obsługują
   PR-y przez `gh`.
   *Gotowe, gdy:* pierwszy prawdziwy PR przechodzi cały obieg — gałąź → PR → recenzja
-  z uwagami → poprawki z nowym SHA → merge zatwierdzony przez Kamila. Domyka to też
-  nieprzetestowany warunek z F5 (ścieżka `pull_request` w `ci.yml`).
+  z uwagami → poprawki z nowym SHA → merge zatwierdzony przez Kamila.
+  W trakcie: [PR #1](https://github.com/Kuchaar/stockview/pull/1) — gałąź, PR i CI zrobione,
+  czeka na recenzję. Przy okazji zamknęła się pierwsza połowa warunku z F5: ścieżka
+  `pull_request` w `ci.yml` odpaliła się i jest zielona (33 s). Druga połowa — że PR
+  z zepsutym importem dostaje czerwony status — nadal nieprzetestowana.
   ⚠️ Recenzja przez Codex CLI **nieuruchomiona** — narzędzia nie ma na Macu (brak w `PATH`,
   w `npm ls -g` i w brew). Dopóki nie zostanie zainstalowane i zalogowane, recenzja
   odbywa się ręcznie albo przez Codex w przeglądarce.

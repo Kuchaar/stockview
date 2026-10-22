@@ -171,9 +171,11 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
 - End a session with an entry at the top of `docs/JOURNAL.md` ending in `Następne:`.
 - **Never commit `.env*`** — `.env.example` is the only exception.
 - Stage explicit paths. Never `git add -A`.
-- CI (`.github/workflows/ci.yml`) has `paths-ignore` on `docs/**` and `**/*.md`, so a
-  documentation-only pull request gets **no CI run at all**. That is an absent check, not
-  a green one — say which it is.
+- CI (`.github/workflows/ci.yml`) has `paths-ignore` on `docs/**` and `**/*.md`, and it
+  skips the run only when **every** changed file matches. A pull request touching docs plus
+  anything else — a config file, `.claude/settings.json` — still gets a CI run; one made of
+  pure Markdown gets **no run at all**. An absent run is an absent check, not a green one, so
+  look at which of the two you have instead of predicting it from the file list.
 
 ## Collaboration
 
