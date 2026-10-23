@@ -153,7 +153,8 @@ To się nie skaluje i cicho starzeje.
   Po imporcie: 189 → **243 wiersze**, 218 z bilansem, 212 z przepływami, wszystkie 24 spółki,
   najnowszy okres `2026-07-31` zamiast `2026-03-31`. Przy okazji U10: Pepco raportuje w EUR.
 
-- [ ] **D9 — waluta nie dochodzi do ekranu, Pepco pokazane jako PLN** (~40 min) — ryzyko: **wysokie** (waluty)
+- [x] **D9 — waluta nie dochodzi do ekranu, Pepco pokazane jako PLN** (~40 min) — ryzyko: **wysokie** (waluty)
+  · [`711b868`](https://github.com/Kuchaar/stockview/commit/711b868) · PR #7 · eksport: [run 40008760790](https://github.com/Kuchaar/stockview/actions/runs/40008760790), commit bota [`532e71d`](https://github.com/Kuchaar/stockview/commit/532e71d)
   Wyszło 2026-10-23 przy sprawdzaniu P0 — **nie jest skutkiem żadnej z dzisiejszych zmian**,
   siedziało tam wcześniej. D8 ustaliło U10 („Pepco raportuje w EUR"), baza to wie
   (`currency = 'EUR'` na 7 wierszach Pepco), ale na ekran ta informacja nie dochodzi:
@@ -170,38 +171,134 @@ To się nie skaluje i cicho starzeje.
   *Gotowe, gdy:* tabela sprawozdań Pepco pokazuje `mln EUR`, a spółek raportujących w złotych
   `mln PLN`, nagłówek bierze walutę z danych, eksport zapisuje `currency` w każdym wierszu
   pliku, i żaden wskaźnik nie dzieli liczby w EUR przez liczbę w PLN.
-  *Niesprawdzone:* czy któryś wskaźnik już dziś miesza EUR z kapitalizacją w złotych —
-  `src/data/ratioCalculator.js` używa słowa `currency` tylko jako nazwy formatu, więc osłony
-  walutowej tam nie widziałem, ale pełnej ścieżki liczb nie przeszedłem.
+  **Jak sprawdzone:** nagłówki i osłona przetestowane na obu poziomach danych — Pepco `EUR`
+  („mln EUR"), PKO BP `PLN` („mln PLN"), `currencyInfo.mismatch` odpowiednio `true` i `false`,
+  a `pe`, `forwardPe`, `pb`, `ps`, `evEbitda`, `peg` i `fcfYield` dla Pepco wszystkie `null`
+  przy zachowanych ROE, marżach i wskaźnikach zadłużenia. Po merge'u ręczny eksport
+  ([run 40008760790](https://github.com/Kuchaar/stockview/actions/runs/40008760790)) wrzucił `currency` do plików na produkcji: Pepco `EUR`,
+  PKO BP, CD Projekt i Żabka `PLN`.
+  **Zamknięte z zastrzeżeniem → [D9a](#).** Warunek „gotowe, gdy" jest spełniony, ale przy
+  weryfikacji wyszło, że Pepco ma **wiersze w dwóch walutach** (2 kwartały oznaczone `PLN`),
+  a `statementCurrency` bierze **pierwszą napotkaną** walutę. Osłona działa dziś tylko dlatego,
+  że wszystkie cztery wiersze **roczne** są w EUR. To jest w D9a.
 
-- [ ] **D10 — nagłówek i Przegląd pokazują wskaźniki z zaszytych danych poziomu 3** (~40 min × 2) — ryzyko: **wysokie** (poprawność liczb)
-  Zgłoszone przez Kamila 2026-10-23 z podglądu PR #7: na stronie Pepco nagłówek pokazuje
-  „P/E: 23.4", Przegląd „C/Z 23,4" i „C/WK 2,16", a zakładka Wycena **tego samego ekranu**
-  pokazuje „—", bo spółka ma dziś stratę (EPS −0,306). Dwa miejsca na jednym ekranie mówią
-  sprzeczne rzeczy, a to z zaszytych liczb wygląda na konkretniejsze.
-  **Skala: wszystkie 24 spółki, nie tylko Pepco.** `useStockData` nakłada na
-  `wig20Companies` **tylko ceny** (`price`, `change`, `changePercent`, `_priceDate` —
-  `src/hooks/useStockData.js:12-22`); `ratios` i `financials` zostają zaszyte. Czytają je:
-  - `src/pages/StockPage.jsx:174-178` — plakietka „P/E" w nagłówku,
-  - `src/pages/StockPage.jsx:565` `KeyRatiosSection` — karty C/Z, C/WK i słupki w Przeglądzie,
-  - `src/pages/StockPage.jsx:100` — **`pageDesc`, czyli opis strony dla Google**: „P/E …,
-    ROE …%, dywidenda …%" idzie do snippetu w wyszukiwarce,
-  - `ScreenerPage` i `ComparePage` — filtry, sortowanie i porównanie,
-  - `HealthScore` i `HealthGrid` przez `calculateSubScores(stock.ratios)` — **ocena kondycji**.
-  **Jak bardzo nieaktualne.** Zaszyte `ratios` policzono zaszytą ceną — widać to arytmetycznie
-  (Pepco: 18,60/0,79 = 23,5 i 18,60/8,61 = 2,16). Porównanie zaszytego `price` z ceną
-  z `latest-prices.json` (2026-10-22) dla 24 spółek: **mediana odchylenia 91%**, **14 spółek
-  powyżej 50%**, maksimum **+186%** (Modivo), dalej Asseco +181%, Pepco +159%, Orlen +149%,
-  mBank +132%. Dwa ujemne: Kruk −27% i Dino −91% — to drugie wygląda na podział akcji
-  (430 → 39,56), nie na spadek, co tylko potwierdza, że tych liczb nikt nie odświeżał.
-  Czyli C/Z w nagłówku nie jest „trochę stare": jest policzone ceną z innej epoki.
-  *Gotowe, gdy:* nagłówek, Przegląd i opis strony dla Google liczą wskaźniki z tych samych
-  danych co zakładka Wycena (z osłoną walutową z D9), a gdy tych danych nie ma, pokazują „—"
-  zamiast liczby z `wig20.js`; żaden ekran nie pokazuje dwóch różnych C/Z dla jednej spółki;
-  spółka ze stratą nie ma dodatniego C/Z w żadnym miejscu.
-  *Uwaga:* to **nie to samo** co „koniec z poziomem 3" z listy „Po Bramce P". Tam chodzi
-  o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć widoków czyta je
-  **zamiast** danych bieżących, nawet gdy te bieżące są dostępne.
+- [ ] **D9a — osłona walutowa odporna na niespójny wiersz** (~40 min) — ryzyko: **wysokie** (waluty)
+  Wyszło przy weryfikacji D9. `statementCurrency` (`src/data/financialSchema.js`) zwraca
+  **pierwszą znalezioną** walutę, a Pepco ma w bazie 9 wierszy w **dwóch** walutach:
+  4 roczne EUR, kwartalne Q1 2026 / Q3 2025 / Q1 2025 EUR, a **Q2 2025 i Q3 2024 oznaczone
+  `PLN`**. Osłona wskaźników działa dziś tylko dlatego, że czyta wiersze roczne. **Jeden
+  roczny wiersz z inną etykietą wyłączyłby ją po cichu dla całej spółki** — najgorszy możliwy
+  tryb awarii dla zabezpieczenia.
+  Te dwa wiersze to **kwoty w euro z etykietą PLN**, nie przeliczone wartości: przychód
+  kwartalny 1,42 i 1,49 mld przy rocznym 4,52 mld EUR daje stosunek **3,11**; przy realnym
+  przeliczeniu na złote wyszłoby ~4,9 mld na kwartał i stosunek ~0,9. Skutek na ekranie:
+  kwartalny rachunek wyników Pepco pokazuje „mln PLN" nad kwotami w euro.
+  **Panel `/admin/financials` nie umie tego naprawić** — jego `payload`
+  (`src/pages/AdminFinancialsPage.jsx:145-155`) nie zawiera pola `currency`, a zapis przez
+  panel ustawia `source: 'manual'` i `verified: true`, czyli **zamroziłby błędną walutę**.
+  Zakres: (1) `statementCurrency` **fail-safe** — przy wierszach o różnych walutach zwraca
+  niezgodność, nie pierwszą napotkaną; (2) nagłówek tabeli nie twierdzi jednej waluty, gdy
+  widoczne kolumny się różnią; (3) pole `currency` w panelu admina.
+  Poprawkę dwóch wierszy Pepco robi Kamil SQL-em w Supabase Studio.
+  *Gotowe, gdy:* dołożenie jednego rocznego wiersza z inną walutą **nie** wyłącza osłony
+  (sprawdzone na danych, nie przez czytanie kodu); tabela z kolumnami w różnych walutach nie
+  pokazuje jednej waluty w nagłówku; panel admina pozwala ustawić `currency`; Pepco ma 9/9
+  wierszy w EUR, a jego kwartalny rachunek wyników pokazuje „mln EUR".
+
+### D10 — bieżące wskaźniki zamiast zaszytych (rozbite na zadania)
+
+Zgłoszone przez Kamila 2026-10-23 z podglądu PR #7: na stronie Pepco nagłówek pokazuje
+„P/E: 23.4", Przegląd „C/Z 23,4" i „C/WK 2,16", a zakładka Wycena **tego samego ekranu**
+pokazuje „—", bo spółka ma stratę (EPS −0,306). Dwa miejsca na jednym ekranie mówią
+sprzeczne rzeczy, a to z zaszytych liczb wygląda na konkretniejsze.
+
+**Skala: wszystkie 24 spółki.** `useStockData` nakłada na `wig20Companies` **tylko ceny**
+(`src/hooks/useStockData.js:12-22`); `ratios` i `financials` zostają zaszyte. Czyta je
+**pięć** miejsc: plakietka w nagłówku (`src/pages/StockPage.jsx:174-178`), karty Przeglądu
+(`KeyRatiosSection`, :565), **opis strony dla Google** (`pageDesc`, :100), `ScreenerPage`
+z `ComparePage`, oraz ocena kondycji przez `calculateSubScores(stock.ratios)`.
+
+**Jak bardzo nieaktualne.** Zaszyte `ratios` policzono zaszytą ceną — widać arytmetycznie
+(Pepco: 18,60/0,79 = 23,5; 18,60/8,61 = 2,16). Porównanie zaszytego `price` z ceną
+z `latest-prices.json` (2026-10-22), 24 spółki: **mediana odchylenia 91%**, **14 spółek
+powyżej 50%**, maksimum **+186%** (Modivo), dalej Asseco +181%, Pepco +159%, Orlen +149%,
+mBank +132%. Dwa ujemne: Kruk −27% i **Dino −91%** (430 → 39,56).
+
+**Zaszyte dane są też niespójne wewnętrznie.** Dla 4 z 24 spółek `price × sharesOutstanding`
+nie zgadza się z zaszytym `marketCap`: Orlen (71 400 vs 26 176 mln), Modivo (36 200 vs 7 434),
+Pepco (8 200 vs 12 648), Alior (7 600 vs 12 065). Czyli nawet w obrębie jednego wpisu liczby
+pochodzą z różnych momentów.
+
+*Uwaga:* to **nie to samo** co „koniec z poziomem 3" z listy „Po Bramce P". Tam chodzi
+o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć widoków czyta je
+**zamiast** danych bieżących, nawet gdy te bieżące są dostępne.
+
+- [ ] **D10d — plaster: zdjąć zaszyte wskaźniki z trzech widoków** (~40 min) — ryzyko: **zwykłe**
+  Zakres **tylko**: plakietka w nagłówku, karty Przeglądu, `pageDesc`. **Screener
+  i Porównywarka zostają bez osłony** do D10c (decyzja Kamila) — ich treścią *są* wskaźniki,
+  więc „—" zamieniłoby je w pustą stronę, a baner nad fałszywą liczbą nadal pokazuje
+  fałszywą liczbę; osłona do wyrzucenia po D10c nie jest warta pracy.
+  Plakietka w nagłówku **znika**, gdy nie ma bieżącego C/Z — „P/E: —" to szum, nie informacja.
+  Karty Przeglądu **zostają** (tłumaczą, czym jest C/Z — Zasady 3 i 4 z `VISION.md`), ale
+  bez liczby i bez kontekstu „Poniżej średniej WIG20". `pageDesc` **bez żadnej liczby
+  wskaźnikowej** — to najpilniejsze z trzech, bo snippet w wyszukiwarce widzi ktoś, kto nawet
+  nie wszedł na stronę.
+  *Gotowe, gdy:* `grep -rn "stock.ratios" src/pages/StockPage.jsx` nie zwraca nic poza
+  Screenerem i Porównywarką; strona Pepco **nie pokazuje dwóch różnych C/Z**; `pageDesc`
+  nie zawiera C/Z, ROE ani stopy dywidendy; zrzuty z podglądu w obu motywach w opisie PR-a.
+
+- [ ] **D10a — liczba akcji jako dane z datą, nie stała w kodzie** (~40 min) — ryzyko: **wysokie** (poprawność liczb)
+  Bez liczby akcji nie da się policzyć kapitalizacji, a bez niej C/WK, P/S, EV/EBITDA i FCF
+  yield. Poziom 2 jej nie ma: sprawdzone na produkcji, `bookValuePerShare: null`
+  i `keyStats: null` dla PKO i Pepco; tabela `financials` tych pól nie przechowuje. `eps`
+  **jest** (PKO 8,55; Pepco −0,306), więc samo C/Z da się policzyć już dziś.
+  **Dino pokazuje, dlaczego to musi mieć datę.** Zaszyte `sharesOutstanding: 98 040 000`
+  jest spójne z zaszytą ceną 430 zł (42 157 vs 42 200 mln `marketCap`), ale dzisiejsza cena
+  to 39,56 zł — czyli kapitalizacja z tych danych wyszłaby **3,9 mld zł** dla jednej
+  z największych spółek WIG20, około **dziesięciokrotnie za nisko**. 430/39,56 = 10,87
+  wygląda na podział akcji; samej przyczyny nie weryfikowałem, ale liczba akcji jest sprzed
+  tej zmiany, cokolwiek nią było.
+  Kierunek: liczba akcji **zapisywana do bazy przy kwartalnym imporcie** (decyzja Kamila),
+  ze źródła z datą, a nie wpisywana do `wig20.js`.
+  *Gotowe, gdy:* liczba akcji dla 24 spółek pochodzi z bazy wraz z datą, na którą obowiązuje;
+  spółka bez tej liczby ma kapitalizację `null`, **nie** oszacowanie; kapitalizacja Dino
+  policzona z nowych danych mieści się w rzędzie wielkości jego realnej kapitalizacji;
+  `grep -rn "sharesOutstanding" src/data/wig20.js` nie jest już źródłem dla żadnego wskaźnika.
+
+- [ ] **D10b — `ratios.json` liczony przy eksporcie** (~40 min × 2) — ryzyko: **wysokie** (poprawność liczb, waluty)
+  `update-financials.yml` liczy wskaźniki dla 24 spółek z bazy + `latest-prices.json`
+  i zapisuje je do `public/data/ratios.json`. `calculateAllRatios` już się do tego nadaje —
+  importuje tylko `financialSchema.js`, bez Reacta. **Osłona walutowa z D9 obowiązuje**,
+  czyli Pepco dostaje `null` w siedmiu wskaźnikach, a nie liczbę.
+  *Gotowe, gdy:* plik istnieje dla 24 spółek i ma **dwie osobne daty** — ceny i sprawozdań,
+  bo mieszanie ich w jedną „datę aktualizacji" to ten sam błąd co „nowa data" w P0; Pepco ma
+  `null` w C/Z, C/Z prognozowanym, C/WK, P/S, EV/EBITDA, PEG i FCF yield; przebieg bez
+  `latest-prices.json` kończy się **błędem**, a nie plikiem bez cen.
+
+- [ ] **D10c — pięć widoków czyta `ratios.json`** (~40 min × 2) — ryzyko: **zwykłe**
+  Nagłówek, Przegląd, `pageDesc`, Screener i Porównywarka. Tu Screener wreszcie dostaje
+  prawdziwe liczby, więc tu wraca też jego osłona.
+  *Gotowe, gdy:* `grep -rn "stock.ratios" src/` nie zwraca nic; żaden ekran nie pokazuje dwóch
+  różnych C/Z dla jednej spółki; **spółka ze stratą nie ma dodatniego C/Z w żadnym miejscu**;
+  filtry Screenera na C/Z i C/WK pomijają spółki z `null`, a nie traktują ich jak zero;
+  zrzuty z podglądu w obu motywach w opisie PR-a.
+
+- [ ] **P8+D10e — ocena kondycji na bieżących danych i bez wyceny** (~40 min × 2) — ryzyko: **wysokie** (ocena finansowa)
+  **Scalone z P8 z Bramki P** (decyzja Kamila), bo to ten sam komponent i ten sam plik:
+  osobno znaczyłoby dwie przebudowy `HealthScore.jsx` i okno, w którym ocena jest już bieżąca,
+  ale nadal mówi „atrakcyjna wycena". Wchodzi **po D10c**.
+  Zakres z obu zadań: ocena liczona z `ratios.json`, **bez bloku wyceny** (więc problem
+  walutowy jej nie dotyczy), tekst werdyktu bez „atrakcyjnej wyceny" w `HealthScore.jsx:191-192`
+  i `StockPage.jsx:802`, progi w zakładce wyceny opisane jako konwencja z podanym źródłem
+  zamiast „✓", zasada językowa dopisana do `AGENTS.md`.
+  **Dwa trafienia grepa, które mają zostać**, żeby warunek dał się zamknąć bez dyskusji:
+  „kupuj" wchodzi też w `src/data/translations.js:276` („inwestor kupujący «cały WIG20»")
+  i `src/data/wig20.js:857` („Kupuje i obsługuje portfele wierzytelności" — opis działalności
+  Kruka). To opisy, nie oceny.
+  *Gotowe, gdy:* w `src/` nie ma słów „atrakcyjn", „kupuj", „niedowartościow" w tekstach dla
+  użytkownika **poza** tymi dwoma opisami działalności; każda ocena prowadzi do opisu
+  metodologii; **żadna część oceny nie pochodzi z `wig20.js`**; zrzuty z podglądu w obu
+  motywach w opisie PR-a.
 ---
 
 ## Bramka P — prywatność i bezpieczeństwo
@@ -276,18 +373,14 @@ w opis PR-a.
   Funkcja w bazie usuwa użytkownika razem z watchlistą; zadanie czyści `auth.audit_log_entries` starsze niż 90 dni.
   *Gotowe, gdy:* po „Usuń konto" w Supabase nie ma ani konta, ani jego wierszy, a czyszczenie logów jest zaplanowane.
 
-- [ ] **P8 — neutralny język ocen** (~40 min) — ryzyko: **wysokie** (zmienia skład oceny)
-  Ocena kondycji bez części o wycenie i bez „atrakcyjnej wyceny", progi w zakładce wyceny opisane jako konwencja
-  z podanym źródłem zamiast „✓", zasada językowa dopisana do AGENTS.md.
-  *Gotowe, gdy:* w `src/` nie ma słów „atrakcyjn", „kupuj", „niedowartościow" w tekstach dla użytkownika,
-  a każda ocena prowadzi do opisu metodologii.
-  **Miejsca z „atrakcyjną wyceną"** — ten sam tekst stoi w dwóch plikach, poprawka musi trafić w oba:
-  `src/components/HealthScore.jsx:191-192` (`getDescription`, wariant `strong`, `pl` i `en`)
-  i `src/pages/StockPage.jsx:802` (`healthDescription`, wariant `strong`). To werdykt oceny kondycji,
-  a mówi o wycenie, której ta ocena nie liczy.
-  Dwa trafienia, które **zostają**, żeby warunek dał się zamknąć bez dyskusji: „kupuj" wchodzi
-  też w `src/data/translations.js:276` („inwestor kupujący «cały WIG20»") i `src/data/wig20.js:857`
-  („Kupuje i obsługuje portfele wierzytelności" — opis działalności Kruka). To opisy, nie oceny.
+- [ ] **P8 — neutralny język ocen** — **przeniesione do [P8+D10e](#d10--bieżące-wskaźniki-zamiast-zaszytych-rozbite-na-zadania) w Bramce 1**
+  **Scalone 2026-10-23 (decyzja Kamila).** To ten sam komponent i ten sam plik co część D10
+  dotycząca oceny kondycji (`HealthScore.jsx`, `calculateSubScores` w `wig20.js`), więc osobno
+  znaczyłoby dwie przebudowy i okno, w którym ocena jest już bieżąca, ale nadal mówi
+  „atrakcyjna wycena". Warunek „gotowe, gdy", oba miejsca z „atrakcyjną wyceną" i dwa
+  trafienia grepa, które mają zostać, przeniesione **bez zmian** do P8+D10e.
+  Zadanie wchodzi **po D10c**, więc Bramka P nie czeka na nie — pozostałe jej punkty są
+  niezależne.
 
 - [ ] **P9 — polityka prywatności i regulamin** (~40 min × 2) — ryzyko: **zwykłe** (dotyka rejestracji)
   `/prywatnosc` i `/regulamin` po polsku i angielsku, link w stopce, wymagany checkbox przy rejestracji,
