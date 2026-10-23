@@ -2,6 +2,68 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — P13 i P12: eksport osobno od importu, brak sekretu = błąd
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **`.github/workflows/update-financials.yml` przepisany — robi tylko eksport.** Import
+  z Yahoo wyszedł z GitHuba: runner dostaje HTTP 403 z `https://stockview.org/api/financials`,
+  bo Cloudflare nie ufa adresom centrów danych. Sprawdzone, że **nie chodzi o nagłówek**:
+  z laptopa ten sam adres oddaje HTTP 200 przy pięciu wariantach `User-Agent` (`curl`, `node`,
+  `undici`, pusty, przeglądarkowy). Blokowany jest adres IP.
+- **Kluczowe odkrycie, które przewróciło zadanie:** dane, których brakowało na stronie,
+  **już leżą w Supabase**. Próbny eksport (`npm run export-financials -- --dry-run`, nic nie
+  zapisuje — sprawdzone w kodzie, że `DRY_RUN` blokuje i `rmSync`, i zapis) wypisał
+  **24 pliki do zapisu, każdy z bilansem i przepływami**, rocznymi i kwartalnymi. Import
+  dokłada nowe kwartały; **eksport** jest tym, co przepisuje bazę do plików czytanych przez
+  stronę. Jedno nigdy nie powinno wisieć na drugim.
+- **P12 w tym samym PR**, bo i tak przepisywałem plik. Kroki „Skip…" pod
+  `if: env.SUPABASE_* == ''` **usunięte**; zamiast nich pierwszy krok `Check secrets`
+  wypisuje `::error::` z **nazwą** brakującego sekretu i kończy `exit 1`. Workflow nie zna
+  już `SUPABASE_SERVICE_ROLE_KEY` — eksportowi wystarcza klucz `anon`.
+- **`scripts/import-financials.mjs`** — zero zapisanych wierszy to teraz **błąd** (`exit 1`),
+  nie wynik. Dotąd kod wywalał się tylko wtedy, gdy padły **wszystkie 24** spółki
+  (`bledy.length === wig20Companies.length`), więc import, w którym wszystkie wiersze były
+  chronione flagą `verified`, kończył się sukcesem, nie wnosząc nic.
+- **`docs/SETUP.md` → nowa sekcja D „Import sprawozdań — raz na kwartał, z laptopa"**
+  (stara D „Czego nie robić" to teraz E): tabela kto-co-kiedy, **terminy ustawowe** publikacji
+  raportów (60 dni dla I i III kwartału, 3 miesiące dla półrocza, 4 dla roku) z datą importu
+  dla każdego okresu, skąd wziąć klucz `service_role`, dlaczego **bez przedrostka `VITE_`**,
+  oraz to, że po imporcie trzeba jeszcze puścić eksport, bo import zmienia bazę, a strona
+  czyta pliki.
+- **`AGENTS.md`** — opis cotygodniowego zadania poprawiony (robi jedną rzecz: eksport),
+  dopisany akapit, dlaczego importu nie ma na GitHubie, i `~189` → `~243` wiersze w tabeli.
+  **`.env.example`** — zniknęło nieprawdziwe „na CI w sekretach repozytorium".
+- **`docs/ROADMAP.md`** — warunek P13 przepisany zgodnie z decyzją Kamila; warunek P0
+  zmniejszony z trzech sekretów do **dwóch**, z notką, że to zmiana i dlaczego.
+
+**Sprawdzone.** `yaml.safe_load` parsuje workflow (kroki w kolejności: Check secrets →
+checkout → setup-node → npm ci → export → commit); `bash -n` na wszystkich czterech krokach
+`run`; krok `Check secrets` przepuszczony przez `bash -e` w **trzech stanach** — oba sekrety
+`exit 0`, brak jednego `exit 1` z jego nazwą, brak obu `exit 1` z dwiema nazwami; importer
+w normalnym dry-runie `exit 0` i 231 wierszy, a z nieosiągalnym źródłem (`API_BASE`
+na zamknięty port) `exit 0` → **`exit 1`** z komunikatem „import nic nie wniósł do bazy";
+`npm run build` przechodzi; `.env.local` jest w `.gitignore` (linia 6); żaden workflow nie
+odwołuje się już do `SUPABASE_SERVICE_ROLE_KEY`. Żadnej wartości sekretu nigdzie nie wypisałem.
+
+**Nie sprawdzone.** Prawdziwy przebieg `update-financials.yml` na `main` — można go odpalić
+dopiero po merge'u. Czy strona spółki pokaże bilans i przepływy — to widać dopiero po tym
+przebiegu. Pułapki `bash -e` z `[ -z ... ] && ...` **nie ma w kodzie** (użyłem formy
+`if ...; then`), ale sam fakt, że testy przeszły, nie dowodzi, że GitHub użyje tej samej
+powłoki co mój Mac — dowodzi tego dopiero przebieg.
+
+**Jedna rzecz zrobiona inaczej, niż brzmiało polecenie.** Nie dodałem nowej komendy
+`npm run import:financials`, bo **`npm run import-financials` już istnieje** w `package.json`
+i robi dokładnie to (`node --env-file-if-exists=.env.local scripts/import-financials.mjs`).
+Drugi alias na to samo byłby tylko kolejnym miejscem do rozjechania się. SETUP.md opisuje
+komendę, która jest.
+
+Następne: runda `@codex review` (ryzyko wysokie — sekrety i źródło danych), po merge'u ręczny
+przebieg eksportu i sprawdzenie strony spółki, potem odhaczenie P0, P12 i P13 z SHA. Po merge'u
+Kamil może usunąć `SUPABASE_SERVICE_ROLE_KEY` z Actions.
+
 ## 2026-10-23 — Bramka P w roadmapie, sekrety sprawdzone w działaniu
 
 Komputer: `MacBook-Pro-Kamil.local`

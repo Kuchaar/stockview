@@ -1,7 +1,15 @@
 name: Update financials
 
-# Sprawozdania zmieniają się kwartalnie, więc codzienny przebieg nic nie wnosi.
-# Raz w tygodniu wystarczy, żeby nowy raport trafił na stronę w kilka dni po publikacji.
+# Eksport tabeli `financials` z Supabase do public/data/financials/ — czyli na poziom 2
+# danych, który czyta strona. Sprawozdania zmieniają się kwartalnie, więc raz w tygodniu
+# wystarczy, żeby nowy raport trafił na stronę w kilka dni po publikacji.
+#
+# Importu z Yahoo tutaj nie ma i nie będzie. Runner GitHuba dostaje HTTP 403 na
+# https://stockview.org/api/financials (odbijany jest adres IP centrum danych, nie nagłówek:
+# z komputera ten sam adres oddaje 200 przy pięciu różnych wariantach `User-Agent`).
+# Import robi się lokalnie — `npm run import-financials`, instrukcja w docs/SETUP.md.
+# Dzięki temu cotygodniowy przebieg robi jedną rzecz, którą naprawdę umie zrobić,
+# i jego kolor coś znaczy.
 on:
   schedule:
     # Sobota, 06:00 UTC — poza sesją giełdową
@@ -16,9 +24,27 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
+      # Brak sekretu to błąd, nie powód do pominięcia kroku. Wcześniej stały tu kroki
+      # „Skip…" pod `if: env.SUPABASE_* == ''` i przebieg bez sekretów kończył się na
+      # ZIELONO, nie zmieniając ani jednego pliku — cztery takie „success" od 2026-09-26.
+      # To wzorzec P1 z AGENTS.md: operacja zakończona błędem nie może zgłaszać sukcesu.
+      #
+      # `if ...; then` zamiast `[ -z "$X" ] && ...`: domyślna powłoka to `bash -e`,
+      # a `&&` z fałszywym testem zwraca 1 i wywaliłoby krok przy obecnym sekrecie.
+      - name: Check secrets
+        run: |
+          missing=""
+          if [ -z "$SUPABASE_URL" ]; then missing="$missing SUPABASE_URL"; fi
+          if [ -z "$SUPABASE_ANON_KEY" ]; then missing="$missing SUPABASE_ANON_KEY"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::Brak sekretu:$missing - eksport NIE zostal wykonany, pliki w public/data/financials/ pozostaja nieaktualne."
+            echo "Dodaj go w Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          echo "Oba sekrety na miejscu."
+
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
@@ -26,29 +52,15 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
-      # Oba skrypty używają @supabase/supabase-js
+      # scripts/export-financials.mjs używa @supabase/supabase-js
       - name: Install dependencies
         run: npm ci
 
-      # Yahoo → tabela `financials` w Supabase. Wymaga sekretu service_role;
-      # bez niego krok się pomija, zamiast wywalać cały przebieg.
-      - name: Import financials into Supabase
-        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
-        run: node scripts/import-financials.mjs
-
-      - name: Skip import (no service_role secret)
-        if: env.SUPABASE_SERVICE_ROLE_KEY == ''
-        run: echo "Brak SUPABASE_SERVICE_ROLE_KEY — pomijam import do Supabase."
-
-      # Baza → public/data/financials/*/data.json (poziom 2 dla strony).
-      # Wystarczy klucz publiczny: tabela ma politykę publicznego odczytu.
+      # Baza → public/data/financials/{companyId}/data.json.
+      # Wystarczy klucz publiczny: tabela `financials` ma politykę publicznego odczytu.
+      # Klucz `service_role` nie jest tu do niczego potrzebny.
       - name: Export financials to static files
-        if: env.SUPABASE_ANON_KEY != ''
         run: node scripts/export-financials.mjs
-
-      - name: Skip export (no anon key)
-        if: env.SUPABASE_ANON_KEY == ''
-        run: echo "Brak SUPABASE_ANON_KEY — pomijam eksport na poziom 2."
 
       - name: Commit and push if changed
         run: |

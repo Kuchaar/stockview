@@ -156,11 +156,14 @@ w opis PR-a.
 
 - [ ] **P0 — wybudzić bazę i zablokować usypianie** (~20 min) — ryzyko: **wysokie** (sekrety)
   *Gotowe, gdy:* projekt Supabase ma status aktywny, logowanie na stockview.org działa, codzienny
-  `keepalive.yml` robi prawdziwe zapytania `select` (także w weekendy), sekrety `SUPABASE_URL`,
-  `SUPABASE_ANON_KEY` i `SUPABASE_SERVICE_ROLE_KEY` są w Actions, a ręcznie odpalony
-  `update-financials.yml` odświeża `public/data/financials/` (bilans i przepływy, nowa data).
-  **Stan na 2026-10-23:** baza aktywna ✓, logowanie na stockview.org działa ✓, trzy sekrety
-  w Actions ✓, codzienny `keepalive.yml` na `main` i sprawdzony ręcznym przebiegiem ✓
+  `keepalive.yml` robi prawdziwe zapytania `select` (także w weekendy), sekrety `SUPABASE_URL`
+  i `SUPABASE_ANON_KEY` są w Actions, a ręcznie odpalony `update-financials.yml` odświeża
+  `public/data/financials/` (bilans i przepływy, nowa data).
+  **Zmiana warunku 2026-10-23 (decyzja Kamila):** pierwotnie wymagał **trzech** sekretów.
+  Po P13 import nie chodzi już na GitHubie, więc `SUPABASE_SERVICE_ROLE_KEY` nie jest
+  w Actions do niczego potrzebny — żywy tylko lokalnie, w `.env.local`.
+  **Stan na 2026-10-23:** baza aktywna ✓, logowanie na stockview.org działa ✓, oba potrzebne
+  sekrety w Actions ✓, codzienny `keepalive.yml` na `main` i sprawdzony ręcznym przebiegiem ✓
   (PR #3, `90ffed0`; [run 39983171367](https://github.com/Kuchaar/stockview/actions/runs/39983171367)
   — trzy `select` po HTTP 200, bez klucza w logu). Brakuje **jednej rzeczy**: ręczny przebieg
   `update-financials.yml` nie odświeżył `public/data/financials/` — blokuje go **P13**.
@@ -243,8 +246,15 @@ w opis PR-a.
   i `/api/financials` na Cloudflare. Dwie rzeczy do rozdzielenia: eksport nie może zależeć od
   powodzenia importu (to on odświeża pliki i wystarczy mu klucz anon — i wiemy już, że z runnera
   by przeszedł), a import potrzebuje drogi, którą runner nie jest odbijany.
-  *Gotowe, gdy:* przebieg na `main` odświeża `public/data/financials/` (bilans, przepływy, nowa data)
-  także wtedy, gdy import nie pobierze nic, a nieudany import nadal kończy przebieg czerwono.
+  **Wybrana droga (decyzja Kamila, 2026-10-23):** import **wychodzi z GitHuba** i zostaje
+  komendą lokalną, odpalaną po raportach kwartalnych. Osobnego workflow importu nie tworzymy —
+  z runnera i tak dostałby 403. Cotygodniowy przebieg robi **tylko eksport**, więc jest zielony
+  i jego kolor coś znaczy. Gdyby import został w cronie, job byłby czerwony co tydzień na stałe,
+  a to to samo zepsucie co w P12, tylko w drugą stronę: tam zielony nic nie znaczył, tu czerwony
+  przestałby cokolwiek znaczyć.
+  *Gotowe, gdy:* cotygodniowy eksport jest zielony i odświeża `public/data/financials/`;
+  ręczny import lokalny jest opisany w [`docs/SETUP.md`](SETUP.md) i kończy się błędem,
+  gdy nic nie zapisze.
   **Blokuje P0** — bez tego warunku „gotowe, gdy" przy P0 nie da się spełnić.
 
 ### Poza kodem — zadania Kamila
