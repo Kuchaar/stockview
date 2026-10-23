@@ -236,6 +236,13 @@ Ground rules:
 - **Silence is not approval; an empty finding list with a named SHA is.** No answer from a
   reviewer, a review-tool run nobody read, a 👍 reaction from a bot, and Kamil's merge
   decision are four different things. Say which one you actually have.
+- **Check every task against [docs/VISION.md](docs/VISION.md).** Before proposing a task,
+  during a review, and in the GPT handover package, read it and say which principle, goal or
+  hypothesis the change serves. **A task that conflicts with its „Zasady" is reported to
+  Kamil instead of being carried out** — name the principle and the conflict, and let him
+  decide. **Only Kamil changes `VISION.md`**, with the date and the reason in
+  `docs/JOURNAL.md`; no agent edits it, not even to „tidy" it or to record something that
+  happened.
 
 ### Review by risk
 
@@ -308,9 +315,10 @@ Two things a handover must never claim:
 ## Code review rules
 
 Priorities follow the consequence of the mistake, not the size of the diff.
-P1–P3 say **what** to look for. **Who** reviews a given change is decided in
-„Review by risk" above, and the high-risk areas listed there cover the same ground as
-P1 — that is deliberate.
+P1–P3 say **what** to look for, and on top of them every review checks the change against the
+„Zasady" in [docs/VISION.md](docs/VISION.md) — see the ground rule above. **Who** reviews a
+given change is decided in „Review by risk" above, and the high-risk areas listed there cover
+the same ground as P1 — that is deliberate.
 
 **P1 — blocks the merge.** It reaches a user, leaks data, or states something false.
 
@@ -385,6 +393,7 @@ decisions.
 
 | File | What's in it |
 |---|---|
+| [docs/VISION.md](docs/VISION.md) | Product direction: mission, target product, **Zasady** (the filter for every task and review), goals, hypotheses, open decisions. **Only Kamil changes it.** |
 | [docs/JOURNAL.md](docs/JOURNAL.md) | Session log, newest entry first, each ends with `Następne:` |
 | [docs/DATA.md](docs/DATA.md) | Data-source audit: field → source → refresh rate → who updates it |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Gates and ~40-minute tasks with "done when…" conditions |

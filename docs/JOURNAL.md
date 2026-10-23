@@ -2,6 +2,84 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — docs/VISION.md jako filtr zadań + rozbieżności z roadmapą
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **`docs/VISION.md`** — dokument kierunku produktu od Kamila, przeniesiony z katalogu
+  głównego repo bez zmiany treści (`shasum -a 256` zgodny z kopią w `~/Downloads`).
+- **`AGENTS.md`** — wiersz w „Docs map" plus **jedna zasada** w „Ground rules": przed
+  zaproponowaniem zadania, przy review i w paczce dla GPT sprawdzam zgodność z `VISION.md`
+  i nazywam zasadę, cel albo hipotezę, której zmiana służy; **zadanie sprzeczne z „Zasadami"
+  zgłaszam Kamilowi, zamiast je realizować**; **`VISION.md` zmienia tylko Kamil**, z datą
+  i powodem w dzienniku. W „Code review rules" jest wskaźnik do tej zasady — nie jej kopia.
+- **Porównanie roadmapy z „Zasadami" i „Otwartymi decyzjami"** — dziewięć rozbieżności
+  niżej. **W `docs/ROADMAP.md` nic nie zmieniłem**, zgodnie z poleceniem.
+
+**Rozbieżności ROADMAP ↔ VISION.**
+
+*Wprost sprzeczne z „Zasadami":*
+
+1. **Nie ma Bramki P, a Bramka 2 już się dzieje.** Zasada 6 mówi „Bramka P przed Bramką 2".
+   ROADMAP ma Bramki 0–4 i **ani jednej Bramki P**, a Bramka 2 jest w połowie: K1
+   (logowanie) i K2 (watchlista) odhaczone, K3 następny w kolejce. Zasada jest więc łamana
+   już teraz, a najbliższe zaplanowane zadanie to dokładnie to, co ma czekać. „prywatn"
+   pojawia się w roadmapie raz — i to w kontekście `noindex`, nie bezpieczeństwa.
+2. **„atrakcyjna wycena" w kodzie — zwrot wymieniony w wizji jako zakazany.** Zasada 1
+   zabrania „ocen typu «atrakcyjna wycena»", Zasada 2 — „wartości godziwej" konkretnej
+   spółki. Dokładnie ten zwrot jest w `src/components/HealthScore.jsx:191-192`
+   i `src/pages/StockPage.jsx:802`, w obu językach. ROADMAP nie ma zadania, które by to
+   usuwało, ani audytu języka ocen w zakładkach Wycena i Kondycja.
+
+*Luki — wizja wymaga, roadmapa milczy:*
+
+3. **Zero zadań edukacyjnych** („edukac", „lekcj" — 0 trafień), choć Zasady 3 i 4 oraz cały
+   „docelowy produkt" na nich stoją. Opcji (A) z Otwartych decyzji nie da się dziś wybrać,
+   bo w roadmapie nie istnieje.
+4. **DCF jako kalkulator — 0 trafień.** Zasada 2 wprost go dopuszcza, a opcja (B) stawia go
+   na trzecim miejscu.
+5. **Licencje na dane — 0 trafień.** Wizja sama zauważa, że Yahoo i widgety TradingView
+   zabraniają użytku komercyjnego, a dane GPW wymagają licencji. Aplikacja używa dziś obu
+   (`TradingViewChart.jsx`, `TickerTape.jsx`, `/api/quote`). Przy pierwszej płatnej funkcji
+   to blokada, nie szczegół.
+6. **Portfel węższy, niż mówi hipoteza.** K5 liczy wycenę „po cenach z `/api/quote`", czyli
+   **tylko 24 spółki WIG20**. ETF-y, obligacje i import z eksportu brokera nie występują
+   w roadmapie, a hipoteza mówi, że bez nich portfel pokaże początkującemu ułamek tego,
+   co ma — czyli K3–K6 zbudują dokładnie ten portfel, który uznano za mało użyteczny.
+7. **„Dane z bazy w każdym widoku, źródło i data przy liczbach" — tylko częściowo.** D7 dał
+   `DataFreshness`, ale **wyłącznie w zakładce Sprawozdania**. Poziom 3 `useFinancials` to
+   nadal zaszyte dane w `src/data/wig20.js`, skąd `ratios` zasilają inne widoki. Brak
+   zadania „źródło i data przy każdej liczbie" oraz „koniec z poziomem 3".
+8. **Cel nr 1 nie ma ścieżki.** „10 obcych osób płaci" — w roadmapie zero zadań
+   monetyzacyjnych („płatn", „abonament" — 0 trafień), więc Otwarta decyzja 2 nie ma
+   odpowiednika nawet w formie przygotowania.
+
+*Rozstrzyga coś, co w wizji jest otwarte:*
+
+9. **Bramka 4 (Redesign) nie występuje w żadnej z dwu opcji.** Otwarta decyzja 1 daje (A)
+   albo (B); roadmapa ustawia po Bramce 2 → Bramkę 3 (zrobioną) → **Redesign na 6–8 sesji**,
+   którego wizja nie wymienia nigdzie. Kolejność w pliku rozstrzyga więc otwartą decyzję, i to
+   na trzecią, nieopisaną opcję.
+
+*Zgodne, dla równowagi:* Zasada 5 (małe kroki) — każde zadanie w roadmapie ma ~40 minut
+i warunek „gotowe, gdy". Sekcja „Poza zakresem na teraz" też się trzyma: ani reklam, ani
+afiliacji CPA, ani fundamentów całej GPW w roadmapie nie ma.
+
+**Do sprawdzenia.** Zmiana dotyczy dokumentacji i jednej zasady — **nic się nie uruchamia**,
+build niczego by tu nie dowiódł. Sprawdzone: zgodność treści `VISION.md` po przeniesieniu
+(sha256), odnośniki w „Docs map" i w nowej zasadzie prowadzą do istniejącego pliku, cytowane
+numery linii w `HealthScore.jsx` i `StockPage.jsx` potwierdzone grepem. **Nie sprawdzałem,
+czy zakładki Wycena i Kondycja mają więcej zwrotów ocennych** niż ten jeden — to byłby
+osobny audyt, poza zakresem tego zadania.
+
+**Następne:** rozbieżności 1 i 2 wymagają **decyzji Kamila**, nie mojej: co wchodzi do
+Bramki P i czy „atrakcyjna wycena" wypada od razu (to ~20 minut, ale dotyka języka ocen,
+więc i tak Twoja decyzja). Dopóki to nie jest rozstrzygnięte, **K3 nie jest dobrym następnym
+zadaniem** — wizja każe go odłożyć za Bramkę P.
+
+
 ## 2026-10-23 — Doprecyzowanie modelu recenzji i 4 uwagi do c929f24
 
 Komputer: `MacBook-Pro-Kamil.local`
