@@ -142,19 +142,24 @@ To się nie skaluje i cicho starzeje.
 
 Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfela.
 
+> **K3–K6 wstrzymane do Otwartej decyzji 1 z [`docs/VISION.md`](VISION.md).** Portfel liczony
+> tylko na 24 spółkach WIG20 jest węższy niż hipoteza o ETF-ach i spółkach spoza indeksu —
+> pokazałby początkującemu ułamek tego, co naprawdę ma. K1 i K2 zostają odhaczone, bo już
+> działają.
+
 - [x] **K1 — logowanie Supabase** · [`3d804c1`](https://github.com/Kuchaar/stockview/commit/3d804c1)
 - [x] **K2 — watchlista z trwałym zapisem** · [`80e4ae2`](https://github.com/Kuchaar/stockview/commit/80e4ae2)
-- [ ] **K3 — schemat portfela w Supabase** (~40 min)
+- [ ] **K3 — schemat portfela w Supabase** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Tabele `portfolio` i `transactions` (ticker, typ, liczba, cena, data, prowizja) + RLS
   ograniczone do właściciela.
   *Gotowe, gdy:* migracja zastosowana, a użytkownik B nie widzi wierszy użytkownika A.
-- [ ] **K4 — dodawanie transakcji** (~40 min)
+- [ ] **K4 — dodawanie transakcji** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Formularz kupna/sprzedaży z walidacją.
   *Gotowe, gdy:* transakcja przeżywa odświeżenie strony i wylogowanie.
-- [ ] **K5 — wycena portfela** (~40 min)
+- [ ] **K5 — wycena portfela** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Wartość bieżąca, koszt nabycia, wynik w PLN i procentach, po cenach z `/api/quote`.
   *Gotowe, gdy:* liczby zgadzają się z ręcznym wyliczeniem na trzech transakcjach.
-- [ ] **K6 — strona `/portfolio`** (~40 min)
+- [ ] **K6 — strona `/portfolio`** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Tabela pozycji + podsumowanie, w stylu istniejących stron.
   *Gotowe, gdy:* działa na telefonie i w trybie ciemnym, pusty portfel ma sensowny stan.
 
@@ -196,9 +201,35 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
   *Gotowe, gdy:* wszystkie 25 URL-i z sitemapy jest zgłoszonych do indeksacji.
   Domena `stockview.org` zweryfikowana, sitemapa zgłoszona 2026-09-20 (razem z S1).
 
+
+## Po Bramce P — do decyzji
+
+Tematy, które wyszły z porównania tej roadmapy z [`docs/VISION.md`](VISION.md) (PR #2):
+wizja ich wymaga, a roadmapa ich nie miała. **Lista tematów, nie zadań** — bez szacunków
+czasu, bez warunków „gotowe, gdy" i **bez kolejności**. Kolejność ustala Kamil po Bramce P,
+razem z Otwartą decyzją 1.
+
+- **Edukacja wplątana w dane i narzędzie** — Zasady 3 i 4; dziś w roadmapie zero zadań
+  edukacyjnych, więc opcji (A) z Otwartej decyzji 1 nie da się wybrać.
+- **DCF jako kalkulator z założeniami użytkownika** — Zasada 2 wprost go dopuszcza, opcja (B)
+  stawia go na trzecim miejscu.
+- **Licencje na dane** — Yahoo i widgety TradingView zabraniają użytku komercyjnego, dane GPW
+  wymagają licencji; aplikacja używa dziś obu.
+- **Portfel z ETF-ami, spółkami spoza WIG20 i importem z eksportu brokera** — warunek z hipotez
+  VISION, od którego zależą wstrzymane K3–K6.
+- **Źródło i data przy każdej liczbie w każdym widoku, oraz koniec z poziomem 3 danych**
+  (zaszyte `financials` i `ratios` w `src/data/wig20.js`) — Zasada 1; dziś `DataFreshness`
+  jest tylko w zakładce Sprawozdania.
+- **Ścieżka do pierwszych płatności** — Cel nr 1 („10 obcych osób płaci") nie ma dziś
+  w roadmapie żadnego odpowiednika; wiąże się z Otwartą decyzją 2.
+
 ---
 
-## Bramka 4 — Redesign
+## Bramka 4 — Redesign — **zaparkowane, poza VISION**
+
+> **Zaparkowane.** [`docs/VISION.md`](VISION.md) nie wymienia redesignu ani w „Zasadach",
+> ani w żadnej z dwu opcji Otwartej decyzji 1. Treść zostaje nietknięta i czeka — jeśli
+> redesign ma wrócić do kolejki, wraca decyzją Kamila i wpisem w `VISION.md`.
 
 **Wchodzi dopiero po zamrożeniu zakresu.** Bez tego przerabiamy wygląd ekranów, które
 i tak się jeszcze zmienią. Zakres celowo wąski: tylko strona główna i strona spółki.
