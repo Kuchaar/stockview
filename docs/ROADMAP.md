@@ -38,6 +38,26 @@ zaczyna się od odtwarzania kontekstu.
   ⚠️ Pierwotny warunek (PR z zepsutym importem dostaje czerwony status) **nieprzetestowany**
   — ścieżka `pull_request` jest w workflow, zweryfikuje ją pierwszy prawdziwy PR.
 
+- [ ] **F6 — jednolity obieg PR i recenzji** (~40 min)
+  Podział odpowiedzialności (Kamil — cele i zgoda na merge; Claude Code — bieżąca praca,
+  propozycje zadań, implementacja, testy, PR-y; GPT — okresowe przeglądy, architektura
+  i metodologia finansowa), **dobór recenzji do ryzyka**, zasady P1–P3, sekcja przekazania
+  do przeglądu GPT i krótki raport z zadania — wszystko w `AGENTS.md`. Skille `/sv-start`,
+  `/sv-koniec` i `/sv-review` obsługują PR-y przez `gh`.
+  *Gotowe, gdy:* pierwszy prawdziwy PR przechodzi cały obieg — gałąź → PR → **review
+  zakończone wskazaniem sprawdzonego SHA i ograniczeń weryfikacji (z uwagami albo bez)**
+  → jeśli były uwagi, poprawki z nowym SHA i ponownym sprawdzeniem dotkniętego zakresu
+  → merge za zgodą Kamila. Warunek **nie wymaga znalezienia błędu** — recenzja bez uwag
+  zalicza obieg tak samo.
+  W trakcie: [PR #1](https://github.com/Kuchaar/stockview/pull/1). Zrobione: gałąź, PR,
+  CI zielone, **recenzja Codex z 8 ustaleniami** (5× P1) i poprawki. Został merge.
+  Przy okazji zamknęła się pierwsza połowa warunku z F5: ścieżka `pull_request` w `ci.yml`
+  odpaliła się i jest zielona. Druga połowa — że PR z zepsutym importem dostaje czerwony
+  status — nadal nieprzetestowana.
+  ℹ️ Codex działa jako **bot wpięty w repo** (komentuje PR przy otwarciu), nie jako CLI;
+  CLI nie jest zainstalowane i nie jest potrzebne. Bot nie jest okresowym przeglądem GPT
+  i niczego nie zatwierdza.
+
 ---
 
 ## Bramka 1 — Dane
@@ -196,3 +216,18 @@ i tak się jeszcze zmienią. Zakres celowo wąski: tylko strona główna i stron
   *Gotowe, gdy:* wygląda tak samo dobrze na telefonie i w obu motywach, testy wizualne przechodzą.
 - [ ] **R4 — strona spółki** (~40 min × 2–3)
   *Gotowe, gdy:* wszystkie 6 zakładek działa bez regresji.
+
+---
+
+## Później — uwagi z recenzji
+
+Uwagi **P2 i niższe** z kolejnych rund recenzji, które **nie blokują merge'a** (patrz
+`AGENTS.md` → „Review by risk", wysokie ryzyko). Jedna runda `@codex review` wystarcza;
+to, co przyjdzie potem i nie jest P1, ląduje tutaj zamiast przedłużać PR bez końca.
+
+Format wiersza: `- [ ] <uwaga> — PR #<nr>, zgłoszone na <SHA>, plik:linia`
+
+Bierz je stąd, gdy dotykasz tego samego pliku albo gdy zrobi się ich tyle, że warto zrobić
+z nich jedno zadanie.
+
+- *(pusto — wszystkie uwagi z PR #1 zostały naprawione w jego trakcie)*

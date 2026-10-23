@@ -20,7 +20,16 @@
       "Bash(git branch *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(git rebase *)",
+      "Bash(git rev-parse *)",
+      "Bash(gh auth status)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)"
     ]
   }
 }
