@@ -216,3 +216,18 @@ i tak się jeszcze zmienią. Zakres celowo wąski: tylko strona główna i stron
   *Gotowe, gdy:* wygląda tak samo dobrze na telefonie i w obu motywach, testy wizualne przechodzą.
 - [ ] **R4 — strona spółki** (~40 min × 2–3)
   *Gotowe, gdy:* wszystkie 6 zakładek działa bez regresji.
+
+---
+
+## Później — uwagi z recenzji
+
+Uwagi **P2 i niższe** z kolejnych rund recenzji, które **nie blokują merge'a** (patrz
+`AGENTS.md` → „Review by risk", wysokie ryzyko). Jedna runda `@codex review` wystarcza;
+to, co przyjdzie potem i nie jest P1, ląduje tutaj zamiast przedłużać PR bez końca.
+
+Format wiersza: `- [ ] <uwaga> — PR #<nr>, zgłoszone na <SHA>, plik:linia`
+
+Bierz je stąd, gdy dotykasz tego samego pliku albo gdy zrobi się ich tyle, że warto zrobić
+z nich jedno zadanie.
+
+- *(pusto — wszystkie uwagi z PR #1 zostały naprawione w jego trakcie)*

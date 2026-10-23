@@ -2,6 +2,64 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — Doprecyzowanie modelu recenzji i 4 uwagi do c929f24
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Model recenzji doprecyzowany decyzją Kamila** — wpisane tam, gdzie opisujemy recenzję,
+  bez tworzenia drugiego procesu:
+  - **bot Codex to nasz „dodatkowy przegląd" dla wysokiego ryzyka.** Automatyczne review
+    na każdym PR-ze **wyłączone**; wołamy go komentarzem `@codex review` **tylko przy
+    wysokim ryzyku i tylko raz**. W tej roli zastępuje przegląd GPT — ale nadal **nie jest**
+    okresowym przeglądem GPT z sekcji handoveru, bo tamten patrzy na nazbierane zmiany,
+    architekturę i metodologię finansową;
+  - **P1 z tej rundy blokują merge**, a **P2 i niższe z dalszych rund nie blokują** — lądują
+    w nowej liście **„Później — uwagi z recenzji"** w `docs/ROADMAP.md` (uwaga, numer PR-a,
+    SHA, plik:linia). Powód: bot będzie znajdował P2 tak długo, jak długo się go pyta;
+  - **niskie i zwykłe ryzyko bez zmian** — niskie: moje review plus weryfikacja, bez
+    drugiego recenzenta i bez czekania; zwykłe: osobna sesja Claude. Ani jedno, ani drugie
+    **nigdy nie wysyła `@codex review`**.
+- **Cztery uwagi Codexa do `c929f24` naprawione** (wszystkie P2, wszystkie przyjęte):
+  1. **Niskie ryzyko czekało na recenzenta** (`/sv-start`) — punkt „niezrecenzowany SHA →
+     poproś o recenzję" był bezwarunkowy, a PR niskiego ryzyka po moim własnym review
+     z definicji nie ma review na GitHubie. Każdy taki PR zamieniał się w oczekiwanie.
+     Teraz ten punkt dotyczy **wyłącznie wysokiego ryzyka**.
+  2. **Jajko i kura z SHA w dzienniku** (`/sv-review`) — kazałem wpisać nowy SHA do wpisu
+     przed commitem poprawek, a to hash commita, który ten wpis zawiera. Teraz w dwu
+     krokach: wpis bez SHA → commit poprawek → **drugi, jednolinijkowy commit `docs:`**,
+     który dopisuje konkretny SHA. Ten wpis powstał dokładnie tak.
+  3. **„Zrecenzowany" bez sprawdzenia, przez kogo** (`/sv-start`) — liczyło się istnienie
+     jakiegokolwiek review, więc przy zwykłym ryzyku komentarz bota zaliczałby się jako
+     wymagana osobna sesja Claude. Teraz recenzję kwalifikuję po **ścieżce z poziomu
+     ryzyka**, z `author.login`: review z `[bot]` nie zastępuje sesji Claude.
+  4. **Commit każdego komentarza osobno** (`/sv-review`) — zapytanie nie pobierało, do
+     której wersji odnosi się dana uwaga, a `commit_id` z poziomu review nie mapuje się na
+     pojedynczy komentarz. **Potwierdzone na żywo**: REST pokazał osiem komentarzy jako
+     zgłoszone do `c929f24`, choć cztery były stare — GitHub przypisuje komentarzom nowszy
+     commit, gdy głowa idzie dalej. Dociągam teraz `commit{oid}` i `originalCommit{oid}`.
+
+**Decyzje.** Wszystkie cztery uwagi przyjęte, żadnej spornej. Dwie z nich (1 i 3) to ten sam
+błąd w dwu miejscach: **zapisałem warunek na „czy recenzja istnieje", zamiast na „czy odbyła
+się ta recenzja, której wymaga poziom ryzyka"**. Trzecia (2) to logiczna niemożliwość,
+której nie zauważyłem, bo nigdy nie przeszedłem tej ścieżki do końca.
+
+**Do sprawdzenia.** Odpalone: zmienione zapytanie GraphQL z `commit{oid}`
+i `originalCommit{oid}` — wszystkie cztery uwagi mają oba `oid` równe `c929f24`, czyli są
+rzeczywiście nowe. **Niesprawdzone:** ścieżka 👍 (bot za każdym razem miał uwagi), promocja
+`wip/*` z `git push origin --delete`, `--force-with-lease`, krok 7 z podglądem Cloudflare
+i cała ścieżka wysokiego ryzyka — w tym nowa reguła jednej rundy `@codex review`, bo ten PR
+ma ryzyko **niskie** i celowo o recenzję nie prosiłem. Lista „Później" jest pusta: wszystkie
+uwagi z PR #1 naprawiliśmy w jego trakcie. Build nie uruchamiany — zmiana nie dotyka `src/`.
+
+**Następne:** merge PR #1 — ryzyko niskie, review własne wykonane, cztery rundy Codexa
+zamknięte, 26/26 wątków rozwiązanych. To domyka **F6**. Potem **K3 — schemat portfela
+w Supabase** (`portfolio` i `transactions` z RLS ograniczonym do właściciela): **pierwsza
+zmiana wysokiego ryzyka**, czyli pierwszy prawdziwy test jednej rundy `@codex review`
+przed merge.
+
+
 ## 2026-10-23 — /sv-review na PR #1: 14 ustaleń P2 z dwóch recenzji
 
 Komputer: `MacBook-Pro-Kamil.local`

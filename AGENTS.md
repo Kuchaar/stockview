@@ -197,10 +197,15 @@ Three people, one lane each. Nobody silently takes over somebody else's lane.
 | **Claude Code** | Runs the day-to-day work off the agreed roadmap: proposes the next task, implements it, tests it, documents it, opens the pull request. **Does not need a prompt from GPT to start a task.** |
 | **GPT** | Periodic review of accumulated change, hard problems, architecture, financial methodology, judgement on where the product is going. **Not a mandatory reviewer of every pull request.** |
 
-The repo also runs tooling that is not a participant: the Codex bot comments on a pull
-request when it is opened, Cloudflare Pages builds a preview, GitGuardian scans for secrets.
-Useful, all three — but none of them is the periodic GPT review and none of them approves
-anything.
+The repo also runs tooling: Cloudflare Pages builds a preview, GitGuardian scans for
+secrets, and the **Codex bot** reviews a pull request when it is asked to. Automatic review
+on every pull request is **switched off** — Codex is called deliberately, and only for a
+high-risk change (see „Review by risk"). None of the three approves anything; approval is
+Kamil's.
+
+In that invited role the Codex bot **is** the additional high-risk review. It is still not
+the periodic GPT handover below — that one looks at accumulated change, architecture and
+financial methodology, and it is the thing the `nieustalony` line tracks.
 
 Ground rules:
 
@@ -239,21 +244,35 @@ goes in the pull request description, so nobody has to work it out twice.
 
 **Low risk** — documentation, a minor visual tweak, UI text with no financial or legal
 meaning.
-→ Claude's own review plus the verification that fits the change. No second reviewer, no
-waiting.
+→ Claude's own review plus the verification that fits the change. **No second reviewer, no
+waiting, and no `@codex review`.** Once the self-review and its verification are written into
+the pull request, a low-risk change is ready for Kamil's merge decision; the absence of a
+GitHub review on its head SHA is the expected state, not a missing step.
 
 **Normal functional change** — behaviour in the app that a user can see or rely on.
 → review in a **separate Claude session**, tests matched to the behaviour, and a check by
-Kamil. A separate session gives fresh context, which is worth something — but it is **not**
-an independent review by a different model, and it shares the same blind spots. Do not
-report it as one.
+Kamil. No `@codex review` here either. A separate session gives fresh context, which is worth
+something — but it is **not** an independent review by a different model, and it shares the
+same blind spots. Do not report it as one, and do not let a bot comment stand in for it: a
+Codex review on the head SHA does **not** satisfy the separate-session requirement.
 
 **High risk** — RLS and permissions, login, secrets, data migrations, an import that
 overwrites existing data, financial formulas, currencies, periods, data sources.
-→ an **additional review before merge and before deployment**. GPT preferred, or another
-competent reviewer. If none is available: open the pull request, say in it that it is waiting
-on a high-risk review, and **go do an independent task of lower risk**. A missing reviewer is
-never a reason to merge a high-risk change.
+→ an **additional review before merge and before deployment**, and this is the one case that
+calls an outside reviewer:
+
+- Ask the **Codex bot** with a `@codex review` comment — **one round.** It stands in here for
+  the GPT review; if GPT is available and Kamil wants it instead, that works too.
+- **Findings of P1 go back into the pull request and block the merge.** Fix them, name the new
+  SHA, and the round is done.
+- **P2 and below from any further round do not block the merge.** They go to the
+  „Później — uwagi z recenzji" list in [docs/ROADMAP.md](docs/ROADMAP.md), with the pull
+  request number and the SHA they were raised against. One round in, findings parked, merge
+  decision to Kamil — a review bot will keep finding P2s for as long as you keep asking, and
+  that is not a reason to hold a change.
+- If no reviewer can be reached at all: open the pull request, say in it that it is waiting on
+  a high-risk review, and **go do an independent task of lower risk**. A missing reviewer is
+  never a reason to merge a high-risk change.
 
 ## GPT review handover
 

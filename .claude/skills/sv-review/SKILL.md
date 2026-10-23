@@ -56,9 +56,17 @@ gh api repos/{owner}/{repo}/pulls/<nr>/reviews   # reviews + stan + commit_id
 gh api graphql -f query='query($owner:String!,$repo:String!,$pr:Int!){
   repository(owner:$owner,name:$repo){ pullRequest(number:$pr){
     reviewThreads(first:100){nodes{id isResolved isOutdated
-      comments(first:10){nodes{path line body author{login}}}}}}}}' \
+      comments(first:10){nodes{path line body author{login}
+        commit{oid} originalCommit{oid}}}}}}}}' \
   -F owner=Kuchaar -F repo=stockview -F pr=<nr>
 ```
+
+`commit{oid}` i `originalCommit{oid}` są tu po to, żeby krok 1 miał czym porównać uwagę
+z `headRefOid`. **`commit_id` z poziomu review nie mapuje się na pojedynczy komentarz**, a co
+więcej GitHub **przypisuje komentarzom nowszy commit**, gdy głowa gałęzi idzie dalej — więc
+po kilku rundach REST pokazuje stare uwagi jako zgłoszone do najnowszego SHA. Bez `oid`ów
+na komentarzu nie wiesz, co jest nieaktualne, i możesz poprawić albo zamknąć uwagę
+przeciwko złej wersji. `originalCommit` mówi, gdzie uwaga powstała.
 
 Ostatnie zapytanie jest niezbędne: **REST nie oddaje stanu rozwiązania wątku**, a to on
 decyduje, co jest jeszcze otwarte.
@@ -97,10 +105,21 @@ Poprawki w osobnych commitach (`fix:` albo `docs:`), opis po polsku, uwaga za uw
 
 **Jeśli cała sesja to sam `/sv-review`, dziennik nadal musi dostać wpis** — inaczej
 `/sv-start` na drugim komputerze przeczyta pole „Następne:" z **przed** recenzji i nie
-dowie się ani o nowym SHA, ani o ograniczeniach weryfikacji, ani o uwagach, które zostały
-otwarte. Dopisz do `docs/JOURNAL.md` przed commitem poprawek: co zgłoszono, co poprawione,
-co odrzucone z uzasadnieniem, co czeka na Kamila, nowy SHA i nowe „Następne:". Format
+dowie się ani o ograniczeniach weryfikacji, ani o uwagach, które zostały otwarte. Format
 i zasada „pokaż wpis i poczekaj na ok" — jak w `/sv-koniec`, krok 5.
+
+**SHA wpisz dopiero po commicie — w dwu krokach.** Nowy SHA jest hashem commita, który
+zawiera także ten wpis, więc **nie da się go znać z góry**: wstawiony „na niby" będzie
+nieaktualny, a jego poprawienie utworzy kolejny SHA i przekazanie między komputerami wskaże
+złą głowę. Dlatego:
+
+1. wpis **bez SHA** — co zgłoszono, co poprawione, co odrzucone z uzasadnieniem, co czeka
+   na Kamila, ograniczenia weryfikacji i nowe „Następne:";
+2. commit poprawek **razem z tym wpisem**, potem `git rev-parse HEAD`;
+3. **drugi, jednolinijkowy commit `docs:`**, który dopisuje konkretny SHA z punktu 2 do tego
+   wpisu. Ten commit ma własny, nowszy SHA — i to **on** jest głową do recenzji, więc jego
+   też podaj w komentarzu do PR-a. Rekurencji tu nie ma: wpis wskazuje commit z poprawkami,
+   a nie sam siebie.
 
 Potem uruchom sprawdzenia dobrane do tego, co zmieniłeś — tabela jest w `/sv-koniec`,
 krok 3. Zasada z `AGENTS.md`: **zmiana po recenzji wymaga sprawdzenia tego zakresu, który
@@ -141,16 +160,23 @@ gh pr checks <nr>
 Wynik z kroku 2 dotyczył **poprzedniego** SHA. Podanie go jako statusu nowego to
 raportowanie zielonego tam, gdzie checki mogą trwać, nie istnieć albo się wywalić.
 
-**I poproś o ponowną recenzję.** Samo wskazanie SHA jej nie uruchamia — bez prośby PR
-zostaje z niezrecenzowanym `headRefOid`, `/sv-start` skieruje go z powrotem tutaj,
-a krok 2 zatrzyma się na „recenzji nie ma". Fix-round wisiałby bez końca:
+**O ponowną recenzję proś tylko przy wysokim ryzyku, i tylko raz.**
 
-```
-gh pr comment <nr> --body "@codex review"
-```
+- **Niskie i zwykłe ryzyko: nie wołaj `@codex review`.** Po poprawkach PR jest gotowy do
+  decyzji Kamila (niskie) albo czeka na osobną sesję Claude (zwykłe). Brak review na nowym
+  SHA jest tu stanem oczekiwanym — `/sv-start` też tak go potraktuje.
+- **Wysokie ryzyko, pierwsza runda jeszcze nie była** — poproś, bo samo wskazanie SHA
+  recenzji nie uruchamia:
 
-Przy zmianie wysokiego ryzyka zagób zamiast tego wskazanego recenzenta i powiedz Kamilowi,
-że PR na niego czeka.
+  ```
+  gh pr comment <nr> --body "@codex review"
+  ```
+
+  Albo zagób wskazanego recenzenta i powiedz Kamilowi, że PR na niego czeka.
+- **Wysokie ryzyko, runda już była** — **nie proś o kolejną.** Popraw P1 i zamknij temat;
+  **P2 i niższe z dalszych rund przenieś do „Później — uwagi z recenzji"** w
+  `docs/ROADMAP.md` (uwaga, numer PR-a, SHA, plik:linia) i powiedz wprost, że **nie blokują
+  merge'a**. Bot będzie znajdował P2 tak długo, jak długo będziesz pytał.
 
 **Nie scalaj PR-a.** Merge to zgoda Kamila na ten konkretny PR.
 

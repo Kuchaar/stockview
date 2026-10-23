@@ -96,9 +96,18 @@ Ustal poziom z `AGENTS.md` → „Review by risk" i wpisz go do opisu PR-a:
 - **wysokie** — RLS i uprawnienia, logowanie, sekrety, migracje, import nadpisujący dane,
   wzory finansowe, waluty, okresy, źródła danych.
 
-Przy **wysokim**: PR zostaje otwarty z adnotacją, że czeka na dodatkową recenzję przed
-merge i przed wdrożeniem. Nie szukaj obejścia — brak recenzenta nie jest powodem do
-scalenia. Powiedz Kamilowi, że to stoi, i weź niezależne zadanie o niższym ryzyku.
+Poziom decyduje, kto recenzuje (`AGENTS.md` → „Review by risk"):
+
+- **niskie** — moje własne review plus weryfikacja, wpisane w opis PR-a. **Bez
+  `@codex review`**, bez czekania; PR idzie od razu do decyzji Kamila.
+- **zwykłe** — wymagana **osobna sesja Claude**. Też **bez `@codex review`**; komentarz bota
+  jej nie zastępuje.
+- **wysokie** — PR zostaje otwarty z adnotacją, że czeka na dodatkowy przegląd przed merge
+  i przed wdrożeniem, i dostaje **jedną rundę** `gh pr comment <nr> --body "@codex review"`
+  (albo wskazanego recenzenta). P1 z tej rundy blokują i trzeba je naprawić; **P2 i niższe
+  z dalszych rund idą do „Później — uwagi z recenzji" w `docs/ROADMAP.md` i nie blokują
+  merge'a**. Brak recenzenta nie jest powodem do scalenia — powiedz Kamilowi, że to stoi,
+  i weź niezależne zadanie o niższym ryzyku.
 
 ### 5. Wpis do dziennika
 

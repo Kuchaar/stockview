@@ -62,9 +62,16 @@ na prompt od GPT.
    **Co liczy się jako nierozwiązana uwaga** — nie zgaduj z liczby komentarzy:
    - każdy wątek z `isResolved: false` (odpowiedź autora **nie** zamyka wątku — zamyka go
      dopiero mutacja `resolveReviewThread`),
-   - `headRefOid`, do którego **nie ma żadnego review** — dodanie commita po
-     `CHANGES_REQUESTED` niczego nie zamyka. Dopóki aktualny SHA nie został zrecenzowany,
-     PR jest „czeka na recenzję aktualnego SHA", choćby wszystkie wątki były pozamykane,
+   - `headRefOid` bez **wymaganej** recenzji — i wymaganą określa **poziom ryzyka z opisu
+     PR-a**, nie sam fakt, że jakieś review istnieje. Patrz na `author.login`:
+     • **niskie** — recenzja na GitHubie **nie jest wymagana**; wystarczy moje własne review
+     i weryfikacja wpisane w opis PR-a. Brak review na `headRefOid` to **stan oczekiwany**,
+     nie brakujący krok,
+     • **zwykłe** — wymagana jest **osobna sesja Claude**. Komentarz bota (`author.login`
+     kończący się na `[bot]`) **jej nie zastępuje** — jeśli review ma tylko bota, wymagana
+     recenzja nadal nie odbyła się i trzeba to zgłosić,
+     • **wysokie** — wymagana jedna runda `@codex review` albo wskazany recenzent.
+     Dodanie commita po `CHANGES_REQUESTED` niczego nie zamyka,
    - **review ze stanem `CHANGES_REQUESTED` na aktualnym SHA** — recenzent może zgłosić
      uwagi w samej treści review, bez ani jednego komentarza do linii. Wtedy wątków jest
      zero, a uwagi są. Patrz na `state` ostatniego review dla tego SHA, nie na to, czy
@@ -117,9 +124,16 @@ Po polsku, **maksymalnie 8 linii**, bez powtarzania surowego outputu skryptu:
       się. Efekt byłby odwrotny do zasady: brak recenzenta blokowałby całą pracę.
    3. **PR z nierozwiązanymi wątkami albo z `CHANGES_REQUESTED` na aktualnym SHA** →
       `/sv-review`. Tu uwagi istnieją, więc jest co poprawiać.
-   4. **PR, którego aktualny SHA nie został zrecenzowany, a który na nikogo nie czeka** →
-      **poproś o recenzję** (komentarz `@codex review` albo zagób wskazanego recenzenta),
-      nie wołaj `/sv-review`. Samo wskazanie SHA recenzji nie uruchamia.
+   4. **PR wysokiego ryzyka, który nie przeszedł jeszcze swojej jednej rundy
+      `@codex review`** → **poproś o recenzję** (`gh pr comment <nr> --body "@codex review"`
+      albo zagób wskazanego recenzenta), nie wołaj `/sv-review`. Samo wskazanie SHA recenzji
+      nie uruchamia.
+
+      **Tylko wysokie ryzyko.** PR niskiego i zwykłego ryzyka **nigdy** nie trafia do tego
+      punktu i **nigdy** nie dostaje `@codex review` — inaczej każdy z nich zamieniłby się
+      w oczekiwanie na drugiego recenzenta, bo po moim własnym review z definicji nie ma
+      review na GitHubie. Niskie: gotowe do decyzji Kamila. Zwykłe: wymagana osobna sesja
+      Claude — powiedz, że jej brakuje, i zaproponuj ją jako zadanie.
    5. **Pierwsze otwarte zadanie z roadmapy**, wybrane po polu „Następne:", nie po
       kolejności w pliku.
 
