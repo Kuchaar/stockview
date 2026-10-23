@@ -138,23 +138,150 @@ To się nie skaluje i cicho starzeje.
   najnowszy okres `2026-07-31` zamiast `2026-03-31`. Przy okazji U10: Pepco raportuje w EUR.
 ---
 
+## Bramka P — prywatność i bezpieczeństwo
+
+**Idzie przed Bramką 2.** Strona już przetwarza dane osobowe (konta, watchlista), a portfel
+z Bramki 2 zbierze ich więcej — [`docs/VISION.md`](VISION.md), Zasada 6. Na produkcji dwie
+rzeczy nie działają, więc najpierw to (baza, poczta), potem ograniczenie danych wysyłanych
+na zewnątrz i język ocen, a polityka prywatności na końcu, kiedy wiadomo, jakie usługi
+zostają. 12 zadań po 20–40 minut, razem ok. 8 godzin.
+
+Źródło: dokument „StockView — prawo, prywatność i bezpieczeństwo" (22.10.2026, sprawdzony
+niezależnym agentem): <https://claude.ai/artifact/VoRrL6fWcfYEwmV8h4ARPV>
+
+Poziom ryzyka stoi przy każdym zadaniu i wynika z `AGENTS.md` → „Review by risk", nie
+z rozmiaru zmiany: **wysokie** dostaje jedną rundę `@codex review` przed merge'em,
+**zwykłe** wymaga osobnej sesji Claude, **niskie** kończy się moim własnym review wpisanym
+w opis PR-a.
+
+- [ ] **P0 — wybudzić bazę i zablokować usypianie** (~20 min) — ryzyko: **wysokie** (sekrety)
+  *Gotowe, gdy:* projekt Supabase ma status aktywny, logowanie na stockview.org działa, codzienny
+  `keepalive.yml` robi prawdziwe zapytania `select` (także w weekendy), sekrety `SUPABASE_URL`,
+  `SUPABASE_ANON_KEY` i `SUPABASE_SERVICE_ROLE_KEY` są w Actions, a ręcznie odpalony
+  `update-financials.yml` odświeża `public/data/financials/` (bilans i przepływy, nowa data).
+  **Stan na 2026-10-23:** baza aktywna ✓, logowanie na stockview.org działa ✓, trzy sekrety
+  w Actions ✓, codzienny `keepalive.yml` na `main` i sprawdzony ręcznym przebiegiem ✓
+  (PR #3, `90ffed0`; [run 39983171367](https://github.com/Kuchaar/stockview/actions/runs/39983171367)
+  — trzy `select` po HTTP 200, bez klucza w logu). Brakuje **jednej rzeczy**: ręczny przebieg
+  `update-financials.yml` nie odświeżył `public/data/financials/` — blokuje go **P13**.
+
+- [ ] **P1 — własny SMTP** (~40 min) — ryzyko: **wysokie** (logowanie, sekrety)
+  *Gotowe, gdy:* obcy adres e-mail dostaje link potwierdzający z adresu w stockview.org, a SPF, DKIM i DMARC przechodzą.
+
+- [ ] **P2 — RLS i migracje dla `watchlist` i `dividends`** (~40 min) — ryzyko: **wysokie** (RLS, migracje)
+  *Gotowe, gdy:* doradca bezpieczeństwa Supabase nie zgłasza błędów, obie tabele mają migracje w repo,
+  a użytkownik B nie widzi watchlisty użytkownika A.
+
+- [ ] **P3 — ustawienia logowania** (~40 min) — ryzyko: **wysokie** (logowanie)
+  Minimum 8 znaków w panelu i w `AuthModal.jsx`, Turnstile przy rejestracji, logowaniu i resecie, link „Nie pamiętam hasła".
+  *Gotowe, gdy:* hasło 7-znakowe jest odrzucane, a reset hasła działa od początku do końca.
+
+- [ ] **P4 — czcionki u siebie, motyw zapisywany po wyborze** (~20 min) — ryzyko: **zwykłe**
+  *Gotowe, gdy:* w zakładce Sieć nie ma żadnego żądania do googleapis.com ani gstatic.com, CSP nie zawiera domen Google,
+  a `sv-theme` pojawia się w localStorage dopiero po przełączeniu motywu.
+
+- [ ] **P5 — strona główna bez TradingView** (~40 min × 2) — ryzyko: **wysokie** (źródło danych)
+  Ticker z `latest-prices.json`, wykres WIG20 z własnych danych.
+  *Gotowe, gdy:* wejście na `/` nie wysyła nic do tradingview.com.
+
+- [ ] **P6 — nagłówki** (~20 min) — ryzyko: **zwykłe**
+  HSTS, `connect-src` bez Yahoo, próba bez `'unsafe-inline'`.
+  *Gotowe, gdy:* Mozilla Observatory daje co najmniej B+, a strona działa w obu motywach.
+  Uwaga: `max-age` w HSTS trudno odkręcić — sprawdź na podglądzie PR-a, zanim trafi na `main`.
+
+- [ ] **P7 — usuwanie konta i retencja logów** (~40 min) — ryzyko: **wysokie** (usuwa dane użytkownika)
+  Funkcja w bazie usuwa użytkownika razem z watchlistą; zadanie czyści `auth.audit_log_entries` starsze niż 90 dni.
+  *Gotowe, gdy:* po „Usuń konto" w Supabase nie ma ani konta, ani jego wierszy, a czyszczenie logów jest zaplanowane.
+
+- [ ] **P8 — neutralny język ocen** (~40 min) — ryzyko: **wysokie** (zmienia skład oceny)
+  Ocena kondycji bez części o wycenie i bez „atrakcyjnej wyceny", progi w zakładce wyceny opisane jako konwencja
+  z podanym źródłem zamiast „✓", zasada językowa dopisana do AGENTS.md.
+  *Gotowe, gdy:* w `src/` nie ma słów „atrakcyjn", „kupuj", „niedowartościow" w tekstach dla użytkownika,
+  a każda ocena prowadzi do opisu metodologii.
+  **Miejsca z „atrakcyjną wyceną"** — ten sam tekst stoi w dwóch plikach, poprawka musi trafić w oba:
+  `src/components/HealthScore.jsx:191-192` (`getDescription`, wariant `strong`, `pl` i `en`)
+  i `src/pages/StockPage.jsx:802` (`healthDescription`, wariant `strong`). To werdykt oceny kondycji,
+  a mówi o wycenie, której ta ocena nie liczy.
+  Dwa trafienia, które **zostają**, żeby warunek dał się zamknąć bez dyskusji: „kupuj" wchodzi
+  też w `src/data/translations.js:276` („inwestor kupujący «cały WIG20»") i `src/data/wig20.js:857`
+  („Kupuje i obsługuje portfele wierzytelności" — opis działalności Kruka). To opisy, nie oceny.
+
+- [ ] **P9 — polityka prywatności i regulamin** (~40 min × 2) — ryzyko: **zwykłe** (dotyka rejestracji)
+  `/prywatnosc` i `/regulamin` po polsku i angielsku, link w stopce, wymagany checkbox przy rejestracji,
+  adres kontaktowy, okresy przechowywania, przekazanie poza EOG.
+  *Gotowe, gdy:* treść zgadza się ze stanem strony po P1–P8.
+  Treść prawna jest decyzją Kamila, nie moją — `AGENTS.md` → „Code review rules", koniec sekcji.
+
+- [ ] **P10 — rejestr czynności i procedura incydentu** (~20 min) — ryzyko: **niskie** (same dokumenty)
+  *Gotowe, gdy:* oba dokumenty są w `docs/` i opisują co najmniej konto, watchlistę i logi.
+
+- [ ] **P11 — konta i repo** (~20 min) — ryzyko: **wysokie** (uprawnienia) · **zadanie Kamila**
+  *Gotowe, gdy:* 2FA działa na GitHubie, w Cloudflare, Supabase, u rejestratora i na skrzynce,
+  a w repo są włączone skanowanie sekretów i Dependabot.
+  Ustawień kont nie ruszam bez uzgodnienia — mogę najwyżej sprawdzić, co widać z `gh`, i zgłosić braki.
+
+- [ ] **P12 — `update-financials.yml` przerywa się przy brakującym sekrecie** (~20 min) — ryzyko: **wysokie** (sekrety)
+  Dziś oba realne kroki są bramkowane `if: env.SUPABASE_* != ''`, a przy braku sekretu wykonuje się
+  krok „Skip…" i cały przebieg kończy się na zielono. Tak przeszły cztery przebiegi „success" od
+  2026-09-26: po 16–24 s, bez jednej zmiany w plikach. To wzorzec P1 z `AGENTS.md` — „operacja
+  zakończona błędem nie może zgłaszać sukcesu". Ma działać jak `keepalive.yml`: brak sekretu →
+  `::error::` z nazwą sekretu i `exit 1`.
+  *Gotowe, gdy:* przebieg bez któregokolwiek z trzech sekretów kończy się czerwono i podaje w logu,
+  którego brakuje, kroków „Skip…" nie ma w pliku, a przebieg z sekretami nadal importuje i eksportuje.
+
+- [ ] **P13 — import z Yahoo nie przechodzi z runnera GitHuba** (~40 min) — ryzyko: **wysokie** (źródło danych)
+  Ręczny przebieg na `main` z 2026-10-23
+  ([run 39981690212](https://github.com/Kuchaar/stockview/actions/runs/39981690212)):
+  `import-financials.mjs` dostał HTTP 403 na 23 spółkach i „fetch failed" na PZU, zapisał 0 wierszy
+  i wywalił job — a przez to krok „Export financials to static files" **w ogóle się nie wykonał**,
+  choć baza ma 243 wiersze, z czego 218 z bilansem i 212 z przepływami. Ten sam adres
+  `https://stockview.org/api/financials?symbol=PKO.WA` z komputera oddaje HTTP 200, więc blokowany
+  jest adres IP runnera, nie endpoint. **Ten sam runner dobija się do Supabase bez problemu** —
+  `keepalive.yml` dostaje z niego HTTP 200 na trzech zapytaniach `select`
+  ([run 39983171367](https://github.com/Kuchaar/stockview/actions/runs/39983171367)), a eksport
+  chodzi tą samą drogą i tym samym kluczem anon. Blokada stoi więc wyłącznie między runnerem
+  i `/api/financials` na Cloudflare. Dwie rzeczy do rozdzielenia: eksport nie może zależeć od
+  powodzenia importu (to on odświeża pliki i wystarczy mu klucz anon — i wiemy już, że z runnera
+  by przeszedł), a import potrzebuje drogi, którą runner nie jest odbijany.
+  *Gotowe, gdy:* przebieg na `main` odświeża `public/data/financials/` (bilans, przepływy, nowa data)
+  także wtedy, gdy import nie pobierze nic, a nieudany import nadal kończy przebieg czerwono.
+  **Blokuje P0** — bez tego warunku „gotowe, gdy" przy P0 nie da się spełnić.
+
+### Poza kodem — zadania Kamila
+
+Trzy sprawy, których nie da się zrobić w repo. Nie zaczynam ich sam i nie zamykam za Kamila.
+
+- [ ] Zapytać compliance u pracodawcy, **zanim** pojawią się własne wyceny albo zarobek.
+- [ ] Już teraz napisać do GPW w sprawie umowy licencyjnej na dane opóźnione.
+- [ ] Afiliację z brokerem rozmawiać tylko w modelu stałej opłaty.
+
+---
+
 ## Bramka 2 — Konta i portfel
 
 Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfela.
 
+> **Pierwszeństwo ma Bramka P.** Portfel zbiera więcej danych osobowych niż watchlista,
+> a prywatność ma je wyprzedzać — Zasada 6 z [`docs/VISION.md`](VISION.md).
+
+> **K3–K6 wstrzymane do Otwartej decyzji 1 z [`docs/VISION.md`](VISION.md).** Portfel liczony
+> tylko na 24 spółkach WIG20 jest węższy niż hipoteza o ETF-ach i spółkach spoza indeksu —
+> pokazałby początkującemu ułamek tego, co naprawdę ma. K1 i K2 zostają odhaczone, bo już
+> działają.
+
 - [x] **K1 — logowanie Supabase** · [`3d804c1`](https://github.com/Kuchaar/stockview/commit/3d804c1)
 - [x] **K2 — watchlista z trwałym zapisem** · [`80e4ae2`](https://github.com/Kuchaar/stockview/commit/80e4ae2)
-- [ ] **K3 — schemat portfela w Supabase** (~40 min)
+- [ ] **K3 — schemat portfela w Supabase** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Tabele `portfolio` i `transactions` (ticker, typ, liczba, cena, data, prowizja) + RLS
   ograniczone do właściciela.
   *Gotowe, gdy:* migracja zastosowana, a użytkownik B nie widzi wierszy użytkownika A.
-- [ ] **K4 — dodawanie transakcji** (~40 min)
+- [ ] **K4 — dodawanie transakcji** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Formularz kupna/sprzedaży z walidacją.
   *Gotowe, gdy:* transakcja przeżywa odświeżenie strony i wylogowanie.
-- [ ] **K5 — wycena portfela** (~40 min)
+- [ ] **K5 — wycena portfela** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Wartość bieżąca, koszt nabycia, wynik w PLN i procentach, po cenach z `/api/quote`.
   *Gotowe, gdy:* liczby zgadzają się z ręcznym wyliczeniem na trzech transakcjach.
-- [ ] **K6 — strona `/portfolio`** (~40 min)
+- [ ] **K6 — strona `/portfolio`** (~40 min) — ⏸ **wstrzymane** (Otwarta decyzja 1)
   Tabela pozycji + podsumowanie, w stylu istniejących stron.
   *Gotowe, gdy:* działa na telefonie i w trybie ciemnym, pusty portfel ma sensowny stan.
 
@@ -196,9 +323,35 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
   *Gotowe, gdy:* wszystkie 25 URL-i z sitemapy jest zgłoszonych do indeksacji.
   Domena `stockview.org` zweryfikowana, sitemapa zgłoszona 2026-09-20 (razem z S1).
 
+
+## Po Bramce P — do decyzji
+
+Tematy, które wyszły z porównania tej roadmapy z [`docs/VISION.md`](VISION.md) (PR #2):
+wizja ich wymaga, a roadmapa ich nie miała. **Lista tematów, nie zadań** — bez szacunków
+czasu, bez warunków „gotowe, gdy" i **bez kolejności**. Kolejność ustala Kamil po Bramce P,
+razem z Otwartą decyzją 1.
+
+- **Edukacja wplątana w dane i narzędzie** — Zasady 3 i 4; dziś w roadmapie zero zadań
+  edukacyjnych, więc opcji (A) z Otwartej decyzji 1 nie da się wybrać.
+- **DCF jako kalkulator z założeniami użytkownika** — Zasada 2 wprost go dopuszcza, opcja (B)
+  stawia go na trzecim miejscu.
+- **Licencje na dane** — Yahoo i widgety TradingView zabraniają użytku komercyjnego, dane GPW
+  wymagają licencji; aplikacja używa dziś obu.
+- **Portfel z ETF-ami, spółkami spoza WIG20 i importem z eksportu brokera** — warunek z hipotez
+  VISION, od którego zależą wstrzymane K3–K6.
+- **Źródło i data przy każdej liczbie w każdym widoku, oraz koniec z poziomem 3 danych**
+  (zaszyte `financials` i `ratios` w `src/data/wig20.js`) — Zasada 1; dziś `DataFreshness`
+  jest tylko w zakładce Sprawozdania.
+- **Ścieżka do pierwszych płatności** — Cel nr 1 („10 obcych osób płaci") nie ma dziś
+  w roadmapie żadnego odpowiednika; wiąże się z Otwartą decyzją 2.
+
 ---
 
-## Bramka 4 — Redesign
+## Bramka 4 — Redesign — **zaparkowane, poza VISION**
+
+> **Zaparkowane.** [`docs/VISION.md`](VISION.md) nie wymienia redesignu ani w „Zasadach",
+> ani w żadnej z dwu opcji Otwartej decyzji 1. Treść zostaje nietknięta i czeka — jeśli
+> redesign ma wrócić do kolejki, wraca decyzją Kamila i wpisem w `VISION.md`.
 
 **Wchodzi dopiero po zamrożeniu zakresu.** Bez tego przerabiamy wygląd ekranów, które
 i tak się jeszcze zmienią. Zakres celowo wąski: tylko strona główna i strona spółki.

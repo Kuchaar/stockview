@@ -2,6 +2,59 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — Bramka P w roadmapie, sekrety sprawdzone w działaniu
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Bramka P w [`docs/ROADMAP.md`](ROADMAP.md)** — przeniesiona z `bramka-p.md` (dokument
+  „StockView — prawo, prywatność i bezpieczeństwo" z 22.10.2026), wstawiona **przed Bramką 2**,
+  zgodnie z Zasadą 6 z [`VISION.md`](VISION.md). Dwanaście zadań P0–P11 i ich warunki
+  „gotowe, gdy" przeniesione **1:1** (sprawdzone skryptem: 12/12 tytułów i 12/12 warunków
+  zgodnych po normalizacji cudzysłowów i spacji), do każdego dopisany **poziom ryzyka** wg
+  `AGENTS.md` → „Review by risk". „Poza kodem" stało się trzema **zadaniami Kamila**.
+  `bramka-p.md` usunięty z katalogu głównego. Przy Bramce 2 nota o pierwszeństwie Bramki P.
+- **P8 ma teraz miejsca** — `src/components/HealthScore.jsx:191-192` (`getDescription`)
+  i `src/pages/StockPage.jsx:802` (`healthDescription`): **ten sam werdykt zduplikowany
+  w dwóch plikach**, w obu językach. Dopisane też dwa trafienia, które mają **zostać**
+  (`translations.js:276` „inwestor kupujący", `wig20.js:857` „Kupuje i obsługuje portfele") —
+  bez tego warunek „w `src/` nie ma słowa «kupuj»" nie dałby się zamknąć bez dyskusji.
+- **Dwa nowe zadania w Bramce P.** **P12** — `update-financials.yml` ma się przerywać
+  z `::error::` i `exit 1` przy brakującym sekrecie, zamiast po cichu wykonywać krok „Skip…"
+  i kończyć na zielono (wzorzec P1: „operacja zakończona błędem nie może zgłaszać sukcesu").
+  **P13** — import z Yahoo nie przechodzi z runnera GitHuba, a jego porażka blokuje eksport;
+  **P13 blokuje P0**.
+
+**Sekrety sprawdzone w działaniu.** `gh secret list` → trzy nazwy (`SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`). Wartości nigdzie nie wypisane.
+
+- **`keepalive.yml` na `main` po merge'u PR #3 (`90ffed0`) — zielony.**
+  [Run 39983171367](https://github.com/Kuchaar/stockview/actions/runs/39983171367): trzy prawdziwe
+  zapytania `select` (`financials`, `dividends`, `financials` po `period_end`), **HTTP 200 ×3**,
+  „Keepalive OK", bez klucza w logu. To **dowód, że `SUPABASE_URL` i `SUPABASE_ANON_KEY` są
+  poprawne** i że runner GitHuba dobija się do Supabase bez przeszkód.
+- **`update-financials.yml` na `main` — czerwony, ale nie z winy sekretów.**
+  [Run 39981690212](https://github.com/Kuchaar/stockview/actions/runs/39981690212): krok
+  **„Import financials into Supabase" wykonał się** — nie „Skip…" — więc sekrety są widoczne
+  dla Actions. Padł na **HTTP 403 na 23 spółkach i „fetch failed" na PZU**, zapisał 0 wierszy
+  i wywalił job, przez co **„Export financials to static files" w ogóle się nie uruchomił**.
+  Importer woła **nasz własny** `https://stockview.org/api/financials`, nie Supabase; z mojego
+  komputera ten adres oddaje HTTP 200. Blokada stoi między runnerem i Cloudflare, nie w bazie.
+
+**Żaden sekret nie jest zły.** `SUPABASE_URL` i `SUPABASE_ANON_KEY` potwierdzone przez keepalive;
+`SUPABASE_SERVICE_ROLE_KEY` **nadal niepotwierdzony** — import padł, zanim zdążył cokolwiek
+wysłać do bazy, więc o tym kluczu wiem tylko, że istnieje i jest niepusty.
+`public/data/financials/` na `main` bez zmian: 24 pliki, po 4 okresy roczne i 4 kwartalne
+rachunku wyników, **0 bilansu, 0 przepływów**, data `2026-09-20` (Żabka 1 okres roczny).
+
+**Nie zrobione i dlaczego.** **P0 nie odhaczone.** Cztery warunki z pięciu są spełnione: baza
+aktywna, logowanie na stockview.org działa (potwierdził Kamil), trzy sekrety w Actions, codzienny
+keepalive na `main` i sprawdzony. Piąty nie: `update-financials.yml` nie odświeża
+`public/data/financials/`, bo blokuje go **P13**. Odhaczenie P0 z SHA czeka na P13.
+
+Następne: P13 (rozdzielić eksport od importu — eksport z runnera przechodzi, co pokazał keepalive), potem P12, i wtedy P0 do odhaczenia z SHA.
+
 ## 2026-10-23 — Keepalive Supabase (P0) i odkrycie: w repo nie ma ani jednego sekretu
 
 Komputer: `MacBook-Pro-Kamil.local`
