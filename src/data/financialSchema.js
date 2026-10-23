@@ -14,6 +14,46 @@ export function isBankSector(sector) {
 // dostaje costOfRevenue: 0, a spółka z zyskiem 595 mln — ebit: 0. Dla tych pól 0 znaczy
 // „brak danych", nie „zero złotych", więc nie trafia do kanonicznego wiersza.
 // Szczegóły: U6 w docs/DATA.md.
+/**
+ * Waluta notowań wszystkich spółek WIG20 na GPW — w niej przychodzą ceny z `/api/quote`
+ * i ze Stooqa. Sprawozdanie może być w innej (U10 w `docs/DATA.md`: Pepco raportuje w EUR),
+ * i wtedy ceny **nie wolno** dzielić przez liczbę ze sprawozdania.
+ */
+export const QUOTE_CURRENCY = 'PLN';
+
+/** Pierwsza znana waluta w zbiorze kanonicznych wierszy, albo `null`. */
+export function currencyOfRows(rows) {
+  for (const row of rows || []) {
+    if (row?.currency) return row.currency;
+  }
+  return null;
+}
+
+/**
+ * Waluta sprawozdań spółki — szukana po wszystkich trzech sprawozdaniach i obu typach
+ * okresu, bo nie każdy poziom danych wypełnia wszystkie. `null` znaczy „nie wiem",
+ * i wtedy nic nie udaje, że wie: ani etykieta kwot, ani osłona we wskaźnikach.
+ */
+export function statementCurrency(data) {
+  if (!data) return null;
+  for (const key of ['incomeStatement', 'balanceSheet', 'cashFlow']) {
+    for (const periodType of ['annual', 'quarterly']) {
+      const found = currencyOfRows(data[key]?.[periodType]);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Nagłówek jednostki dla tabel kwot: „mln PLN", „mln EUR", a przy nieznanej walucie
+ * samo „mln". Brak waluty nie może udawać złotówek — to był właśnie błąd D9.
+ */
+export function amountUnit(currency, lang) {
+  const base = lang === 'pl' ? 'mln' : 'M';
+  return currency ? `${base} ${currency}` : base;
+}
+
 export const YAHOO_ZERO_MEANS_MISSING = new Set([
   'costOfRevenue', 'grossProfit', 'operatingExpenses', 'operatingIncome',
   'ebitda', 'interestExpense',
@@ -398,6 +438,8 @@ export function toLegacyTable(data) {
   const column = (rows, key) => rows.map((r) => r[key] ?? null);
 
   return {
+    // Tabela „Przegląd" miesza wiersze z trzech sprawozdań, więc walutę bierze z całości.
+    currency: statementCurrency(data),
     annual: {
       years: annualRows.map((r) => r.period),
       revenue: column(annualRows, 'revenue'),

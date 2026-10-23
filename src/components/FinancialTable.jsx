@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLang } from '../context/LangContext';
 import { formatNumber } from '../data/wig20';
+import { amountUnit } from '../data/financialSchema';
 
 export default function FinancialTable({ financials }) {
   const { lang, t } = useLang();
@@ -8,6 +9,9 @@ export default function FinancialTable({ financials }) {
 
   const data = financials[period];
   const headers = period === 'annual' ? data.years : data.quarters;
+  // Waluta z danych, nie z założenia (D9). Poziom 3 z `wig20.js` jej nie ma — wtedy
+  // nagłówek mówi samo „mln", zamiast twierdzić, że to złotówki.
+  const currency = financials.currency ?? null;
 
   const rows = period === 'annual'
     ? [
@@ -52,7 +56,7 @@ export default function FinancialTable({ financials }) {
           <thead>
             <tr className="border-b border-surface-200 dark:border-surface-800">
               <th className="sticky left-0 z-10 bg-white dark:bg-surface-950 text-left py-3 pr-4 font-medium text-surface-500 text-xs uppercase tracking-wider">
-                {lang === 'pl' ? 'mln PLN' : 'M PLN'}
+                {amountUnit(currency, lang)}
               </th>
               {headers.map(h => (
                 <th key={h} className="text-right py-3 px-3 font-mono font-medium text-surface-500 text-xs">

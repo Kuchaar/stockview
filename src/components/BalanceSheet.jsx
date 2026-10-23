@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLang } from '../context/LangContext';
+import { amountUnit, currencyOfRows } from '../data/financialSchema';
 
 // Klucze kanoniczne z src/data/financialSchema.js — nie surowe nazwy z Yahoo.
 const LABELS = {
@@ -70,6 +71,8 @@ export default function BalanceSheet({ liveData, fallbackFinancials }) {
   // kanoniczny wiersz ma `date` jako 'YYYY-MM-DD' — sortowanie leksykalne działa
   const sorted = [...statements].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 4);
   const headers = sorted.map(s => s.date || '—');
+  // Waluta z danych, nie z założenia: Pepco raportuje w EUR (D9).
+  const currency = currencyOfRows(sorted);
 
   return (
     <div>
@@ -96,7 +99,7 @@ export default function BalanceSheet({ liveData, fallbackFinancials }) {
           <thead>
             <tr className="border-b border-surface-200 dark:border-surface-800">
               <th className="sticky left-0 z-10 bg-white dark:bg-surface-950 text-left py-3 pr-4 font-medium text-surface-500 text-xs uppercase tracking-wider">
-                {lang === 'pl' ? 'mln PLN' : 'M PLN'}
+                {amountUnit(currency, lang)}
               </th>
               {headers.map(h => (
                 <th key={h} className="text-right py-3 px-3 font-mono font-medium text-surface-500 text-xs">

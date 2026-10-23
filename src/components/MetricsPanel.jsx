@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getRatioMeta } from '../data/ratioCalculator';
-import { HelpCircle } from 'lucide-react';
+import { useLang } from '../context/LangContext';
+import { HelpCircle, Info } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'profitability', fields: ['roe', 'roa', 'roic', 'grossMargin', 'operatingMargin', 'netMargin', 'ebitdaMargin'] },
@@ -18,8 +19,12 @@ const TAB_LABELS = {
   growth: { pl: 'Wzrost', en: 'Growth' },
 };
 
-function formatValue(value, format) {
+// `currency` dotyczy tylko formatu 'currency', czyli kwot (np. przepływ operacyjny).
+// `null` znaczy „nie wiem" i wtedy kwota idzie bez waluty — nigdy z domyślnym „PLN",
+// bo spółka może raportować w euro (D9).
+function formatValue(value, format, currency = null) {
   if (value == null) return '—';
+  const withCur = (text) => (currency ? `${text} ${currency}` : text);
   switch (format) {
     case 'percent':
       return `${value.toFixed(1)}%`;
@@ -28,9 +33,9 @@ function formatValue(value, format) {
     case 'ratio':
       return value.toFixed(2);
     case 'currency':
-      if (Math.abs(value) >= 1e9) return `${(value / 1e9).toFixed(1)} mld`;
-      if (Math.abs(value) >= 1e6) return `${(value / 1e6).toFixed(0)} mln`;
-      return value.toLocaleString('pl-PL');
+      if (Math.abs(value) >= 1e9) return withCur(`${(value / 1e9).toFixed(1)} mld`);
+      if (Math.abs(value) >= 1e6) return withCur(`${(value / 1e6).toFixed(0)} mln`);
+      return withCur(value.toLocaleString('pl-PL'));
     default:
       return String(value);
   }
@@ -49,7 +54,7 @@ function getValueColor(value, meta) {
   return '';
 }
 
-function MetricCard({ ratioKey, value, lang }) {
+function MetricCard({ ratioKey, value, lang, currency = null }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const meta = getRatioMeta(ratioKey);
   if (!meta) return null;
@@ -87,13 +92,14 @@ function MetricCard({ ratioKey, value, lang }) {
         </div>
       </div>
       <div className={`font-mono font-semibold text-lg ${colorClass}`}>
-        {formatValue(value, meta.format)}
+        {formatValue(value, meta.format, currency)}
       </div>
     </div>
   );
 }
 
 export default function MetricsPanel({ ratios, lang }) {
+  const { t } = useLang();
   const [activeTab, setActiveTab] = useState('profitability');
 
   if (!ratios) {
@@ -114,6 +120,15 @@ export default function MetricsPanel({ ratios, lang }) {
     const meta = getRatioMeta(f);
     return meta != null;
   });
+
+  // Osłona walutowa z D9: część wskaźników jest `null`, bo łączyłyby dwie waluty.
+  // Bez tego wyjaśnienia użytkownik widzi same „—" i nie wie, czy to brak danych,
+  // czy awaria. Pokazujemy je tam, gdzie te wskaźniki miałyby stać.
+  const cur = ratios.currencyInfo;
+  const showCurrencyNote = cur?.mismatch === true && (activeTab === 'valuation' || activeTab === 'dividend');
+  const currencyNote = showCurrencyNote
+    ? t('stock.currencyMismatch').replaceAll('{statement}', cur.statement).replaceAll('{quote}', cur.quote)
+    : null;
 
   return (
     <div>
@@ -145,9 +160,20 @@ export default function MetricsPanel({ ratios, lang }) {
             ratioKey={field}
             value={activeRatios[field]}
             lang={lang}
+            currency={cur?.statement ?? null}
           />
         ))}
       </div>
+
+      {currencyNote && (
+        <div className="mt-5 flex gap-3 rounded-xl border border-warn/30 bg-warn/5 p-4
+                        dark:border-warn/25 dark:bg-warn/10">
+          <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-warn" aria-hidden="true" />
+          <p className="text-xs leading-relaxed text-surface-600 dark:text-surface-300">
+            {currencyNote}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

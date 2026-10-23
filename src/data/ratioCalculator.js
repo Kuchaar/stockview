@@ -1,7 +1,7 @@
 // Comprehensive financial ratio calculator for StockView
 // Operates on the canonical financial data format from financialSchema.js
 
-import { isBankSector } from './financialSchema.js'; // z rozszerzeniem: ten plik czytają też skrypty pod Node
+import { isBankSector, statementCurrency, QUOTE_CURRENCY } from './financialSchema.js'; // z rozszerzeniem: ten plik czytają też skrypty pod Node
 
 const TAX_RATE_PL = 0.19; // Polish CIT rate
 
@@ -74,12 +74,28 @@ export function calculateAllRatios(financialData, currentPrice, sharesOutstandin
     ? currentPrice * sharesOutstanding
     : null;
 
+  // Osłona walutowa (D9). `currentPrice` jest w walucie notowań, czyli w PLN — tak notuje
+  // GPW i tak oddają Stooq i Yahoo. Sprawozdanie może być w innej walucie: Pepco raportuje
+  // w EUR (U10 w docs/DATA.md). Wskaźnika, który łączy cenę z liczbą ze sprawozdania,
+  // **nie liczymy wtedy wcale** — nie przeliczamy też kursem, bo kurs z dnia wyceny i kurs
+  // średni okresu to dwie różne rzeczy, a wybór między nimi jest decyzją metodologiczną,
+  // nie szczegółem implementacyjnym. Lepiej „—" niż liczba, która wygląda poprawnie.
+  // Wskaźniki czysto ilorazowe (ROE, marże, dług/kapitał) są bezpieczne: dzielą walutę
+  // przez tę samą walutę i skracają ją.
+  const statementCur = statementCurrency(financialData);
+  const currencyMismatch = statementCur != null && statementCur !== QUOTE_CURRENCY;
+
   return {
     profitability: calcProfitability(inc, bs, bank),
-    valuation: calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap),
+    valuation: calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap, currencyMismatch),
     debtAndLiquidity: calcDebtAndLiquidity(inc, bs, cf, bank),
-    dividend: calcDividend(cf, inc, ks, marketCap),
+    dividend: calcDividend(cf, inc, ks, marketCap, currencyMismatch),
     growth: calcGrowth(inc, incPrev),
+    currencyInfo: {
+      statement: statementCur,
+      quote: QUOTE_CURRENCY,
+      mismatch: currencyMismatch,
+    },
   };
 }
 
@@ -110,7 +126,17 @@ function calcProfitability(inc, bs, bank) {
   };
 }
 
-function calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap) {
+function calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap, currencyMismatch = false) {
+  // Każdy wskaźnik poniżej łączy cenę albo kapitalizację (PLN) z liczbą ze sprawozdania,
+  // więc przy innej walucie sprawozdania wszystkie idą na `null` — `forwardPe` też.
+  // Tego ostatniego nie liczymy my, a Yahoo, i właśnie dlatego nie wiemy, czy dla spółki
+  // raportującej w EUR zestawia cenę w PLN z prognozą zysku w EUR. Jedna liczba stojąca
+  // między kreskami wyglądałaby na sprawdzoną, a sprawdzona nie jest (decyzja Kamila
+  // po recenzji PR #7).
+  if (currencyMismatch) {
+    return { pe: null, forwardPe: null, pb: null, ps: null, evEbitda: null, peg: null, fcfYield: null };
+  }
+
   const eps = inc?.eps ?? ks.eps ?? null;
   const bvps = bs?.bookValuePerShare ?? ks.bookValue ?? null;
   const revenue = inc?.revenue;
@@ -162,12 +188,16 @@ function calcDebtAndLiquidity(inc, bs, cf, bank) {
   };
 }
 
-function calcDividend(cf, inc, ks, marketCap) {
+function calcDividend(cf, inc, ks, marketCap, currencyMismatch = false) {
   const dividendsPaid = cf?.dividendsPaid;
   const netIncome = inc?.netIncome;
 
+  // Stopa od Yahoo jest ich własną, spójną liczbą — zostaje. Nasze wyliczenie awaryjne
+  // dzieli dywidendę ze sprawozdania przez kapitalizację w PLN, więc przy innej walucie
+  // sprawozdania się go nie robi. `payoutRatio` jest bezpieczny: dywidenda i zysk netto
+  // są w tej samej walucie.
   let dividendYield = ks.dividendYield ?? null;
-  if (dividendYield == null && dividendsPaid != null && marketCap != null && marketCap > 0) {
+  if (!currencyMismatch && dividendYield == null && dividendsPaid != null && marketCap != null && marketCap > 0) {
     dividendYield = round2(Math.abs(dividendsPaid) / marketCap * 100);
   }
 

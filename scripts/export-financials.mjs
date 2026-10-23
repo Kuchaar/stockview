@@ -41,7 +41,9 @@ function toCanonical(company, rows) {
   const sorted = [...rows].sort((a, b) => b.period_end.localeCompare(a.period_end));
 
   for (const row of sorted) {
-    const meta = { date: row.period_end, period: row.period_label };
+    // `currency` musi tu być: bez niej plik poziomu 2 nie wie, w czym są kwoty, a strona
+    // domyśla się złotówek. Pepco raportuje w EUR (U10 w docs/DATA.md) — to był błąd D9.
+    const meta = { date: row.period_end, period: row.period_label, currency: row.currency ?? null };
     const blocks = [
       ['incomeStatement', row.income],
       ['balanceSheet', row.balance],
@@ -73,7 +75,7 @@ function toCanonical(company, rows) {
 async function main() {
   const { data, error } = await db
     .from('financials')
-    .select('company_id, period_type, period_end, period_label, income, balance, cash_flow, source, updated_at')
+    .select('company_id, period_type, period_end, period_label, income, balance, cash_flow, currency, source, updated_at')
     .order('period_end', { ascending: false });
 
   if (error) {

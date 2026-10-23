@@ -173,6 +173,35 @@ To się nie skaluje i cicho starzeje.
   *Niesprawdzone:* czy któryś wskaźnik już dziś miesza EUR z kapitalizacją w złotych —
   `src/data/ratioCalculator.js` używa słowa `currency` tylko jako nazwy formatu, więc osłony
   walutowej tam nie widziałem, ale pełnej ścieżki liczb nie przeszedłem.
+
+- [ ] **D10 — nagłówek i Przegląd pokazują wskaźniki z zaszytych danych poziomu 3** (~40 min × 2) — ryzyko: **wysokie** (poprawność liczb)
+  Zgłoszone przez Kamila 2026-10-23 z podglądu PR #7: na stronie Pepco nagłówek pokazuje
+  „P/E: 23.4", Przegląd „C/Z 23,4" i „C/WK 2,16", a zakładka Wycena **tego samego ekranu**
+  pokazuje „—", bo spółka ma dziś stratę (EPS −0,306). Dwa miejsca na jednym ekranie mówią
+  sprzeczne rzeczy, a to z zaszytych liczb wygląda na konkretniejsze.
+  **Skala: wszystkie 24 spółki, nie tylko Pepco.** `useStockData` nakłada na
+  `wig20Companies` **tylko ceny** (`price`, `change`, `changePercent`, `_priceDate` —
+  `src/hooks/useStockData.js:12-22`); `ratios` i `financials` zostają zaszyte. Czytają je:
+  - `src/pages/StockPage.jsx:174-178` — plakietka „P/E" w nagłówku,
+  - `src/pages/StockPage.jsx:565` `KeyRatiosSection` — karty C/Z, C/WK i słupki w Przeglądzie,
+  - `src/pages/StockPage.jsx:100` — **`pageDesc`, czyli opis strony dla Google**: „P/E …,
+    ROE …%, dywidenda …%" idzie do snippetu w wyszukiwarce,
+  - `ScreenerPage` i `ComparePage` — filtry, sortowanie i porównanie,
+  - `HealthScore` i `HealthGrid` przez `calculateSubScores(stock.ratios)` — **ocena kondycji**.
+  **Jak bardzo nieaktualne.** Zaszyte `ratios` policzono zaszytą ceną — widać to arytmetycznie
+  (Pepco: 18,60/0,79 = 23,5 i 18,60/8,61 = 2,16). Porównanie zaszytego `price` z ceną
+  z `latest-prices.json` (2026-10-22) dla 24 spółek: **mediana odchylenia 91%**, **14 spółek
+  powyżej 50%**, maksimum **+186%** (Modivo), dalej Asseco +181%, Pepco +159%, Orlen +149%,
+  mBank +132%. Dwa ujemne: Kruk −27% i Dino −91% — to drugie wygląda na podział akcji
+  (430 → 39,56), nie na spadek, co tylko potwierdza, że tych liczb nikt nie odświeżał.
+  Czyli C/Z w nagłówku nie jest „trochę stare": jest policzone ceną z innej epoki.
+  *Gotowe, gdy:* nagłówek, Przegląd i opis strony dla Google liczą wskaźniki z tych samych
+  danych co zakładka Wycena (z osłoną walutową z D9), a gdy tych danych nie ma, pokazują „—"
+  zamiast liczby z `wig20.js`; żaden ekran nie pokazuje dwóch różnych C/Z dla jednej spółki;
+  spółka ze stratą nie ma dodatniego C/Z w żadnym miejscu.
+  *Uwaga:* to **nie to samo** co „koniec z poziomem 3" z listy „Po Bramce P". Tam chodzi
+  o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć widoków czyta je
+  **zamiast** danych bieżących, nawet gdy te bieżące są dostępne.
 ---
 
 ## Bramka P — prywatność i bezpieczeństwo
@@ -419,6 +448,13 @@ razem z Otwartą decyzją 1.
   jest tylko w zakładce Sprawozdania.
 - **Ścieżka do pierwszych płatności** — Cel nr 1 („10 obcych osób płaci") nie ma dziś
   w roadmapie żadnego odpowiednika; wiąże się z Otwartą decyzją 2.
+- **Czy przeliczać sprawozdania w obcej walucie kursem** — wyszło z D9. Dziś wskaźniki
+  łączące cenę w PLN z liczbą w EUR są **niedostępne**, z wyjaśnieniem na ekranie, i nic
+  nie jest przeliczane. Przeliczanie wymagałoby wyboru, którego nie da się zrobić „technicznie":
+  kurs z dnia wyceny, kurs na koniec okresu sprawozdawczego, czy kurs średni okresu — trzy
+  różne odpowiedzi na to samo pytanie, każda obronna i każda dająca inne C/Z. Doszłoby do tego
+  źródło kursów (NBP?), jego data i to, że wskaźnik historyczny trzeba by przeliczać kursem
+  historycznym, inaczej zmiana kursu udaje zmianę wyniku spółki. **Decyzja Kamila.**
 
 ---
 
@@ -458,4 +494,10 @@ Format wiersza: `- [ ] <uwaga> — PR #<nr>, zgłoszone na <SHA>, plik:linia`
 Bierz je stąd, gdy dotykasz tego samego pliku albo gdy zrobi się ich tyle, że warto zrobić
 z nich jedno zadanie.
 
-- *(pusto — wszystkie uwagi z PR #1 zostały naprawione w jego trakcie)*
+- [ ] **`calculateHealthScoreV2` to martwy kod — usunąć** — PR #7, zgłoszone na `cdd042a`,
+  `src/data/ratioCalculator.js:262`. Funkcja liczy ocenę kondycji z blokiem Wycena o wadze
+  20% (`pe`, `pb`, `evEbitda`), ale **nikt jej nie importuje** — `grep` po `src/` zwraca samą
+  definicję. Ocenę liczy `calculateHealthScore`/`calculateSubScores` z `wig20.js`. Zostawiona
+  świadomie (decyzja Kamila), bo usuwanie jej przy okazji D9 rozszerzyłoby zakres PR-a
+  wysokiego ryzyka. Po osłonie walutowej z D9 dostaje `null`-e i blok Wycena sam wypadłby
+  z wagi, więc nie jest groźna — jest tylko zbędna i myląca.
