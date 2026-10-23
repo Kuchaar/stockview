@@ -10,62 +10,337 @@
       {
         "date": "2025-12-31",
         "period": "FY2025",
-        "revenue": 33277000000,
-        "netIncome": 3313000000
+        "eps": 1.89,
+        "ebitda": 7430000000,
+        "revenue": 34358000000,
+        "netIncome": 3313000000,
+        "grossProfit": 6597000000,
+        "interestExpense": 690000000,
+        "operatingIncome": 5004000000
       },
       {
         "date": "2024-12-31",
         "period": "FY2024",
-        "revenue": 32535000000,
-        "netIncome": 585000000
+        "eps": 0.33,
+        "ebitda": 4954000000,
+        "revenue": 35399000000,
+        "netIncome": 585000000,
+        "grossProfit": 3968000000,
+        "interestExpense": 719000000,
+        "operatingIncome": 2547000000
       },
       {
         "date": "2023-12-31",
         "period": "FY2023",
-        "revenue": 42657000000,
-        "netIncome": 1673000000
+        "eps": 0.64,
+        "ebitda": 4690000000,
+        "revenue": 50035000000,
+        "netIncome": 1123000000,
+        "grossProfit": 4408000000,
+        "interestExpense": 842000000,
+        "operatingIncome": 3209000000
       },
       {
         "date": "2022-12-31",
         "period": "FY2022",
-        "revenue": 36311000000,
-        "netIncome": -134000000
+        "eps": -0.08,
+        "ebitda": 2800000000,
+        "revenue": 36795000000,
+        "netIncome": -134000000,
+        "grossProfit": 1941000000,
+        "interestExpense": 630000000,
+        "operatingIncome": 898000000
       }
     ],
     "quarterly": [
       {
         "date": "2026-06-30",
         "period": "Q2 2026",
-        "revenue": 7694000000,
-        "netIncome": 586000000
+        "eps": 0.33,
+        "ebitda": 1665000000,
+        "revenue": 7755000000,
+        "netIncome": 586000000,
+        "grossProfit": 1266000000,
+        "interestExpense": 131000000,
+        "operatingIncome": 908000000
       },
       {
         "date": "2026-03-31",
         "period": "Q1 2026",
+        "eps": 0.56,
+        "ebitda": 2071000000,
         "revenue": 9507000000,
-        "netIncome": 979000000
+        "netIncome": 979000000,
+        "grossProfit": 1812000000,
+        "interestExpense": 149000000,
+        "operatingIncome": 1382000000
       },
       {
         "date": "2025-12-31",
         "period": "Q4 2025",
-        "revenue": 9018000000,
-        "netIncome": 416000000
+        "ebitda": 1402000000,
+        "revenue": 9240000000,
+        "netIncome": 416000000,
+        "grossProfit": 1286000000,
+        "interestExpense": 155000000,
+        "operatingIncome": 783000000
       },
       {
         "date": "2025-09-30",
         "period": "Q3 2025",
-        "revenue": 7616000000,
-        "netIncome": 844000000
+        "eps": 0.48,
+        "ebitda": 1878000000,
+        "revenue": 7819000000,
+        "netIncome": 844000000,
+        "grossProfit": 1606000000,
+        "interestExpense": 152000000,
+        "operatingIncome": 1249000000
+      },
+      {
+        "date": "2025-06-30",
+        "period": "Q2 2025",
+        "eps": 0.53,
+        "ebitda": 1880000000,
+        "revenue": 7667000000,
+        "netIncome": 923000000,
+        "grossProfit": 1604000000,
+        "interestExpense": 176000000,
+        "operatingIncome": 1221000000
+      },
+      {
+        "date": "2025-03-31",
+        "period": "Q1 2025",
+        "eps": 0.64
       }
     ]
   },
   "balanceSheet": {
-    "annual": [],
-    "quarterly": []
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "cash": 248000000,
+        "netPPE": 39210000000,
+        "inventory": 807000000,
+        "totalDebt": 13118000000,
+        "totalAssets": 48717000000,
+        "totalEquity": 20783000000,
+        "currentAssets": 6604000000,
+        "retainedEarnings": 9116000000,
+        "totalLiabilities": 27931000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 11538000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "cash": 325000000,
+        "netPPE": 35161000000,
+        "inventory": 937000000,
+        "totalDebt": 14615000000,
+        "totalAssets": 45714000000,
+        "totalEquity": 17713000000,
+        "currentAssets": 7645000000,
+        "retainedEarnings": 6376000000,
+        "totalLiabilities": 27960000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 12153000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "cash": 692000000,
+        "netPPE": 33724000000,
+        "inventory": 1483000000,
+        "totalDebt": 17415000000,
+        "totalAssets": 49138000000,
+        "totalEquity": 17320000000,
+        "currentAssets": 11779000000,
+        "retainedEarnings": 5201000000,
+        "totalLiabilities": 31780000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 13571000000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "cash": 1678000000,
+        "netPPE": 30758000000,
+        "inventory": 1118000000,
+        "totalDebt": 16487000000,
+        "totalAssets": 45276000000,
+        "totalEquity": 16536000000,
+        "currentAssets": 10223000000,
+        "retainedEarnings": 4254000000,
+        "totalLiabilities": 28707000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 10206000000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "cash": 2362000000,
+        "netPPE": 40649000000,
+        "inventory": 733000000,
+        "totalDebt": 13059000000,
+        "totalAssets": 51273000000,
+        "totalEquity": 22038000000,
+        "currentAssets": 7693000000,
+        "retainedEarnings": 7390000000,
+        "totalLiabilities": 29232000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 11989000000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "cash": 658000000,
+        "netPPE": 39855000000,
+        "inventory": 771000000,
+        "totalDebt": 12867000000,
+        "totalAssets": 49827000000,
+        "totalEquity": 21826000000,
+        "currentAssets": 7091000000,
+        "retainedEarnings": 10098000000,
+        "totalLiabilities": 27998000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 11357000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "cash": 248000000,
+        "netPPE": 39210000000,
+        "inventory": 807000000,
+        "totalDebt": 13118000000,
+        "totalAssets": 48717000000,
+        "totalEquity": 20783000000,
+        "currentAssets": 6604000000,
+        "retainedEarnings": 9116000000,
+        "totalLiabilities": 27931000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 11538000000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "cash": 294000000,
+        "netPPE": 37699000000,
+        "inventory": 678000000,
+        "totalDebt": 14298000000,
+        "totalAssets": 46757000000,
+        "totalEquity": 20553000000,
+        "currentAssets": 6122000000,
+        "retainedEarnings": 8782000000,
+        "totalLiabilities": 26201000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 9998000000
+      },
+      {
+        "date": "2025-06-30",
+        "period": "Q2 2025",
+        "cash": 204000000,
+        "netPPE": 36708000000,
+        "inventory": 754000000,
+        "totalDebt": 14084000000,
+        "totalAssets": 46227000000,
+        "totalEquity": 19727000000,
+        "currentAssets": 6605000000,
+        "retainedEarnings": 7936000000,
+        "totalLiabilities": 26497000000,
+        "sharesOutstanding": 1752549394,
+        "currentLiabilities": 10709000000
+      }
+    ]
   },
   "cashFlow": {
-    "annual": [],
-    "quarterly": []
+    "annual": [
+      {
+        "date": "2025-12-31",
+        "period": "FY2025",
+        "freeCashFlow": 1674000000,
+        "financingCashFlow": -1388000000,
+        "investingCashFlow": -5830000000,
+        "operatingCashFlow": 6981000000,
+        "capitalExpenditure": -5307000000
+      },
+      {
+        "date": "2024-12-31",
+        "period": "FY2024",
+        "freeCashFlow": 3031000000,
+        "financingCashFlow": -3824000000,
+        "investingCashFlow": -4639000000,
+        "operatingCashFlow": 7972000000,
+        "capitalExpenditure": -4941000000
+      },
+      {
+        "date": "2023-12-31",
+        "period": "FY2023",
+        "freeCashFlow": 590000000,
+        "financingCashFlow": 286000000,
+        "investingCashFlow": -4794000000,
+        "operatingCashFlow": 4616000000,
+        "capitalExpenditure": -4026000000
+      },
+      {
+        "date": "2022-12-31",
+        "period": "FY2022",
+        "freeCashFlow": -1104000000,
+        "financingCashFlow": 1518000000,
+        "investingCashFlow": -3976000000,
+        "operatingCashFlow": 2775000000,
+        "capitalExpenditure": -3879000000
+      }
+    ],
+    "quarterly": [
+      {
+        "date": "2026-06-30",
+        "period": "Q2 2026",
+        "freeCashFlow": 1460000000,
+        "financingCashFlow": 241000000,
+        "investingCashFlow": -1161000000,
+        "operatingCashFlow": 2659000000,
+        "capitalExpenditure": -1199000000
+      },
+      {
+        "date": "2026-03-31",
+        "period": "Q1 2026",
+        "freeCashFlow": 1047000000,
+        "financingCashFlow": -63000000,
+        "investingCashFlow": -1447000000,
+        "operatingCashFlow": 2108000000,
+        "capitalExpenditure": -1061000000
+      },
+      {
+        "date": "2025-12-31",
+        "period": "Q4 2025",
+        "freeCashFlow": 813000000,
+        "financingCashFlow": -887000000,
+        "investingCashFlow": -1810000000,
+        "operatingCashFlow": 2706000000,
+        "capitalExpenditure": -1893000000
+      },
+      {
+        "date": "2025-09-30",
+        "period": "Q3 2025",
+        "freeCashFlow": 90000000,
+        "financingCashFlow": 165000000,
+        "investingCashFlow": -1396000000,
+        "operatingCashFlow": 1328000000,
+        "capitalExpenditure": -1238000000
+      },
+      {
+        "date": "2025-06-30",
+        "period": "Q2 2025",
+        "freeCashFlow": 0,
+        "financingCashFlow": -1305000000,
+        "investingCashFlow": -1209000000,
+        "operatingCashFlow": 1136000000,
+        "capitalExpenditure": -1136000000
+      }
+    ]
   },
   "keyStats": null
 }
