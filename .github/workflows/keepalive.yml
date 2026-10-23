@@ -1,0 +1,73 @@
+name: Keepalive Supabase
+
+# Projekt Supabase na darmowym planie jest usypiany po okresie bez zapytan, a uspiona baza
+# to martwe logowanie, watchlista i dywidendy. Ten workflow nie robi nic poza utrzymaniem
+# aktywnosci bazy.
+#
+# Dlaczego osobny plik, a nie krok w `update-prices.yml`: tamten chodzi tylko w dni robocze
+# (`1-5`), wiec sobota i niedziela nie dawalyby ani jednego zapytania. Rozszerzenie jego
+# harmonogramu na weekend oznaczaloby z kolei dwa commity tygodniowo na `main` z sama
+# podbita data w `latest-prices.json` (`fetch-stooq.mjs` nadpisuje `lastUpdated` przy kazdym
+# przebiegu). Osobny plik: jedna odpowiedzialnosc, zero commitow-smieci.
+
+on:
+  schedule:
+    # Codziennie, takze w weekendy. 07:00 UTC — poza godzinami przebiegu cen (18:00 UTC),
+    # zeby oba zadania nie konkurowaly o ten sam moment.
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+# Nic nie commituje — wystarczy odczyt repo.
+permissions:
+  contents: read
+
+# Nowy przebieg anuluje poprzedni, jesli ten jeszcze wisi.
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      # Zadnego `checkout` ani `setup-node`: ten job nie czyta repo i nie ma zaleznosci.
+      # `curl` jest na `ubuntu-latest` z pudelka, wiec nic nie instalujemy.
+      #
+      # Klucz `anon`, nie `service_role`: tabele `financials` i `dividends` maja polityke
+      # publicznego odczytu, wiec wyzszych uprawnien ten krok nie potrzebuje.
+      # Klucz idzie wylacznie w naglowkach, nigdy w URL-u, zeby nie wyciekl do logu przez
+      # komunikat bledu curl-a.
+      #
+      # Brakujacy sekret **przerywa przebieg bledem**, a nie cichym pominieciem — tak jak
+      # w `update-financials.yml`, gdzie ciche pomijanie dalo miesiac zielonych przebiegow
+      # przy nieodswiezanych danych.
+      - name: Keepalive Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Brak sekretu SUPABASE_URL lub SUPABASE_ANON_KEY - keepalive NIE zostal wykonany, baza nadal usypia."
+            echo "Dodaj oba w Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          # Kilka prawdziwych zapytan `select` na przebieg, nie jeden ping: liczy sie
+          # aktywnosc bazy, a dokumentacja Supabase mowi o "kilku zapytaniach uzytkownika"
+          # dziennie. Zadnego endpointu `health` — on nie jest aktywnoscia bazy.
+          fail=0
+          for target in "financials?select=company_id&limit=1" \
+                        "dividends?select=id&limit=1" \
+                        "financials?select=period_end&order=period_end.desc&limit=1"; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              "$SUPABASE_URL/rest/v1/$target")
+            echo "Supabase REST ${target%%\?*} -> HTTP $code"
+            [ "$code" = "200" ] || fail=1
+            sleep 3
+          done
+          if [ "$fail" != "0" ]; then
+            echo "::error::Keepalive nieudany - co najmniej jedno zapytanie nie zwrocilo 200; baza moze byc uspiona albo klucz niewazny."
+            exit 1
+          fi
+          echo "Keepalive OK - baza odpowiada na wszystkie zapytania."
