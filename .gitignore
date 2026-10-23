@@ -13,6 +13,10 @@ dist
 .claude/worktrees/
 CLAUDE.local.md
 
+# Generowane przez aplikację Codex jako jej własna kopia skilli z .claude/skills/ —
+# nie używamy ich i rozjeżdżają się z oryginałem, więc nie wchodzą do repo.
+.agents/
+
 *.log
 
 .vscode/*

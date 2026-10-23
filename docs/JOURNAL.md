@@ -62,6 +62,12 @@ oddawał **od zawsze** — więc sam widok nie dowodzi, że eksport zadziałał.
 pod `https://stockview.org/data/financials/pkobp/data.json`. Żeby zobaczyć poziom 2 w akcji,
 trzeba zablokować `*/api/financials*` w DevTools → Network i odświeżyć stronę.
 
+**`.agents/` dopisane do `.gitignore`** (decyzja Kamila). Katalog wraca sam — generuje go
+aplikacja Codex jako **własną kopię** skilli z `.claude/skills/`, w wersji dla siebie
+(„wymagana jest osobna sesja **Codex**" tam, gdzie w oryginale stoi „sesja **Claude**"): tyle
+samo linii, inna treść. Nie używamy jej, a dwie rozjeżdżające się kopie tych samych instrukcji
+to proszenie się o kłopoty. **Katalogu nie usuwam** — niech sobie leży nieśledzony.
+
 Następne: D9 — waluta na ekran (Pepco jako EUR), najpierw `FinancialTable.jsx:55`, potem
 `currency` w eksporcie. Lokalny import sprawozdań za III kwartał: początek grudnia.
 
