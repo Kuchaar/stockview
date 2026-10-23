@@ -8,17 +8,19 @@ Komputer: `MacBook-Pro-Kamil.local`
 
 **Zrobione.**
 
-- **Krok `Keepalive Supabase` w `.github/workflows/update-prices.yml`** — jedno lekkie
-  `select` (`/rest/v1/financials?select=company_id&limit=1`) przez `curl`, raz na każdy
-  dzień roboczy. **Bez nowych zależności**: ten workflow celowo nie robi `npm ci`, więc
-  `@supabase/supabase-js` nie wchodzi w grę; `curl` jest na `ubuntu-latest` z pudełka.
-  **Klucz `anon`, nie `service_role`** — tabela `financials` ma politykę publicznego
-  odczytu, wyższych uprawnień ten krok nie potrzebuje. Klucz idzie **wyłącznie
-  w nagłówkach**, nigdy w URL-u, żeby nie wyciekł do logu przez komunikat błędu.
-- **Krok jest ostatni i celowo głośny.** Ostatni, bo gdy Supabase nie odpowiada, ceny są
-  już zacommitowane i opublikowane. Głośny, bo **brakujący sekret przerywa krok błędem,
-  a nie cichym pominięciem** — dokładnie odwrotnie niż w `update-financials.yml`, i poniżej
-  jest widać dlaczego.
+- **Nowy workflow `.github/workflows/keepalive.yml`** — **trzy prawdziwe zapytania
+  `select`** przez REST (`financials` ×2, `dividends` ×1), kluczem `anon`, raz na dobę,
+  **codziennie — także w weekendy** (`cron: '0 7 * * *'`). Żadnego endpointu `health`:
+  liczy się aktywność bazy, nie to, że API żyje. **Bez nowych zależności** — `curl`
+  z pudełka, bez `checkout` i bez `setup-node`, bo ten job nie czyta repo.
+  `permissions: contents: read`, bo niczego nie commituje.
+- **Klucz `anon`, nie `service_role`** — `financials` i `dividends` mają politykę
+  publicznego odczytu, więcej uprawnień nie trzeba. Klucz idzie **wyłącznie w nagłówkach**,
+  nigdy w URL-u, żeby nie wyciekł do logu przez komunikat błędu `curl`-a.
+- **Brakujący sekret przerywa przebieg błędem**, nie cichym pominięciem — dokładnie
+  odwrotnie niż w `update-financials.yml`, i poniżej jest widać dlaczego.
+- **`update-prices.yml` ostatecznie nietknięty.** Pierwsza wersja dokładała krok tam
+  (zgodnie z brzmieniem zadania), ale recenzja to wywróciła — patrz „Recenzja" niżej.
 
 **Odkrycia — ważniejsze niż samo zadanie.**
 
@@ -40,22 +42,46 @@ Komputer: `MacBook-Pro-Kamil.local`
 
 **Decyzje.**
 
+**Recenzja (ryzyko wysokie → jedna runda `@codex review`).**
+
+Codex zgłosił **jedno ustalenie, P1, i miał rację**: `update-prices.yml` ma
+`cron: '0 18 * * 1-5'`, czyli **tylko dni robocze** — w sobotę i niedzielę baza nie
+dostałaby ani jednego zapytania, a moje lokalne `HTTP 200` dowodzi jedynie dostępności
+REST API, **nie wystarczającej aktywności**. Zielony przebieg przy uśpionej bazie — czyli
+dokładnie ten wzorzec, przed którym sam ostrzegałem w tym samym PR-ze.
+
+Przy naprawie sprawdziłem też założenie, które chciałem przyjąć na słowo — że weekendowy
+przebieg cen byłby niegroźny, bo „nic się nie zmieniań. **Nieprawda:**
+`fetch-stooq.mjs` nadpisuje `lastUpdated` dzisiejszą datą przy każdym przebiegu, więc
+sobota i niedziela dałyby **dwa commity tygodniowo na `main` z samą podbitą datą**.
+Dlatego keepalive dostał własny plik — decyzją Kamila, bo to wyjście poza literalne
+brzmienie zadania („dodaj krok do `update-prices.yml`").
+
 - **Ryzyko tej zmiany: wysokie.** Według `AGENTS.md` → „Review by risk" wysokie ryzyko
   obejmuje **sekrety**, a ten krok wprowadza odwołania do sekretów w workflow, który pisze
   na `main`. Sam klucz `anon` jest publiczny z natury (jedzie w bundlu klienta jako
   `VITE_*`), ale decyduje mechanizm, nie wrażliwość tego konkretnego klucza. Ścieżka
   recenzji: **jedna runda `@codex review` przed merge** — pierwsze prawdziwe użycie tej
-  ścieżki.
+  ścieżki. Runda się odbyła, P1 naprawione, kolejnej nie proszę: zgodnie z `AGENTS.md`
+  jedna runda wystarcza, a P2 i niższe z dalszych rund i tak nie blokowałyby merge'a.
 - **Brakujący sekret ma wywalać przebieg, nie pomijać kroku.** Cena: dopóki sekretów nie
   ma, codzienny przebieg cen będzie czerwony (ceny i tak się zapiszą, bo krok jest
   ostatni). Korzyść: nie powtarzamy miesiąca zielonych przebiegów przy martwej robocie.
   Dlatego **sekrety warto dodać przed merge**, nie po.
 
-**Do sprawdzenia.** Krok jest wykonywalny, więc go wykonałem, a nie tylko napisałem:
-**wszystkie trzy gałęzie przeszły lokalnie** — sukces (`HTTP 200`), brak sekretu
-(`::error::` i `exit 1`), zły klucz (`HTTP 401`, `exit 1`, bez klucza w logu). YAML parsuje
-się (`yaml.safe_load`, 5 kroków, keepalive ostatni), skrypt kroku przechodzi `bash -n`,
-w pliku nie ma słowa `SERVICE_ROLE`. **Niesprawdzone:** przebieg na runnerze GitHuba —
+**Do sprawdzenia.** Workflow jest wykonywalny, więc go wykonałem, a nie tylko napisałem:
+**trzy zapytania → `HTTP 200` ×3, `exit 0`**; gałąź „brak sekretu" → `::error::` i `exit 1`;
+gałąź „zły klucz" → `HTTP 401`, `exit 1`, **bez klucza w logu**. YAML parsuje się
+(`yaml.safe_load`), skrypt przechodzi `bash -n`, w pliku nie ma `SERVICE_ROLE` ani klucza
+w URL-u ani endpointu `health`, `update-prices.yml` nie różni się od `main`,
+`package.json` i lockfile bez zmian.
+
+**Logowanie na `stockview.org` — co dało się sprawdzić z terminala:** strona odpowiada
+`HTTP 200` w 0,2 s; w produkcyjnym bundlu (`assets/index-C8XNMcgu.js`, 603 kB) są **URL
+projektu i klucz `anon`**, czyli `supabase` nie jest `null` i logowanie *może* działać;
+`/auth/v1/health` → `HTTP 200`, dostawca `email` włączony, `disable_signup: false`,
+`mailer_autoconfirm: false` (czyli mail z linkiem naprawdę się wysyła). **Celowo nie
+wywołałem wysłania magic linka** — to mail na skrzynkę Kamila, czyli akcja na zewnątrz. **Niesprawdzone:** przebieg na runnerze GitHuba —
 bez sekretów wyjdzie czerwony i to jest zachowanie oczekiwane, nie błąd. Nie odpalałem
 `update-prices.yml` ani `update-financials.yml` (punkt 3 zadania czeka na merge).
 Logowania na `stockview.org` nie da się sprawdzić z terminala — patrz „Następne:".
