@@ -2,6 +2,89 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — zasada podglądu w AGENTS.md, D9 odhaczone, plan D10 rozbity na zadania
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Eksport i produkcja.** [Run 40008760790](https://github.com/Kuchaar/stockview/actions/runs/40008760790)
+zielony, commit bota [`532e71d`](https://github.com/Kuchaar/stockview/commit/532e71d). Produkcja
+oddaje walutę w plikach poziomu 2: **Pepco `EUR`**, PKO BP, CD Projekt i Żabka `PLN`.
+**D9 odhaczone** z SHA `711b868` i linkiem do przebiegu.
+
+**Ale przy weryfikacji wyszła wada, której nie przewidziałem — stąd D9a.** Pepco ma w bazie
+**9 wierszy w dwóch walutach**: 4 roczne EUR, kwartalne Q1 2026 / Q3 2025 / Q1 2025 EUR,
+a **Q2 2025 i Q3 2024 oznaczone `PLN`**. To jedyna taka spółka w całej bazie.
+`statementCurrency` zwraca **pierwszą napotkaną** walutę, więc osłona z D9 działa dziś
+**tylko dlatego**, że funkcja zaczyna od wierszy rocznych, a te są wszystkie w EUR. Jeden
+roczny wiersz z inną etykietą wyłączyłby ją po cichu dla całej spółki — najgorszy możliwy
+tryb awarii dla zabezpieczenia. D9a robi to `fail-safe`: różne waluty w wierszach jednej
+spółki znaczą „niezgodność", nie „pierwsza wygrywa".
+
+Sprawdziłem jeszcze, czy te dwa kwartały są naprawdę przeliczone na złote. Nie są: przychód
+1,42 i 1,49 mld przy rocznym 4,52 mld EUR daje stosunek **3,11**; przy realnym przeliczeniu
+wyszłoby ~4,9 mld na kwartał i stosunek ~0,9. **To kwoty w euro z etykietą PLN** — wada
+danych od Yahoo. Skutek: kwartalny rachunek wyników Pepco pokazuje „mln PLN" nad euro.
+
+**`/admin/financials` tej wady nie naprawi — i gorzej, zamroziłby ją.** `payload`
+(`AdminFinancialsPage.jsx:145-155`) **nie zawiera pola `currency`**, a zapis przez panel
+ustawia `source: 'manual'` i `verified: true`. Czyli kliknięcie „zapisz" na tym wierszu
+utrwaliłoby błędną walutę i zablokowało importerowi jej poprawienie. Dlatego Kamil poprawia
+te dwa wiersze SQL-em, a dołożenie pola `currency` do panelu weszło w zakres D9a.
+
+**Zasada podglądu w przeglądarce — trzy zmiany w `AGENTS.md`** (zgoda Kamila). Rzecz
+nieprzyjemna: **ta zasada już tam była**, w „Workflow": „use it to check the change in
+a browser before asking for a merge". Nie złamałem jej przez niewiedzę — „Finishing a task"
+punkt 2 pozwalał **nazwać** brak sprawdzenia („no browser check") jako ograniczenie,
+więc dwie zasady mówiły różne rzeczy i wybierałem słabszą. Teraz:
+
+1. **„Workflow"** — zmiana widoczna na stronie nie jest skończona bez **zrzutu z podglądu
+   PR-a, w obu motywach, pokazującego zmieniony widok**; zrzuty idą do opisu PR-a,
+   **nigdy do repo**. Narzędzie: automatyzacja Chrome, którą już mam — **bez Playwrighta**
+   (decyzja Kamila; testy wizualne w CI to osobne zadanie, nie skrót wokół tej zasady).
+2. **„Review by risk"** — przy ryzyku zwykłym i wysokim zrzuty z obu motywów są **częścią
+   weryfikacji, nie dodatkiem**.
+3. **„Finishing a task" punkt 2** — „no browser check" **przestaje być ograniczeniem do
+   zgłoszenia**, a staje się brakującym krokiem. Nazwanie go go nie załatwia.
+
+W uzasadnieniu zapisałem, co ta zasada faktycznie wyłapała, żeby nie wyglądała na biurokrację:
+oba błędy z PR #7 — „C/Z (forward) 63.9x" jako jedyna liczba między kreskami i „P/E: 23.4"
+w nagłówku obok „—" w Wycenie — wyszły z podglądu Kamila. Żadnego nie dałoby się zobaczyć
+w danych, w teście ani w zielonym buildzie.
+
+**Plan D10 rozbity na pięć zadań**, w kolejności ustalonej przez Kamila: **D10d** (plaster:
+tylko nagłówek, Przegląd i `pageDesc` — Screener i Porównywarka **bez osłony** do D10c),
+**D10a** (liczba akcji jako dane z datą, zapisywane do bazy przy kwartalnym imporcie),
+**D10b** (`ratios.json` liczony przy eksporcie, z osłoną walutową), **D10c** (pięć widoków
+czyta ten plik), **P8+D10e** (ocena kondycji na bieżących danych i bez wyceny).
+
+**P8 scalone z oceną kondycji z D10** (decyzja Kamila): ten sam komponent i plik, więc osobno
+znaczyłoby dwie przebudowy `HealthScore.jsx` i okno, w którym ocena jest już bieżąca, ale
+nadal mówi „atrakcyjna wycena". Wpis P8 w Bramce P wskazuje teraz na P8+D10e; warunek
+„gotowe, gdy", oba miejsca z „atrakcyjną wyceną" i dwa trafienia grepa, które mają zostać,
+przeniesione bez zmian. Przy scalaniu **zgubiłem na moment** te dwa trafienia
+(`translations.js:276`, `wig20.js:857`) i dopisałem je z powrotem — bez nich warunku
+nie dałoby się zamknąć bez dyskusji.
+
+**Dino — sprawdzone, o co prosił Kamil.** Zaszyte `sharesOutstanding: 98 040 000` jest
+**spójne z zaszytą ceną** 430 zł (42 157 vs 42 200 mln `marketCap`), ale dzisiejsza cena to
+39,56 zł, więc kapitalizacja z tych danych wyszłaby **3,9 mld zł** dla jednej z największych
+spółek WIG20 — około **dziesięciokrotnie za nisko**. 430/39,56 = 10,87 wygląda na podział
+akcji; samej przyczyny nie weryfikowałem, ale liczba akcji jest sprzed tej zmiany, cokolwiek
+nią było. Przy okazji: dla **4 z 24 spółek** `price × sharesOutstanding` nie zgadza się
+z zaszytym `marketCap` — Orlen (71 400 vs 26 176 mln), Modivo (36 200 vs 7 434), Pepco
+(8 200 vs 12 648), Alior (7 600 vs 12 065). Nawet w obrębie jednego wpisu liczby pochodzą
+z różnych momentów. To wszystko jest w D10a.
+
+**Sprawdzone.** Przeniesienie treści P8 skontrolowane grepem (6 fragmentów, w tym dwa,
+które najpierw zginęły); kolejność otwartych zadań w pliku zgodna z ustaloną;
+`grep` potwierdza, że zasada o zrzutach stoi w trzech miejscach `AGENTS.md`.
+**Nie sprawdzone:** nic w aplikacji — ten PR nie dotyka kodu. To też pierwszy PR, w którym
+nowa zasada o zrzutach **nie ma zastosowania**, bo nie ma zmiany widocznej na stronie;
+od następnego ma.
+
+Następne: D9a (pierwsze zadanie kodowe), potem D10d, D10a, D10b, D10c, P8+D10e, dalej P1.
+Kamil poprawia SQL-em dwa wiersze Pepco. Import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-23 — D9: waluta dochodzi do ekranu, wskaźniki nie mieszają EUR z PLN
 
 Komputer: `MacBook-Pro-Kamil.local`

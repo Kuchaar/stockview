@@ -171,8 +171,18 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
   exception stands.
 - Branch names carry the commit type: `feat/*`, `fix/*`, `chore/*`, `docs/*`, and `wip/*`
   for work handed over mid-task.
-- A pull request gets a Cloudflare preview deployment; use it to check the change in a
-  browser before asking for a merge.
+- A pull request gets a Cloudflare preview deployment. **A change that is visible on the
+  site is not finished until it has been opened in that preview in a browser, in both
+  themes, with a screenshot of the changed view attached to the pull request.** A screenshot
+  of the home page does not count — it has to show the view that changed. Screenshots go in
+  the pull request, **never committed to the repo**. Use the Chrome automation that is
+  already available; adding a browser-test dependency is a separate task, not a shortcut
+  around this rule.
+
+  This rule exists because it caught what nothing else did: on PR #7 the preview showed
+  „C/Z (forward) 63.9x" standing as the only number among dashes, and the Pepco page showing
+  „P/E: 23.4" in the header next to „—" in the valuation tab. Neither was visible in the
+  data, in a test or in a green build — only on the screen.
 - Small commits, conventional commits (`feat:` / `fix:` / `chore:` / `docs:`), description
   in Polish.
 - A bot commits `public/data/` to `main` every weekday, so **rebase on `origin/main` before
@@ -272,6 +282,8 @@ Kamil. No `@codex review` here either. A separate session gives fresh context, w
 something — but it is **not** an independent review by a different model, and it shares the
 same blind spots. Do not report it as one, and do not let a bot comment stand in for it: a
 Codex review on the head SHA does **not** satisfy the separate-session requirement.
+**If the change is visible on the site, screenshots from the preview in both themes are part
+of that verification, not an extra.** The same applies to a high-risk change below.
 
 **High risk** — RLS and permissions, login, secrets, data migrations, an import that
 overwrites existing data, financial formulas, currencies, periods, data sources.
@@ -385,9 +397,11 @@ Keep the closing report short — one to three lines per point. The lasting part
 this file.
 
 1. **What changed and why.**
-2. **What was checked, and what was not.** Name the limits: no browser check, no production
-   run, no CI run at all. And keep the evidence honest — **a green build is evidence about
-   the build, never proof that an instruction or a rule is correct.**
+2. **What was checked, and what was not.** Name the limits: no production run, no CI run at
+   all. And keep the evidence honest — **a green build is evidence about the build, never
+   proof that an instruction or a rule is correct.**
+   **For a change visible on the site, „no browser check" is not a limit to declare — it is
+   a missing step.** Declaring it does not discharge it: go and look at the preview.
 3. **One programming lesson worth keeping** — the non-obvious thing, two or three sentences,
    because Kamil is learning web development.
 4. **A financial explanation, only when the task touches money** — what the number means, for
