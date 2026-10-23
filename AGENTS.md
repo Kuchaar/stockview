@@ -170,7 +170,9 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
   that moved something**, because a rebase changes the tree and the SHA the checks were run
   against; `pull.rebase` and `rebase.autoStash` are set globally.
 - **Once a branch is pushed, rebase it only when it has to be rebased** — when the pull
-  request stops being `MERGEABLE`. A rebase rewrites published commits, so the next push
+  request is actually `CONFLICTING`. `mergeable: UNKNOWN` is GitHub still computing the
+  answer, not a conflict: re-query it instead of acting on it. A rebase rewrites published
+  commits, so the next push
   needs `--force-with-lease` (never a bare `--force`) and it invalidates the reviewed SHA
   and every resolved review thread. Those bot commits in `public/data/` do not conflict with
   anything, and the merge absorbs them by itself: a tidy history is not worth throwing a
@@ -259,12 +261,15 @@ Cadence, roughly: **every 3–5 small pull requests, or once a week**, whichever
 and subject to GPT being available. It is a cadence, not a gate — work does not stop waiting
 for it, with the one exception of the high-risk changes above.
 
-**Last SHA actually reviewed by GPT: `nieustalony`.**
+**Last SHA actually reviewed by GPT: `nieustalony`. Date of that review: `nieustalony`.**
 
-Move that line only when a review of the code actually happened. A handover is six short
-items:
+Move those two values only when a review of the code actually happened, and keep the date
+next to the SHA — the „once a week" half of the cadence cannot be worked out from a commit
+timestamp, which says when the code was written, not when anybody looked at it. Without the
+date a quiet week passes unnoticed. A handover is six short items:
 
-1. **Last SHA actually checked by GPT** — the line above, or `nieustalony` when there is none.
+1. **Last SHA actually checked by GPT, and when** — the line above, or `nieustalony` for
+   either value when there is none.
 2. **The current SHA, and the pull requests since that point** — numbers and one-line titles.
 3. **What the changes were for, what the checks said, and what is not verified.**
 4. **Material changes to finance, data and security** — formulas, currencies, periods,

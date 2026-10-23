@@ -2,6 +2,85 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — /sv-review na PR #1: 14 ustaleń P2 z dwóch recenzji
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.** Dwie recenzje Codex (`a185621` i `1f85327`) dały 14 ustaleń, wszystkie P2,
+wszystkie w skillach i wszystkie prawdziwe. Przyjąłem wszystkie — żadnego spornego,
+żadnego poza zakresem.
+
+- **Zakleszczenie przy wysokim ryzyku naprawione** (`/sv-start`) — najważniejsze
+  ustalenie. PR wysokiego ryzyka czekający na recenzenta z definicji ma niezrecenzowany
+  `headRefOid`, więc wpadał w punkt „niezrecenzowany SHA", dostawał `/sv-review`, a ten
+  zatrzymywał się na „recenzji nie ma". Punkt „weź niezależne zadanie o niższym ryzyku"
+  nigdy się nie wykonywał — instrukcja robiła dokładnie to, czemu miała zapobiec.
+  Kolejność pierwszeństwa ma teraz pięć pozycji, od góry: **czerwone CI** → **PR wysokiego
+  ryzyka czekający na recenzenta (nie `/sv-review`, weź inne zadanie)** → **nierozwiązane
+  wątki albo `CHANGES_REQUESTED` na aktualnym SHA → `/sv-review`** → **niezrecenzowany SHA
+  → poproś o recenzję, nie wołaj `/sv-review`** → **zadanie z roadmapy**.
+- **Samo wskazanie SHA nie uruchamia recenzji** (`/sv-review`) — druga połowa tego samego
+  zakleszczenia. Krok 5 wysyła teraz `gh pr comment --body "@codex review"`, a przy wysokim
+  ryzyku zagóbi wskazanego recenzenta.
+- **Reakcja 👍 nigdzie nie była pobierana** (`/sv-start`) — Codex przy braku uwag nie pisze
+  komentarza, tylko reaguje. `gh pr view --comments` tego nie oddaje, więc recenzja bez
+  uwag wyglądałaby jak brak recenzji i PR krążyłby w kółko. Zapytanie dostało
+  `reactionGroups` i `submittedAt`.
+- **`CHANGES_REQUESTED` bez komentarza do linii** (`/sv-start`) — review z uwagami w samej
+  treści dawało zero wątków i przechodziło jako „brak uwag". Teraz liczy się `state`
+  ostatniego review dla aktualnego SHA.
+- **`UNKNOWN` to nie konflikt** (`/sv-koniec`, `AGENTS.md`) — GitHub liczy zdolność
+  scalenia asynchronicznie; mój wczorajszy warunek „rebase, gdy PR przestał być
+  `MERGEABLE`" rebase'owałby na stanie przejściowym. Trafiłem na `UNKNOWN` w tej samej
+  sesji i musiałem odpytać ponownie, a mimo to zapisałem regułę źle. Teraz: rebase tylko
+  na `CONFLICTING`/`DIRTY`, na `UNKNOWN` ponowne zapytanie.
+- **Skille to nie proza** (`/sv-koniec`) — wiersz „wyłącznie dokumentacja lub instrukcje →
+  nic się nie uruchamia" rozbity na dwa: pasywna dokumentacja (nic) i `.claude/skills/`
+  (**przejdź dotkniętą ścieżkę — każdą zmienioną komendę gita i każde zmienione wywołanie
+  API odpal raz**). Zmiana samych `.md` nie dostaje runu CI, więc literówka dojeżdżała
+  nietknięta do następnej sesji.
+- **Ukończona praca z `wip/*`** (`/sv-koniec`) — reguła „`wip/*` nie dostaje PR-a" była
+  bezwarunkowa, więc skończona praca podjęta z `wip/` nigdy nie wchodziła do obiegu.
+  Teraz: rozstrzygnij warunek „gotowe, gdy…", a jeśli spełniony — `git branch -m` na
+  docelowy prefiks i PR.
+- **CI sprawdzane dla starego SHA** (`/sv-review`) — jedyne `gh pr checks` było w kroku 2,
+  przed pushem, a raport podawał to jako status nowego SHA. Dodane ponowne odpytanie po
+  pushu.
+- **Brak wpisu do dziennika przy sesji z samym `/sv-review`** — ten wpis istnieje dzięki
+  temu ustaleniu.
+- **Czerwone CI przegrywało z roadmapą** (`/sv-start`) — zepsuty PR nie trafiał do żadnego
+  punktu pierwszeństwa. Jest teraz na szczycie.
+- **Praca na recenzowanej gałęzi** (`/sv-start`) — po `/sv-koniec` checkout zostaje na
+  gałęzi PR-a, więc nowe zadanie commitowałoby się na PR w recenzji. Dodane przejście na
+  świeży `main`.
+- **Podgląd Cloudflare** (`/sv-koniec`, nowy krok 7) — przy zmianie w UI wszystkie
+  sprawdzenia odbywały się przed istnieniem PR-a, a deployment podglądowy powstaje razem
+  z PR-em. Jeśli oględzin nie da się zrobić, merge jest zablokowany i trzeba to powiedzieć.
+- **Brak daty przeglądu GPT** (`AGENTS.md`) — próg „raz w tygodniu" nie miał od czego
+  liczyć: data commita to nie data przeglądu. Linia handoveru ma teraz SHA **i datę**, obie
+  `nieustalony`.
+
+**Decyzje.** Wszystkie 14 ustaleń przyjęte bez sporu. Trzy z nich (zakleszczenie, `UNKNOWN`,
+„skille to nie proza") to błędy w regułach, które sam napisałem dzień wcześniej, i wszystkie
+trzy dotyczą tego samego: **zapisałem regułę, zamiast sprawdzić, jak zachowuje się
+narzędzie.** Dlatego ustalenie o weryfikacji skilli uznaję za najważniejsze z całej trójki
+recenzji — zmienia sposób pracy, nie tylko treść pliku.
+
+**Do sprawdzenia.** Odpalone na żywo: nowe zapytanie GraphQL z `reactionGroups`
+i `submittedAt`, `gh pr view` z `mergeable`/`mergeStateStatus`/`reactionGroups`,
+`gh pr list --state merged` (0 scalonych PR-ów), `git branch -m` na gałęzi-atrapie.
+**Niesprawdzone:** ścieżka 👍 — Codex za każdym razem miał uwagi, więc reakcji nigdy nie
+było (pole zwraca pustą listę, zapytanie działa); `git push origin --delete` z promocji
+`wip/*`; `--force-with-lease`; ścieżka „wysokie ryzyko bez recenzenta"; krok 7 z podglądem
+Cloudflare. Build nie uruchamiany — zmiana nie dotyka `src/`.
+
+**Następne:** poprosić Codex o recenzję nowego SHA i zobaczyć, czy czwarte przejście
+zamyka temat. **Merge PR #1 dopiero po recenzji bez uwag albo po świadomej decyzji Kamila,
+że dalsze rundy nie wnoszą** — trzy recenzje z rzędu znalazły po kilka ustaleń, więc warto
+sprawdzić, czy to się zbiega. Potem **K3 — schemat portfela w Supabase** (wysokie ryzyko:
+RLS i uprawnienia).
+
+
 ## 2026-10-22 — Nowy model współpracy i recenzja Codex na PR #1
 
 Komputer: `MacBook-Pro-Kamil.local`

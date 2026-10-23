@@ -22,7 +22,7 @@ i spytaj który.
 ### 1. Stań dokładnie na recenzowanym SHA
 
 ```
-gh pr view <nr> --json number,title,headRefName,headRefOid,baseRefName,body
+gh pr view <nr> --json number,title,headRefName,headRefOid,baseRefName,body,mergeable,mergeStateStatus
 git status --porcelain          # musi być pusto
 git fetch origin
 git switch <headRefName>
@@ -35,6 +35,11 @@ na drugim komputerze może ona być starsza od PR-a i poprawki wylądują na inn
 recenzowany. Dlatego: czyste drzewo robocze, fast-forward z `origin/<headRefName>`
 i jawne sprawdzenie, że `HEAD == headRefOid`. Jeśli fast-forward nie przechodzi albo SHA
 się nie zgadza — **zatrzymaj się** i powiedz, co jest rozjechane.
+
+`mergeable` i `mergeStateStatus` pobierz **tutaj**, nie dopiero przy pushu: krok 5
+decyduje na ich podstawie, czy rebase'ować. Bez nich poprawki wejdą, a PR zostanie
+skonfliktowany i nikt tego nie zauważy. `UNKNOWN` to stan przejściowy — GitHub jeszcze
+liczy; odpytaj ponownie po kilku sekundach, zamiast traktować go jak konflikt.
 
 Zapisz też **SHA, którego dotyczyły uwagi** (`commit_id` komentarzy, `commit.oid` review).
 Jeśli jest inny niż `headRefOid`, część uwag może być nieaktualna — sprawdź je względem
@@ -86,9 +91,16 @@ w jedną:
 
 Recenzent zgłasza, autor poprawia — nie odwrotnie.
 
-### 4. Popraw i sprawdź właściwy zakres
+### 4. Popraw, zapisz w dzienniku i sprawdź właściwy zakres
 
 Poprawki w osobnych commitach (`fix:` albo `docs:`), opis po polsku, uwaga za uwagą.
+
+**Jeśli cała sesja to sam `/sv-review`, dziennik nadal musi dostać wpis** — inaczej
+`/sv-start` na drugim komputerze przeczyta pole „Następne:" z **przed** recenzji i nie
+dowie się ani o nowym SHA, ani o ograniczeniach weryfikacji, ani o uwagach, które zostały
+otwarte. Dopisz do `docs/JOURNAL.md` przed commitem poprawek: co zgłoszono, co poprawione,
+co odrzucone z uzasadnieniem, co czeka na Kamila, nowy SHA i nowe „Następne:". Format
+i zasada „pokaż wpis i poczekaj na ok" — jak w `/sv-koniec`, krok 5.
 
 Potem uruchom sprawdzenia dobrane do tego, co zmieniłeś — tabela jest w `/sv-koniec`,
 krok 3. Zasada z `AGENTS.md`: **zmiana po recenzji wymaga sprawdzenia tego zakresu, który
@@ -119,7 +131,26 @@ gh api graphql -f query='mutation($id:ID!){
 Wątków spornych nie zamykaj, dopóki nie wpiszesz w nie uzasadnienia. Wątków poza zakresem
 nie zamykaj wcale — czekają na decyzję Kamila.
 
-Na koniec dopisz **nowy SHA w komentarzu do PR-a** razem z tym, co ponownie sprawdzono.
+Na koniec dopisz **nowy SHA w komentarzu do PR-a** razem z tym, co ponownie sprawdzono,
+i **odpytaj CI jeszcze raz — już dla nowego SHA**:
+
+```
+gh pr checks <nr>
+```
+
+Wynik z kroku 2 dotyczył **poprzedniego** SHA. Podanie go jako statusu nowego to
+raportowanie zielonego tam, gdzie checki mogą trwać, nie istnieć albo się wywalić.
+
+**I poproś o ponowną recenzję.** Samo wskazanie SHA jej nie uruchamia — bez prośby PR
+zostaje z niezrecenzowanym `headRefOid`, `/sv-start` skieruje go z powrotem tutaj,
+a krok 2 zatrzyma się na „recenzji nie ma". Fix-round wisiałby bez końca:
+
+```
+gh pr comment <nr> --body "@codex review"
+```
+
+Przy zmianie wysokiego ryzyka zagób zamiast tego wskazanego recenzenta i powiedz Kamilowi,
+że PR na niego czeka.
 
 **Nie scalaj PR-a.** Merge to zgoda Kamila na ten konkretny PR.
 

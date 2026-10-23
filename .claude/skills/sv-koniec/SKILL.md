@@ -35,8 +35,13 @@ gh pr view <nr> --json mergeable,mergeStateStatus   # jeśli PR już istnieje
 **Najpierw rozstrzygnij, czy rebase jest w ogóle potrzebny.** Rebase'uj, gdy:
 
 - gałąź nie jest jeszcze wypchnięta — wtedy jest darmowy, rób go zawsze;
-- PR przestał być `MERGEABLE` albo `mergeStateStatus` to `DIRTY` — jest konflikt
-  do rozwiązania.
+- `mergeable` to `CONFLICTING` albo `mergeStateStatus` to `DIRTY` — jest prawdziwy
+  konflikt do rozwiązania.
+
+**`UNKNOWN` nie jest konfliktem.** GitHub liczy zdolność scalenia asynchronicznie i zaraz
+po pushu zwraca `mergeable: UNKNOWN` — GraphQL rozróżnia `UNKNOWN` od `CONFLICTING`.
+Odpytaj ponownie po kilku sekundach. Rebase na `UNKNOWN` przepisałby opublikowaną gałąź
+i unieważnił zrecenzowany SHA na podstawie stanu, który za chwilę sam się wyjaśni.
 
 **Nie rebase'uj**, gdy PR jest `MERGEABLE`/`CLEAN`, a `origin/main` ruszył tylko tam, gdzie
 nie dotykasz — w praktyce w `public/data/` od bota. Rebase przepisałby opublikowane commity,
@@ -65,13 +70,22 @@ Nie cały rytuał na ślepo i nie wyłącznie build:
 | liczby, wskaźniki, waluty | ręczne przeliczenie na jednej spółce, z podaniem okresu i waluty |
 | skrypty w `scripts/` | przebieg na jednej spółce, **nigdy importer produkcyjny na całości** |
 | migracja, RLS, uprawnienia | sprawdzenie, że konto B nie widzi wierszy konta A |
-| wyłącznie dokumentacja lub instrukcje | **nic się nie uruchamia** — powiedz to wprost |
+| wyłącznie dokumentacja pasywna (`docs/`, `README`, dziennik) | **nic się nie uruchamia** — powiedz to wprost |
+| `.claude/skills/` — **instrukcje wykonywalne** | przejdź dotkniętą ścieżkę: każdą zmienioną komendę gita i każde zmienione wywołanie API odpal raz, na czymś bezpiecznym |
 
 Jeśli build nie przechodzi — **zatrzymaj się**, powiedz co się wywala (plik, linia,
 komunikat) i zaproponuj naprawę. Nie commituj zepsutego builda.
 
 **Zielony build nie jest dowodem na poprawność instrukcji ani reguły.** Przy zmianie
 w `AGENTS.md` czy w skillach build mówi tylko tyle, że aplikacja nadal się buduje.
+
+**Ale „to tylko instrukcja" też nie jest powodem, żeby nie sprawdzić niczego.** Pliki
+w `.claude/skills/` **wykonują** polecenia: rebase'ują gałęzie, pushują commity, zamykają
+wątki recenzji. A skoro zmiana samych `.md` nie dostaje też runu CI (`paths-ignore`),
+literówka w komendzie albo błąd w przejściu stanu dojedzie **nietknięty** do następnej
+prawdziwej sesji i wywali się w połowie rytuału. Zmieniłeś zapytanie GraphQL — odpal je.
+Zmieniłeś warunek na `mergeable` — sprawdź, co API naprawdę zwraca. Zmieniłeś mutację —
+wykonaj ją raz.
 
 ### 4. Poziom ryzyka
 
@@ -143,8 +157,41 @@ SHA: `<pełny sha>` · ścieżka recenzji wg poziomu ryzyka
 SHA bierz z `git rev-parse HEAD` **po** pushu. Od tej chwili nie dotykaj gałęzi, dopóki
 recenzja nie wróci.
 
-Praca niedokończona (`wip/*`) **nie dostaje PR-a** — zostaje jako gałąź do podjęcia na
-drugim komputerze: `npm run sync` → `git switch wip/<opis>`.
+**`wip/*` — tylko dopóki praca jest niedokończona.** Gałąź `wip/*` nie dostaje PR-a
+i zostaje do podjęcia na drugim komputerze: `npm run sync` → `git switch wip/<opis>`.
+
+Ale jeśli podjąłeś pracę z `wip/*` i **skończyłeś** ją w tej sesji, ta gałąź **musi
+zmienić nazwę**, zanim wystawisz PR — inaczej gotowa zmiana zostaje jako WIP i nigdy nie
+wchodzi do obiegu recenzji:
+
+```
+git branch -m wip/<opis> feat/<opis>          # albo fix/ , chore/ , docs/
+git push -u origin feat/<opis>
+git push origin --delete wip/<opis>
+```
+
+Rozstrzygnij wprost: czy warunek „gotowe, gdy…" z zadania jest spełniony? Jeśli tak —
+przemianuj i wystaw PR. Jeśli nie — zostaw `wip/*` i powiedz, czego brakuje.
+
+### 7. Podgląd Cloudflare — dopiero teraz da się go sprawdzić
+
+Przy zmianie widocznej w UI **wszystkie sprawdzenia z kroku 3 odbyły się, zanim PR
+istniał**, a deployment podglądowy powstaje **razem z PR-em**. Czyli w momencie
+sprawdzania nie było jeszcze czego obejrzeć w przeglądarce — a `AGENTS.md` wymaga
+sprawdzenia zmiany w przeglądarce przed prośbą o merge.
+
+Po utworzeniu PR-a:
+
+```
+gh pr checks <nr>          # poczekaj, aż „Cloudflare Pages" przestanie być pending
+```
+
+Potem otwórz adres podglądu i sprawdź zmianę — **oba motywy i szerokość telefonu**.
+Jeśli nie da się tego zrobić (jak dotychczas bywało: Chrome nie łączył się
+z localhostem), **powiedz to wprost i napisz, że merge jest zablokowany do czasu
+oględzin** — nie podawaj merge'a jako następnego kroku, skoro wymagana weryfikacja
+nie została wykonana. Przy zmianie bez części wizualnej pomiń ten krok i powiedz, że
+nie dotyczy.
 
 **Nie wywołuj `gh pr merge`.** Nawet gdy CI jest zielone, a recenzja bez uwag.
 `main` ma zostawać w stanie, który się buduje.
