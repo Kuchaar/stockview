@@ -2,6 +2,90 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — D9: waluta dochodzi do ekranu, wskaźniki nie mieszają EUR z PLN
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Gdzie kwoty Pepco spotykały cenę w złotych.** Przeszedłem wszystkie pięć miejsc, o które
+pytał Kamil, zanim cokolwiek zmieniłem.
+
+- **Zakładka Wycena** (`StockPage.jsx:78` → `calculateAllRatios(liveFinancials, stock.price,
+  stock.sharesOutstanding)` → `MetricsPanel`) — **jedyne miejsce, gdzie mieszanie dzieje się
+  na żywo.** Siedem wskaźników: `pe = cena(PLN)/eps(EUR)`, `pb = cena(PLN)/bvps(EUR)`,
+  `ps = kapitalizacja(PLN)/przychód(EUR)`, `ev = kapitalizacja(PLN) + dług(EUR) − gotówka(EUR)`
+  — **dodawanie dwóch walut** — `evEbitda`, `fcfYield = fcf(EUR)/kapitalizacja(PLN)`, `peg`
+  (pochodna `pe`), plus awaryjna `dividendYield = |dywidendy(EUR)|/kapitalizacja(PLN)`.
+  Rząd błędu to kurs EUR/PLN, czyli około ×4,3. Najjaskrawszy przykład: `bookValue` z Yahoo
+  dla Pepco to **0,366 EUR**, więc `pb = 18,60/0,366 = 50,8` zamiast około 11,8.
+- **Tabele kwot** — pięć miejsc z zaszytym „PLN": `FinancialTable.jsx:55` (Przegląd),
+  `IncomeStatement.jsx:99`, `BalanceSheet.jsx:99`, `CashFlowStatement.jsx:98` (Sprawozdania)
+  oraz `ValuationMetrics.jsx:11,12,54`, które doklejało „ PLN" do EPS i wartości księgowej.
+  Żadne z nich **nie czytało** pola `currency`.
+- **Ocena kondycji nie mieszała** — ale z innego powodu, niż zakładałem. Liczy ją
+  `calculateHealthScore`/`calculateSubScores` z `wig20.js` na `stock.ratios`, czyli na
+  **zaszytych** liczbach poziomu 3. Funkcja `calculateHealthScoreV2` w `ratioCalculator.js:262`,
+  która brałaby `pe`, `pb` i `evEbitda` jako blok Wycena o wadze 20%, jest **martwym kodem** —
+  `grep` po `src/` pokazuje tylko jej definicję. Gdyby ktoś ją podłączył przed tą poprawką,
+  jedna piąta oceny Pepco liczyłaby się z dzielenia PLN przez EUR.
+- **Screener i Porównywarka nie mieszają na żywo** — oba czytają `stock.ratios` (poziom 3).
+  Ale te liczby dla Pepco są zaszyte i nieaktualne: `pe: 23.4`, `eps: 0.79`, `bookValue: 8.61`,
+  a 18,60/0,79 = 23,5 i 18,60/8,61 = 2,16, więc ktoś policzył je ceną w złotych przez wartości
+  na akcję nieznanego pochodzenia. Dzisiejsze dane mówią `eps: −0,306 EUR`, `bookValue: 0,366 EUR`.
+  To nie mieszanie walut w kodzie, a stare ręczne liczby — osobny temat, już w roadmapie
+  („koniec z poziomem 3").
+
+**Naprawione.**
+
+- **`financialSchema.js`** — jedno miejsce prawdy o walucie: `QUOTE_CURRENCY = 'PLN'`
+  (tak notuje GPW i tak przychodzą ceny), `currencyOfRows`, `statementCurrency` i `amountUnit`.
+  `amountUnit(null, lang)` daje **samo „mln"**, nie „mln PLN" — brak waluty nie może udawać
+  złotówek, bo to był właśnie ten błąd. `toLegacyTable` przenosi walutę do zakładki Przegląd.
+- **Osłona walutowa w `ratioCalculator.js`** — przy `statementCurrency !== QUOTE_CURRENCY`
+  wszystkie siedem wskaźników mieszających idzie na `null`, a awaryjne wyliczenie stopy
+  dywidendy się nie wykonuje. `forwardPe` zostaje: to gotowa liczba od Yahoo, my w niej nic
+  nie mieszamy. Wskaźniki czysto ilorazowe (ROE, ROA, ROIC, marże, dług/kapitał, płynność,
+  pokrycie odsetek, `payoutRatio`, wzrosty) **nie są ruszane** — dzielą walutę przez tę samą
+  walutę, więc ona się skraca. Funkcja zwraca też `currencyInfo` dla UI.
+- **`MetricsPanel`** — nota na zakładkach Wycena i Dywidenda, która mówi, czego brakuje
+  i dlaczego. Bez niej użytkownik widzi same „—" i nie wie, czy to brak danych, czy awaria.
+  Tekst przez `t()`, z wpisami `pl` i `en`.
+- **Cztery tabele i `ValuationMetrics`** — nagłówek i sufiks biorą walutę z danych.
+- **Eksport miał dwie przyczyny, nie jedną.** Oprócz `meta = { date, period }`, które gubiło
+  `row.currency` (`export-financials.mjs:42`), **`select` w ogóle nie pobierał kolumny
+  `currency`** (linia 78). Poprawienie tylko jednego nie dałoby nic — i po pierwszej poprawce
+  pliki nadal miały `currency: None`, co złapał dopiero prawdziwy przebieg eksportu.
+
+**Sprawdzone na żywo, oba poziomy danych.** Skryptem przez `normalizeFinancials`
++ `calculateAllRatios`, na prawdziwych odpowiedziach produkcji:
+
+| | Pepco | PKO BP |
+|---|---|---|
+| `statementCurrency`, poziom 1 | **EUR** | **PLN** |
+| `statementCurrency`, poziom 2 | **EUR** | **PLN** |
+| nagłówek tabeli (pl / en) | „mln EUR" / „M EUR" | „mln PLN" / „M PLN" |
+| `currencyInfo.mismatch` | **true** | **false** |
+| `pe`, `pb`, `ps`, `evEbitda`, `peg`, `fcfYield` | wszystkie **null** | liczby (pe 8,42, ps 2,9) |
+| ROE, marża netto, dług/kapitał | liczone normalnie | liczone normalnie |
+
+Poziom 2 testowałem na plikach wygenerowanych **prawdziwym** eksportem lokalnie, a potem
+przywróciłem `public/data/financials/` przez `git restore` — te pliki commituje bot, nie ja.
+`npm run build` przechodzi, oba teksty noty (pl i en) są w zbudowanym bundlu.
+
+**Czego nie sprawdziłem.** Strony w przeglądarce — nie otwierałem jej ani nie oglądałem noty
+w obu motywach. Klasy mają jawne warianty `dark:`, a `warn` istnieje w `tailwind.config.js`,
+ale to argument, nie dowód. Po merge'u trzeba puścić eksport, żeby pliki na produkcji dostały
+`currency` — do tego czasu poziom 2 na produkcji nadal go nie ma.
+
+**Do decyzji Kamila — przeliczanie kursem.** Zapisane w roadmapie, w „Po Bramce P".
+Nic nie przeliczam, bo wybór kursu nie jest szczegółem technicznym: kurs z dnia wyceny,
+kurs na koniec okresu i kurs średni okresu dają trzy różne C/Z, każdy obronny. Doszłoby
+źródło kursów i to, że wskaźnik historyczny wymagałby kursu historycznego — inaczej ruch
+na walucie udaje zmianę wyniku spółki.
+
+Następne: po merge'u ręczny przebieg eksportu (żeby produkcja dostała `currency`), sprawdzenie
+zakładki Wycena dla Pepco w przeglądarce w obu motywach, i odhaczenie D9 z SHA. Potem P1 —
+własny SMTP. Import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-23 — P0, P12, P13 i F6 odhaczone; bilans i przepływy są na produkcji
 
 Komputer: `MacBook-Pro-Kamil.local`

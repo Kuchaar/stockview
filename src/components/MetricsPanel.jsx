@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getRatioMeta } from '../data/ratioCalculator';
-import { HelpCircle } from 'lucide-react';
+import { useLang } from '../context/LangContext';
+import { HelpCircle, Info } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'profitability', fields: ['roe', 'roa', 'roic', 'grossMargin', 'operatingMargin', 'netMargin', 'ebitdaMargin'] },
@@ -94,6 +95,7 @@ function MetricCard({ ratioKey, value, lang }) {
 }
 
 export default function MetricsPanel({ ratios, lang }) {
+  const { t } = useLang();
   const [activeTab, setActiveTab] = useState('profitability');
 
   if (!ratios) {
@@ -114,6 +116,15 @@ export default function MetricsPanel({ ratios, lang }) {
     const meta = getRatioMeta(f);
     return meta != null;
   });
+
+  // Osłona walutowa z D9: część wskaźników jest `null`, bo łączyłyby dwie waluty.
+  // Bez tego wyjaśnienia użytkownik widzi same „—" i nie wie, czy to brak danych,
+  // czy awaria. Pokazujemy je tam, gdzie te wskaźniki miałyby stać.
+  const cur = ratios.currencyInfo;
+  const showCurrencyNote = cur?.mismatch === true && (activeTab === 'valuation' || activeTab === 'dividend');
+  const currencyNote = showCurrencyNote
+    ? t('stock.currencyMismatch').replaceAll('{statement}', cur.statement).replaceAll('{quote}', cur.quote)
+    : null;
 
   return (
     <div>
@@ -148,6 +159,16 @@ export default function MetricsPanel({ ratios, lang }) {
           />
         ))}
       </div>
+
+      {currencyNote && (
+        <div className="mt-5 flex gap-3 rounded-xl border border-warn/30 bg-warn/5 p-4
+                        dark:border-warn/25 dark:bg-warn/10">
+          <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-warn" aria-hidden="true" />
+          <p className="text-xs leading-relaxed text-surface-600 dark:text-surface-300">
+            {currencyNote}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

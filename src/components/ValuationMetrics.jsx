@@ -1,15 +1,18 @@
 import { useLang } from '../context/LangContext';
 import { formatRatio } from '../data/wig20';
 
-export default function ValuationMetrics({ ratios }) {
+// `currency` opisuje wartości na akcję (EPS, wartość księgowa). `null` znaczy „nie wiem"
+// i wtedy nie dopisujemy żadnej waluty — zaszyte „PLN" było błędem D9, bo te liczby
+// przychodzą z poziomu 3 (`wig20.js`), który waluty nie podaje.
+export default function ValuationMetrics({ ratios, currency = null }) {
   const { t } = useLang();
 
   const metrics = [
     { label: t('stock.peRatio'), value: ratios.pe, format: 'x', benchmark: '< 15 ✓' },
     { label: t('stock.pbRatio'), value: ratios.pb, format: 'x', benchmark: '< 1.5 ✓' },
     { label: t('stock.evEbitda'), value: ratios.evEbitda, format: 'x', benchmark: '< 10 ✓' },
-    { label: t('stock.eps'), value: ratios.eps, format: 'PLN' },
-    { label: t('stock.bookValue'), value: ratios.bookValue, format: 'PLN' },
+    { label: t('stock.eps'), value: ratios.eps, format: 'amount' },
+    { label: t('stock.bookValue'), value: ratios.bookValue, format: 'amount' },
     { label: t('stock.dividendYield'), value: ratios.dividendYield, format: '%' },
     { label: t('stock.roe'), value: ratios.roe, format: '%', benchmark: '> 15% ✓' },
     { label: t('stock.roa'), value: ratios.roa, format: '%', benchmark: '> 5% ✓' },
@@ -51,7 +54,7 @@ export default function ValuationMetrics({ ratios }) {
   const formatValue = (m) => {
     if (m.value === null || m.value === undefined) return '—';
     if (m.format === '%') return `${m.value.toFixed(1)}%`;
-    if (m.format === 'PLN') return `${formatRatio(m.value)} PLN`;
+    if (m.format === 'amount') return currency ? `${formatRatio(m.value)} ${currency}` : formatRatio(m.value);
     return formatRatio(m.value);
   };
 

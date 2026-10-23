@@ -419,6 +419,13 @@ razem z Otwartą decyzją 1.
   jest tylko w zakładce Sprawozdania.
 - **Ścieżka do pierwszych płatności** — Cel nr 1 („10 obcych osób płaci") nie ma dziś
   w roadmapie żadnego odpowiednika; wiąże się z Otwartą decyzją 2.
+- **Czy przeliczać sprawozdania w obcej walucie kursem** — wyszło z D9. Dziś wskaźniki
+  łączące cenę w PLN z liczbą w EUR są **niedostępne**, z wyjaśnieniem na ekranie, i nic
+  nie jest przeliczane. Przeliczanie wymagałoby wyboru, którego nie da się zrobić „technicznie":
+  kurs z dnia wyceny, kurs na koniec okresu sprawozdawczego, czy kurs średni okresu — trzy
+  różne odpowiedzi na to samo pytanie, każda obronna i każda dająca inne C/Z. Doszłoby do tego
+  źródło kursów (NBP?), jego data i to, że wskaźnik historyczny trzeba by przeliczać kursem
+  historycznym, inaczej zmiana kursu udaje zmianę wyniku spółki. **Decyzja Kamila.**
 
 ---
 
