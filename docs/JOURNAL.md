@@ -40,6 +40,11 @@ Komputer: `MacBook-Pro-Kamil.local`
      zgłoszone do `c929f24`, choć cztery były stare — GitHub przypisuje komentarzom nowszy
      commit, gdy głowa idzie dalej. Dociągam teraz `commit{oid}` i `originalCommit{oid}`.
 
+**SHA poprawek: `6ab937f3aca41b7f0fdd43279932c1f534b60637`.** Ten numer dopisał drugi,
+jednolinijkowy commit `docs:` — dokładnie tak, jak każe naprawiona uwaga 2, bo hash commita
+z poprawkami zawiera też treść tego wpisu i nie da się go znać wcześniej. Głową gałęzi jest
+ten drugi commit.
+
 **Decyzje.** Wszystkie cztery uwagi przyjęte, żadnej spornej. Dwie z nich (1 i 3) to ten sam
 błąd w dwu miejscach: **zapisałem warunek na „czy recenzja istnieje", zamiast na „czy odbyła
 się ta recenzja, której wymaga poziom ryzyka"**. Trzecia (2) to logiczna niemożliwość,
