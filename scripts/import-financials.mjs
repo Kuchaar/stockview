@@ -179,7 +179,17 @@ async function main() {
   if (pominietychVerified) console.log(`Pominiętych jako verified: ${pominietychVerified}`);
   if (bledy.length) {
     console.log(`Błędy (${bledy.length}): ${bledy.join('; ')}`);
-    if (bledy.length === wig20Companies.length) process.exit(1); // nic się nie udało
+  }
+
+  // Zero wierszy to błąd, nie wynik. Przebieg, który nic nie wniósł do bazy, nie może
+  // kończyć się sukcesem — niezależnie od tego, czy winne jest pobieranie, czy wszystkie
+  // wiersze były chronione flagą `verified`. Wzorzec P1 z AGENTS.md: „operacja zakończona
+  // błędem nie może zgłaszać sukcesu". Przy `--dry-run` liczy się to samo: zero wierszy
+  // do zapisu znaczy, że prawdziwy przebieg też by nic nie wniósł.
+  if (!zapisanych) {
+    console.error('');
+    console.error(`BŁĄD: ${DRY_RUN ? 'zero wierszy do zapisu' : 'zapisano 0 wierszy'} — import nic nie wniósł do bazy.`);
+    process.exit(1);
   }
 }
 

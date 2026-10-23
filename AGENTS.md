@@ -78,9 +78,17 @@ All three shapes go through `normalizeFinancials()` in `src/data/financialSchema
 `public/data/history/{ticker}.json` (~1250 sessions, 5 years), cache TTL 30–60 min.
 `.github/workflows/update-prices.yml` runs `scripts/fetch-stooq.mjs` every weekday at
 18:00 UTC and commits the price files straight to `main`. Financial statements have their own
-weekly job, `.github/workflows/update-financials.yml` (Saturday 06:00 UTC): it imports from
-Yahoo into Supabase and exports `public/data/financials/`, because statements change
-quarterly and there is nothing to gain from running that daily.
+weekly job, `.github/workflows/update-financials.yml` (Saturday 06:00 UTC), and it does
+**one** thing: it exports the Supabase `financials` table to `public/data/financials/`.
+Weekly is enough because statements change quarterly.
+
+**The import is not on GitHub.** A runner gets HTTP 403 from
+`https://stockview.org/api/financials` — Cloudflare distrusts datacenter addresses, and it is
+the address that is blocked, not the `User-Agent`. So the import runs **locally**, from
+Kamil's laptop, once a quarter after the reports come out: `npm run import-financials`, with
+the procedure in [docs/SETUP.md](docs/SETUP.md) („Import sprawozdań"). That split is
+deliberate — a weekly cron whose import can never succeed would be red every week, and a
+colour that is always the same carries no information.
 
 ### Pages Functions
 
@@ -113,9 +121,11 @@ Tables in use: `watchlist`, `dividends`, `financials`. Credentials live in `.env
 (see `.env.example`).
 
 `financials` holds the company statements — natural key `(company_id, period_type,
-period_end)`, currently ~189 rows, RLS allows public `select` and writes only from the admin
+period_end)`, currently ~243 rows, RLS allows public `select` and writes only from the admin
 account. **The app never reads it at runtime.** `scripts/import-financials.mjs` fills it from
-Yahoo (needs a `service_role` key), `scripts/export-financials.mjs` writes it out to
+Yahoo (needs a `service_role` key in `.env.local` — **never** under a `VITE_*` name, which
+Vite would inline into the published bundle; run locally only, see
+[docs/SETUP.md](docs/SETUP.md)), `scripts/export-financials.mjs` writes it out to
 `public/data/financials/{companyId}/data.json`, and the app reads those static files as tier 2
 of `useFinancials`. Manual corrections go through `/admin/financials`; a row with
 `verified = true` is never overwritten by the importer. Migration:

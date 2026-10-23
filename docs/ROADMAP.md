@@ -105,11 +105,11 @@ To się nie skaluje i cicho starzeje.
   puste wiersze, a `isBank()` idzie po sektorze ze `src/data/wig20.js`.
 - [x] **D5 — eksport na poziom 2** (~40 min)
   `scripts/export-financials.mjs` → `public/data/financials/{companyId}/data.json`,
-  wpięty w `update-prices.yml`.
+  wpięty w `update-financials.yml` (pierwotnie w `update-prices.yml`).
   *Gotowe, gdy:* przy wyłączonym `/api/financials` strona spółki pokazuje dane z `source: 'manual'`.
   24 pliki (108 kB). Sprawdzone na serwerze dev bez `/api/*`: PKO, CDR i ZAB schodzą na
   `source: 'manual'` z okresami FY2025–FY2022 zamiast na zaszyte dane z 2024 r.
-  Bot wymaga trzech sekretów w repo — patrz `docs/DATA.md`.
+  Bot wymaga dwóch sekretów w repo — patrz `docs/DATA.md`.
 - [x] **D6 — panel `/admin/financials`** (~40 min × 2)
   Po wzorze `/admin/dividends`: ręczna korekta wiersza i ustawienie flagi `verified`.
   *Gotowe, gdy:* poprawiona ręcznie liczba przeżywa kolejny przebieg importera.
@@ -156,11 +156,14 @@ w opis PR-a.
 
 - [ ] **P0 — wybudzić bazę i zablokować usypianie** (~20 min) — ryzyko: **wysokie** (sekrety)
   *Gotowe, gdy:* projekt Supabase ma status aktywny, logowanie na stockview.org działa, codzienny
-  `keepalive.yml` robi prawdziwe zapytania `select` (także w weekendy), sekrety `SUPABASE_URL`,
-  `SUPABASE_ANON_KEY` i `SUPABASE_SERVICE_ROLE_KEY` są w Actions, a ręcznie odpalony
-  `update-financials.yml` odświeża `public/data/financials/` (bilans i przepływy, nowa data).
-  **Stan na 2026-10-23:** baza aktywna ✓, logowanie na stockview.org działa ✓, trzy sekrety
-  w Actions ✓, codzienny `keepalive.yml` na `main` i sprawdzony ręcznym przebiegiem ✓
+  `keepalive.yml` robi prawdziwe zapytania `select` (także w weekendy), sekrety `SUPABASE_URL`
+  i `SUPABASE_ANON_KEY` są w Actions, a ręcznie odpalony `update-financials.yml` odświeża
+  `public/data/financials/` (bilans i przepływy, nowa data).
+  **Zmiana warunku 2026-10-23 (decyzja Kamila):** pierwotnie wymagał **trzech** sekretów.
+  Po P13 import nie chodzi już na GitHubie, więc `SUPABASE_SERVICE_ROLE_KEY` nie jest
+  w Actions do niczego potrzebny — żywy tylko lokalnie, w `.env.local`.
+  **Stan na 2026-10-23:** baza aktywna ✓, logowanie na stockview.org działa ✓, oba potrzebne
+  sekrety w Actions ✓, codzienny `keepalive.yml` na `main` i sprawdzony ręcznym przebiegiem ✓
   (PR #3, `90ffed0`; [run 39983171367](https://github.com/Kuchaar/stockview/actions/runs/39983171367)
   — trzy `select` po HTTP 200, bez klucza w logu). Brakuje **jednej rzeczy**: ręczny przebieg
   `update-financials.yml` nie odświeżył `public/data/financials/` — blokuje go **P13**.
@@ -221,13 +224,15 @@ w opis PR-a.
   Ustawień kont nie ruszam bez uzgodnienia — mogę najwyżej sprawdzić, co widać z `gh`, i zgłosić braki.
 
 - [ ] **P12 — `update-financials.yml` przerywa się przy brakującym sekrecie** (~20 min) — ryzyko: **wysokie** (sekrety)
-  Dziś oba realne kroki są bramkowane `if: env.SUPABASE_* != ''`, a przy braku sekretu wykonuje się
-  krok „Skip…" i cały przebieg kończy się na zielono. Tak przeszły cztery przebiegi „success" od
-  2026-09-26: po 16–24 s, bez jednej zmiany w plikach. To wzorzec P1 z `AGENTS.md` — „operacja
-  zakończona błędem nie może zgłaszać sukcesu". Ma działać jak `keepalive.yml`: brak sekretu →
-  `::error::` z nazwą sekretu i `exit 1`.
-  *Gotowe, gdy:* przebieg bez któregokolwiek z trzech sekretów kończy się czerwono i podaje w logu,
-  którego brakuje, kroków „Skip…" nie ma w pliku, a przebieg z sekretami nadal importuje i eksportuje.
+  Przed tą zmianą oba realne kroki były bramkowane `if: env.SUPABASE_* != ''`, a przy braku sekretu
+  wykonywał się krok „Skip…" i cały przebieg kończył się na zielono. Tak przeszły cztery przebiegi
+  „success" od 2026-09-26: po 16–24 s, bez jednej zmiany w plikach. To wzorzec P1 z `AGENTS.md` —
+  „operacja zakończona błędem nie może zgłaszać sukcesu". Ma działać jak `keepalive.yml`: brak
+  sekretu → `::error::` z nazwą sekretu i `exit 1`.
+  *Gotowe, gdy:* brak `SUPABASE_URL` albo `SUPABASE_ANON_KEY` kończy przebieg czerwono i podaje
+  w logu nazwę brakującego sekretu, kroków „Skip…" nie ma w pliku, a przebieg z sekretami eksportuje.
+  **Warunek poprawiony 2026-10-23** po uwadze P2 z recenzji PR #5 na `3532415`: mówił o **trzech**
+  sekretach oraz o imporcie, czyli wymagał cofnięcia tego, co P13 właśnie usuwa.
 
 - [ ] **P13 — import z Yahoo nie przechodzi z runnera GitHuba** (~40 min) — ryzyko: **wysokie** (źródło danych)
   Ręczny przebieg na `main` z 2026-10-23
@@ -243,8 +248,15 @@ w opis PR-a.
   i `/api/financials` na Cloudflare. Dwie rzeczy do rozdzielenia: eksport nie może zależeć od
   powodzenia importu (to on odświeża pliki i wystarczy mu klucz anon — i wiemy już, że z runnera
   by przeszedł), a import potrzebuje drogi, którą runner nie jest odbijany.
-  *Gotowe, gdy:* przebieg na `main` odświeża `public/data/financials/` (bilans, przepływy, nowa data)
-  także wtedy, gdy import nie pobierze nic, a nieudany import nadal kończy przebieg czerwono.
+  **Wybrana droga (decyzja Kamila, 2026-10-23):** import **wychodzi z GitHuba** i zostaje
+  komendą lokalną, odpalaną po raportach kwartalnych. Osobnego workflow importu nie tworzymy —
+  z runnera i tak dostałby 403. Cotygodniowy przebieg robi **tylko eksport**, więc jest zielony
+  i jego kolor coś znaczy. Gdyby import został w cronie, job byłby czerwony co tydzień na stałe,
+  a to to samo zepsucie co w P12, tylko w drugą stronę: tam zielony nic nie znaczył, tu czerwony
+  przestałby cokolwiek znaczyć.
+  *Gotowe, gdy:* cotygodniowy eksport jest zielony i odświeża `public/data/financials/`;
+  ręczny import lokalny jest opisany w [`docs/SETUP.md`](SETUP.md) i kończy się błędem,
+  gdy nic nie zapisze.
   **Blokuje P0** — bez tego warunku „gotowe, gdy" przy P0 nie da się spełnić.
 
 ### Poza kodem — zadania Kamila
