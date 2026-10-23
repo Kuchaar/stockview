@@ -1,7 +1,7 @@
 // Comprehensive financial ratio calculator for StockView
 // Operates on the canonical financial data format from financialSchema.js
 
-import { isBankSector, statementCurrency, QUOTE_CURRENCY } from './financialSchema.js'; // z rozszerzeniem: ten plik czytają też skrypty pod Node
+import { isBankSector, currencyGuard } from './financialSchema.js'; // z rozszerzeniem: ten plik czytają też skrypty pod Node
 
 const TAX_RATE_PL = 0.19; // Polish CIT rate
 
@@ -74,16 +74,20 @@ export function calculateAllRatios(financialData, currentPrice, sharesOutstandin
     ? currentPrice * sharesOutstanding
     : null;
 
-  // Osłona walutowa (D9). `currentPrice` jest w walucie notowań, czyli w PLN — tak notuje
-  // GPW i tak oddają Stooq i Yahoo. Sprawozdanie może być w innej walucie: Pepco raportuje
-  // w EUR (U10 w docs/DATA.md). Wskaźnika, który łączy cenę z liczbą ze sprawozdania,
-  // **nie liczymy wtedy wcale** — nie przeliczamy też kursem, bo kurs z dnia wyceny i kurs
-  // średni okresu to dwie różne rzeczy, a wybór między nimi jest decyzją metodologiczną,
-  // nie szczegółem implementacyjnym. Lepiej „—" niż liczba, która wygląda poprawnie.
-  // Wskaźniki czysto ilorazowe (ROE, marże, dług/kapitał) są bezpieczne: dzielą walutę
-  // przez tę samą walutę i skracają ją.
-  const statementCur = statementCurrency(financialData);
-  const currencyMismatch = statementCur != null && statementCur !== QUOTE_CURRENCY;
+  // Osłona walutowa (D9, uodporniona w D9a). `currentPrice` jest w walucie notowań, czyli
+  // w PLN — tak notuje GPW i tak oddają Stooq i Yahoo. Sprawozdanie może być w innej walucie:
+  // Pepco raportuje w EUR (U10 w docs/DATA.md). Wskaźnika, który łączy cenę z liczbą ze
+  // sprawozdania, **nie liczymy wtedy wcale** — nie przeliczamy też kursem, bo kurs z dnia
+  // wyceny i kurs średni okresu to dwie różne rzeczy, a wybór między nimi jest decyzją
+  // metodologiczną, nie szczegółem implementacyjnym. Lepiej „—" niż liczba, która wygląda
+  // poprawnie. Wskaźniki czysto ilorazowe (ROE, marże, dług/kapitał) są bezpieczne: dzielą
+  // walutę przez tę samą walutę i skracają ją.
+  //
+  // Decyzję podejmuje `currencyGuard`, nie porównanie z jedną wartością: przy wierszach
+  // o **różnych** walutach też trzeba wyłączyć wskaźniki, a wcześniejsza wersja brała
+  // „pierwszą napotkaną" walutę i wtedy jeden wiersz mógł po cichu wyłączyć osłonę.
+  const guard = currencyGuard(financialData);
+  const currencyMismatch = guard.mismatch;
 
   return {
     profitability: calcProfitability(inc, bs, bank),
@@ -91,11 +95,7 @@ export function calculateAllRatios(financialData, currentPrice, sharesOutstandin
     debtAndLiquidity: calcDebtAndLiquidity(inc, bs, cf, bank),
     dividend: calcDividend(cf, inc, ks, marketCap, currencyMismatch),
     growth: calcGrowth(inc, incPrev),
-    currencyInfo: {
-      statement: statementCur,
-      quote: QUOTE_CURRENCY,
-      mismatch: currencyMismatch,
-    },
+    currencyInfo: guard,
   };
 }
 

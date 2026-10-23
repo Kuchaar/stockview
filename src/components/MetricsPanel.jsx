@@ -126,8 +126,12 @@ export default function MetricsPanel({ ratios, lang }) {
   // czy awaria. Pokazujemy je tam, gdzie te wskaźniki miałyby stać.
   const cur = ratios.currencyInfo;
   const showCurrencyNote = cur?.mismatch === true && (activeTab === 'valuation' || activeTab === 'dividend');
+  // Dwa powody wyłączenia brzmią inaczej i nie wolno ich zlewać: „spółka raportuje w euro"
+  // to stan normalny, „wiersze podają różne waluty" to wada danych, o której warto wiedzieć.
   const currencyNote = showCurrencyNote
-    ? t('stock.currencyMismatch').replaceAll('{statement}', cur.statement).replaceAll('{quote}', cur.quote)
+    ? t(cur.reason === 'inconsistent' ? 'stock.currencyInconsistent' : 'stock.currencyMismatch')
+        .replaceAll('{statement}', cur.statement)
+        .replaceAll('{quote}', cur.quote)
     : null;
 
   return (

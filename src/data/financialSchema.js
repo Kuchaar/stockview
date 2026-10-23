@@ -21,28 +21,80 @@ export function isBankSector(sector) {
  */
 export const QUOTE_CURRENCY = 'PLN';
 
-/** Pierwsza znana waluta w zbiorze kanonicznych wierszy, albo `null`. */
-export function currencyOfRows(rows) {
+/** Wszystkie **różne** waluty w zbiorze kanonicznych wierszy, posortowane. */
+export function currenciesOfRows(rows) {
+  const found = new Set();
   for (const row of rows || []) {
-    if (row?.currency) return row.currency;
+    if (row?.currency) found.add(row.currency);
   }
-  return null;
+  return [...found].sort();
 }
 
 /**
- * Waluta sprawozdań spółki — szukana po wszystkich trzech sprawozdaniach i obu typach
- * okresu, bo nie każdy poziom danych wypełnia wszystkie. `null` znaczy „nie wiem",
- * i wtedy nic nie udaje, że wie: ani etykieta kwot, ani osłona we wskaźnikach.
+ * Jedna waluta zbioru wierszy, albo `null`. **`null` znaczy „nie da się powiedzieć jedną
+ * etykietą"** — i obejmuje dwa przypadki: żaden wiersz nie podaje waluty, albo wiersze
+ * podają różne. Oba muszą dać ten sam wynik, bo nagłówek tabeli nie może twierdzić jednej
+ * waluty nad kolumnami, które jej nie mają wspólnej (D9a).
  */
-export function statementCurrency(data) {
-  if (!data) return null;
+export function currencyOfRows(rows) {
+  const found = currenciesOfRows(rows);
+  return found.length === 1 ? found[0] : null;
+}
+
+/** Wszystkie różne waluty spółki, po trzech sprawozdaniach i obu typach okresu. */
+export function statementCurrencies(data) {
+  if (!data) return [];
+  const found = new Set();
   for (const key of ['incomeStatement', 'balanceSheet', 'cashFlow']) {
     for (const periodType of ['annual', 'quarterly']) {
-      const found = currencyOfRows(data[key]?.[periodType]);
-      if (found) return found;
+      for (const cur of currenciesOfRows(data[key]?.[periodType])) found.add(cur);
     }
   }
-  return null;
+  return [...found].sort();
+}
+
+/**
+ * Jedna waluta sprawozdań spółki, albo `null` przy braku danych **lub niezgodności**.
+ * Do etykiet. Do decyzji „czy wolno dzielić cenę przez liczbę ze sprawozdania" służy
+ * `currencyGuard` — ta funkcja sama nie wystarcza, bo `null` nie mówi, czy waluty nie ma,
+ * czy jest ich kilka.
+ */
+export function statementCurrency(data) {
+  const found = statementCurrencies(data);
+  return found.length === 1 ? found[0] : null;
+}
+
+/**
+ * Osłona walutowa (D9, uodporniona w D9a). Mówi, czy wolno łączyć cenę akcji — zawsze
+ * w `QUOTE_CURRENCY` — z liczbą ze sprawozdania.
+ *
+ * Cztery stany, bo trzy nie wystarczały:
+ * - `match`        — sprawdzono i waluty się zgadzają; liczymy,
+ * - `foreign`      — sprawozdanie w innej walucie; **nie liczymy**,
+ * - `inconsistent` — wiersze jednej spółki podają **różne** waluty; **nie liczymy**.
+ *   Poprzednia wersja brała „pierwszą napotkaną" walutę, więc jeden wiersz z inną etykietą
+ *   mógł po cichu **wyłączyć osłonę** dla całej spółki. Przy niezgodności zakładamy
+ *   najgorsze — zabezpieczenie ma padać w stronę bezpieczną, nie wygodną.
+ * - `unknown`      — żaden wiersz nie podaje waluty; **liczymy**. Dotyczy poziomu 3
+ *   (zaszyte `financials` w `wig20.js`), gdzie waluty nie ma, ale kwoty są w złotych —
+ *   sprawdzone na Pepco, które raportuje w EUR, a ma tam przychód 15 200–22 000 mln,
+ *   czyli wielkość złotową, nie euro (~4 500 mln EUR).
+ */
+export function currencyGuard(data) {
+  const found = statementCurrencies(data);
+  if (found.length === 0) {
+    return { statement: null, quote: QUOTE_CURRENCY, mismatch: false, reason: 'unknown' };
+  }
+  if (found.length > 1) {
+    return { statement: found.join(' / '), quote: QUOTE_CURRENCY, mismatch: true, reason: 'inconsistent' };
+  }
+  const statement = found[0];
+  return {
+    statement,
+    quote: QUOTE_CURRENCY,
+    mismatch: statement !== QUOTE_CURRENCY,
+    reason: statement === QUOTE_CURRENCY ? 'match' : 'foreign',
+  };
 }
 
 /**

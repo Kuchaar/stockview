@@ -4,11 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { supabase } from '../lib/supabase';
 import { wig20Companies } from '../data/wig20';
-import { CANONICAL_FIELDS, isBankSector, derivePeriod } from '../data/financialSchema';
+import { CANONICAL_FIELDS, isBankSector, derivePeriod, QUOTE_CURRENCY } from '../data/financialSchema';
 import { Save, Loader2, ShieldAlert, Plus, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const ADMIN_ID = '576bc3af-9081-4248-8985-959f50590340';
+
+// Waluty, w ktorych raportuja spolki WIG20: zlote plus euro (Pepco, U10 w docs/DATA.md).
+const CURRENCIES = ['PLN', 'EUR'];
 
 const BLOCKS = [
   { key: 'income', column: 'income' },
@@ -61,6 +64,9 @@ export default function AdminFinancialsPage() {
   const [selectedEnd, setSelectedEnd] = useState(null);
   const [values, setValues] = useState(emptyValues);
   const [verified, setVerified] = useState(true);
+  // Waluta wiersza. Bez tego pola nie dało się tu naprawić źle oznaczonego okresu, a zapis
+  // przez panel ustawiał `verified: true`, czyli zamrażał błąd (D9a).
+  const [currency, setCurrency] = useState(QUOTE_CURRENCY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -108,6 +114,7 @@ export default function AdminFinancialsPage() {
       cashFlow: asText(row.cash_flow),
     });
     setVerified(row.verified);
+    setCurrency(row.currency || QUOTE_CURRENCY);
     setMessage(null);
   }
 
@@ -116,6 +123,7 @@ export default function AdminFinancialsPage() {
     setSelectedEnd(today);
     setValues(emptyValues());
     setVerified(true);
+    setCurrency(QUOTE_CURRENCY);
     setMessage(null);
   }
 
@@ -151,6 +159,7 @@ export default function AdminFinancialsPage() {
       balance: clean(values.balance),
       cash_flow: clean(values.cashFlow),
       source: 'manual',
+      currency,
       verified,
     };
 
@@ -292,6 +301,18 @@ export default function AdminFinancialsPage() {
                 </span>
               </>
             )}
+            <label className="flex items-center gap-2">
+              <span className="font-medium">{t('admin.currency')}</span>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="rounded-lg border border-surface-300 dark:border-surface-700
+                           bg-white dark:bg-surface-900 px-2 py-1 font-mono text-xs"
+              >
+                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <span className="text-xs text-surface-500">{t('admin.currencyHint')}</span>
+            </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"

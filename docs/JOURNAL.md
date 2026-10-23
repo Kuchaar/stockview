@@ -2,6 +2,61 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — D9a: osłona walutowa fail-safe, pole waluty w panelu admina
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Dane Pepco potwierdzone.** Kamil wykonał SQL. Baza: **9 wierszy, wszystkie `EUR`**,
+`verified = true` dokładnie przy dwóch poprawionych (`2025-06-30`, `2024-09-30`), `source`
+nadal `yahoo`. Zapytanie o spółki z więcej niż jedną walutą zwraca **pustą listę**. Eksport
+[run 40014697215](https://github.com/Kuchaar/stockview/actions/runs/40014697215) zielony,
+commit bota [`4da0b2c`](https://github.com/Kuchaar/stockview/commit/4da0b2c); na produkcji
+Pepco ma `EUR` we **wszystkich** wierszach wszystkich trzech sprawozdań, PKO BP `PLN`.
+
+**Zrobione w D9a.**
+
+- **`currencyGuard` zamiast porównania z jedną wartością** (`src/data/financialSchema.js`).
+  Cztery stany, bo trzy nie wystarczały: `match` (liczymy), `foreign` (sprawozdanie w innej
+  walucie — nie liczymy), **`inconsistent`** (wiersze jednej spółki podają różne waluty —
+  nie liczymy) i `unknown` (żaden wiersz nie podaje waluty — liczymy).
+- **`unknown` → liczymy, i to jest poparte danymi, nie założeniem.** Dotyczy poziomu 3
+  (zaszyte `financials` w `wig20.js`), gdzie waluty nie ma. Sprawdziłem na najtrudniejszym
+  przypadku: Pepco raportuje w EUR, ale na poziomie 3 ma przychód **15 200–22 000 mln**,
+  czyli wielkość **złotową** (realny przychód to ~4 500 mln EUR). Zaszyte dane są więc
+  przeliczone na złote i pasują do ceny w złotych.
+- **`currencyOfRows` zwraca `null` przy niezgodności**, nie pierwszą napotkaną walutę, więc
+  nagłówek tabeli nie twierdzi jednej waluty nad kolumnami, które jej nie mają wspólnej.
+- **Nota w `MetricsPanel` rozróżnia powód.** „Spółka raportuje w euro" to stan normalny,
+  „wiersze podają różne waluty" to wada danych — zlanie ich w jeden komunikat ukryłoby tę
+  drugą. Nowy wpis `stock.currencyInconsistent` w `pl` i `en`.
+- **Pole `currency` w `/admin/financials`.** To była druga połowa wady: `payload` go nie
+  zawierał, a zapis ustawiał `source: 'manual'` i `verified: true`, czyli **zamrażał** błędną
+  walutę i blokował importerowi jej poprawienie. Teraz jest wybór `PLN`/`EUR`, wczytywany
+  z wiersza i wysyłany w `payload`, z podpowiedzią w obu językach.
+
+**Dowód, że osłona naprawdę jest fail-safe — na danych, nie z lektury kodu.** Wziąłem
+prawdziwą odpowiedź produkcji dla Pepco i **zmieniłem etykietę jednego rocznego wiersza**
+na `PLN`, a potem puściłem obie wersje logiki obok siebie:
+
+| Scenariusz | stara logika | nowa logika |
+|---|---|---|
+| Pepco, wszystkie EUR | `mismatch: true` | `foreign`, `mismatch: true` |
+| PKO BP, wszystkie PLN | `mismatch: false` | `match`, `mismatch: false` |
+| **Pepco + jeden roczny wiersz `PLN`** | **`mismatch: false` — osłona wyłączona** | **`inconsistent`, `mismatch: true`** |
+| dane bez waluty (poziom 3) | `mismatch: false` | `unknown`, `mismatch: false` |
+
+Trzeci wiersz to cała treść D9a: jedna zła etykieta w jednym z dziewięciu wierszy wystarczała,
+żeby C/Z i C/WK znów policzyły się z PLN przez EUR. Nagłówek przy mieszanych kolumnach
+daje teraz „mln", a przy zgodnych „mln EUR".
+
+**Sprawdzone.** Cztery scenariusze osłony wyżej; nagłówek w trzech przypadkach (EUR+PLN,
+EUR+EUR, brak waluty); `node --check` na obu zmienionych plikach `.js`; `npm run build`
+przechodzi. **Podgląd w przeglądarce w obu motywach — zgodnie z nową zasadą z `AGENTS.md`** —
+opisany w komentarzu do PR-a.
+
+Następne: D10d (plaster: nagłówek, Przegląd, `pageDesc`), potem D10a, D10b, D10c, P8+D10e,
+dalej P1. Import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-23 — zasada podglądu w AGENTS.md, D9 odhaczone, plan D10 rozbity na zadania
 
 Komputer: `MacBook-Pro-Kamil.local`
