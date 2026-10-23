@@ -60,9 +60,39 @@ i robi dokładnie to (`node --env-file-if-exists=.env.local scripts/import-finan
 Drugi alias na to samo byłby tylko kolejnym miejscem do rozjechania się. SETUP.md opisuje
 komendę, która jest.
 
-Następne: runda `@codex review` (ryzyko wysokie — sekrety i źródło danych), po merge'u ręczny
-przebieg eksportu i sprawdzenie strony spółki, potem odhaczenie P0, P12 i P13 z SHA. Po merge'u
-Kamil może usunąć `SUPABASE_SERVICE_ROLE_KEY` z Actions.
+**Recenzja Codex na `3532415` — jedna uwaga, P2, trafna.** Warunek „gotowe, gdy" przy **P12**
+nadal mówił o **trzech** sekretach oraz o imporcie i eksporcie, czyli wymagałby cofnięcia tego,
+co P13 właśnie usuwa. Poprawiony na: brak `SUPABASE_URL` albo `SUPABASE_ANON_KEY` → przebieg
+czerwony z nazwą sekretu w logu, brak kroków „Skip…" w pliku, przebieg z sekretami eksportuje.
+
+**Przy tej samej okazji — trzy miejsca, których bot nie wskazał**, a mówiły to samo nieprawdziwie:
+
+- **`docs/DATA.md`, sekcja „Sekrety, których potrzebuje bot"** — najgorsze z nich. Twierdziła,
+  że `update-prices.yml` robi „ceny → import do Supabase → eksport", wymieniała **trzy** sekrety
+  z `SUPABASE_SERVICE_ROLE_KEY` w roli sekretu repozytorium i kończyła się zdaniem „brak sekretu
+  pomija krok, a nie wywala całego przebiegu" — czyli opisem dokładnie tego błędu, który P12
+  naprawia. Przepisana: dwa sekrety, brak któregokolwiek = przebieg czerwony, `service_role`
+  tylko lokalnie w `.env.local` i nigdy pod nazwą `VITE_*`.
+- **`docs/ROADMAP.md`, zadanie D5** — „Bot wymaga trzech sekretów w repo" → dwóch.
+- **`docs/ROADMAP.md`, zadanie D5** — „wpięty w `update-prices.yml`"; eksportera tam nie ma
+  (`grep financials .github/workflows/update-prices.yml` → 0 trafień), siedzi
+  w `update-financials.yml`. Poprawione, z adnotacją, gdzie był pierwotnie.
+
+**Czego świadomie nie ruszyłem:** wcześniejszych wpisów w tym dzienniku, które mówią o „trzech
+sekretach w Actions". Były prawdziwe w dniu, w którym je pisałem — dziennik jest zapisem tego,
+co się stało, nie dokumentem do utrzymywania w aktualności. Przepisywanie go wstecz zabrałoby
+jedyny ślad tego, jak ta decyzja powstała.
+
+**Sprawdzone ponownie po poprawkach:** zmiana jest w czterech plikach Markdown i nie dotyka
+kodu ani workflow, więc testy z pierwszej rundy zachowują ważność; powtórzyłem natomiast audyt
+grepem — `trzy sekrety`/`trzech sekret` nie występuje już w `AGENTS.md`, `ROADMAP.md`,
+`SETUP.md` ani `DATA.md`, i żaden z tych plików nie przypisuje już importu cotygodniowemu
+workflow. Nowej rundy `@codex review` nie zamawiam — decyzja Kamila, to poprawka dokumentacji.
+Jeden commit, bez osobnego commita stemplującego SHA — też jego decyzja; SHA podaję
+w komentarzu do PR-a.
+
+Następne: po merge'u ręczny przebieg eksportu i sprawdzenie strony spółki, potem odhaczenie
+P0, P12 i P13 z SHA. Po merge'u Kamil może usunąć `SUPABASE_SERVICE_ROLE_KEY` z Actions.
 
 ## 2026-10-23 — Bramka P w roadmapie, sekrety sprawdzone w działaniu
 

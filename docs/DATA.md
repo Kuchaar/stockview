@@ -313,16 +313,28 @@ przebiegu bota. Poprawki wprowadza się w bazie i oznacza `verified = true`.
 
 ### Sekrety, których potrzebuje bot
 
-`.github/workflows/update-prices.yml` robi teraz: ceny → import do Supabase → eksport na poziom 2
-→ commit. W ustawieniach repozytorium (Settings → Secrets and variables → Actions) muszą być:
+**Stan od 2026-10-23 (PR #5, zadania P12 i P13).** `.github/workflows/update-financials.yml`
+robi **jedną** rzecz: eksport bazy na poziom 2 → commit. **Importu w tym workflow nie ma** —
+runner GitHuba dostaje HTTP 403 z `https://stockview.org/api/financials`, bo Cloudflare odbija
+adresy centrów danych. Import jest komendą lokalną, odpalaną raz na kwartał z laptopa:
+`npm run import-financials`, procedura w [`SETUP.md`](SETUP.md), sekcja „Import sprawozdań".
+
+W ustawieniach repozytorium (Settings → Secrets and variables → Actions) muszą być **dwa**:
 
 | Sekret | Do czego | Jeśli go nie ma |
 |---|---|---|
-| `SUPABASE_URL` | import i eksport | oba kroki się nie wykonają |
-| `SUPABASE_SERVICE_ROLE_KEY` | import (omija RLS) | import pominięty, eksport i ceny działają |
-| `SUPABASE_ANON_KEY` | eksport (klucz publiczny) | eksport pominięty |
+| `SUPABASE_URL` | eksport | **przebieg czerwony**, nazwa sekretu w logu |
+| `SUPABASE_ANON_KEY` | eksport (klucz publiczny) | **przebieg czerwony**, nazwa sekretu w logu |
 
-Kroki są warunkowe, więc brak sekretu pomija krok, a nie wywala całego przebiegu.
+**Brak sekretu to błąd, nie powód do pominięcia kroku.** Do 2026-10-23 kroki były warunkowe
+(`if: env.SUPABASE_* != ''`) i przebieg bez sekretów kończył się na **zielono**, nie zmieniając
+ani jednego pliku — cztery takie „success" od 2026-09-26. Teraz pierwszy krok sprawdza oba
+sekrety i przy braku wypisuje `::error::` z nazwą, a potem `exit 1`.
+
+`SUPABASE_SERVICE_ROLE_KEY` **nie jest już sekretem repozytorium** — żaden workflow go nie
+używa. Potrzebuje go tylko lokalny import (zapis do `financials` jest w RLS zarezerwowany dla
+konta administracyjnego), więc żyje wyłącznie w `.env.local` na komputerze, **nigdy** pod nazwą
+`VITE_*`: Vite wkleja każdą zmienną `VITE_*` do publicznego bundla.
 
 ## Stan po D6 (2026-09-20)
 
