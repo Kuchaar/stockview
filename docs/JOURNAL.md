@@ -2,6 +2,69 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — P0, P12, P13 i F6 odhaczone; bilans i przepływy są na produkcji
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Sekrety:** `gh secret list` → **dokładnie dwa**, `SUPABASE_URL` i `SUPABASE_ANON_KEY`.
+  Kamil usunął `SUPABASE_SERVICE_ROLE_KEY` z Actions po merge'u PR #5; żaden workflow go
+  nie używa, żyje tylko w `.env.local` na laptopie.
+- **Eksport na `main` przeszedł** — [run 40001596221](https://github.com/Kuchaar/stockview/actions/runs/40001596221), zielony: „Oba sekrety
+  na miejscu", „Wierszy w bazie: 243, spółek: 24", „Plików zapisanych: 24", a potem commit bota
+  [`388f32f`](https://github.com/Kuchaar/stockview/commit/388f32f) wprost na `main`
+  (**+6845/−373** w 24 plikach). Pierwszy przebieg tego workflow, który cokolwiek zmienił.
+- **Produkcja oddaje bilans i przepływy.** `https://stockview.org/data/financials/pkobp/data.json`
+  → bilans 4 okresy roczne i 5 kwartalnych, przepływy 4/5, `sources: ['yahoo']`. Sprawdzone też
+  `cdprojekt`, `pepco` i `zabka` — wszystkie mają oba sprawozdania. Przed dzisiejszym dniem
+  **wszystkie 24 pliki miały zero bilansu i zero przepływów**.
+- **P0, P12, P13 i F6 odhaczone** w `docs/ROADMAP.md`, każde z SHA i linkiem do przebiegu.
+  Przy P12 i P13 dopisane „Jak sprawdzone", żeby odhaczenie dało się później zweryfikować
+  bez wiary na słowo. SHA poprawki z recenzji PR #5: **`c477fe2`**.
+- **F6 zamknięte z uzasadnieniem.** Decydujący nie jest PR #1 (powstał **razem** z regułami,
+  więc trudno nim dowodzić, że reguły działają), a **PR #5**, który je tylko **stosował**:
+  poziom ryzyka w opisie, jedna runda `@codex review` z nazwanym celem, jedna uwaga P2,
+  poprawka z nowym SHA, ponowne sprawdzenie **dotkniętego** zakresu, wątek zamknięty mutacją,
+  nowy SHA w komentarzu, bez proszenia o drugą rundę, merge za zgodą Kamila.
+
+**Warunek P0 poprawiony — miał błędne założenie, nie tylko nieaktualne.** Mówił „bilans
+i przepływy, **nowa data**". Data się nie zmieniła i **nie powinna była**: `lastUpdated`
+w plikach to **najnowszy `updated_at` z bazy** (`scripts/export-financials.mjs:56`), czyli data,
+kiedy zmieniły się **liczby**, a nie kiedy przeszedł bot. Sprawdziłem bazę przez REST: wszystkie
+243 wiersze mają `updated_at` z 2026-09-20, najstarszy 14:28, najnowszy 20:07 — cały zestaw,
+razem z bilansami, powstał tego jednego dnia. Czyli `2026-09-20` w plikach jest **prawdą**,
+a nie zastojem; ruszy się po pierwszym lokalnym imporcie, czyli na początku grudnia. Przeciwny
+wzorzec siedzi w `scripts/fetch-stooq.mjs`, który wpisuje dzisiejszą datę przy **każdym**
+przebiegu — i właśnie dlatego weekendowy cron produkowałby tam commity-śmieci. Warunek
+przepisany na „`lastUpdated` pokazuje datę ostatniego zapisu w bazie", z notką, że to poprawka
+błędnego założenia, a nie przykrawanie kryterium pod wynik.
+
+**Znalezione przy okazji — nowe zadanie D9, wzorzec P1, nie z dzisiejszych zmian.**
+Waluta nie dochodzi do ekranu. `src/components/FinancialTable.jsx:55` wypisuje nagłówek narożny
+jako zaszyte `'mln PLN'` / `'M PLN'` i **nie czyta pola `currency` w ogóle**, więc tabela
+sprawozdań **Pepco opisuje kwoty w euro jako „mln PLN"** — na obu poziomach danych. Dodatkowo
+`scripts/export-financials.mjs:42` buduje `meta = { date, period }` i gubi `row.currency`,
+więc pliki poziomu 2 nie mają tego pola wcale (na produkcji `pepco/data.json` → `currency: None`),
+choć baza wie swoje (`currency = 'EUR'` na 7 wierszach Pepco) i poziom 1 z Yahoo walutę oddaje.
+D8 zapisało U10 „Pepco raportuje w EUR" — fakt był znany, tylko nikt nie sprawdził, czy UI go
+honoruje. Zadanie trafiło do Bramki 1, nie na listę „Później", bo to klasa P1.
+
+**Czego nie sprawdziłem.** Czy któryś **wskaźnik** już dziś dzieli liczbę w EUR przez liczbę
+w PLN — `ratioCalculator.js` używa słowa `currency` tylko jako nazwy formatu, więc osłony
+walutowej tam nie widziałem, ale całej ścieżki liczb nie przeszedłem. Nie otwierałem też strony
+w przeglądarce: wszystko wyżej jest sprawdzone na plikach, przebiegach i zapytaniach REST.
+
+**Jak zobaczyć bilans i przepływy na stronie.** PKO BP → `/stock/pkobp` → zakładka
+**Sprawozdania** → podzakładki **Bilans** i **Przepływy pieniężne**. Uwaga: w normalnej
+przeglądarce dane przyjdą z **poziomu 1** (`/api/financials`, Yahoo), który bilans i przepływy
+oddawał **od zawsze** — więc sam widok nie dowodzi, że eksport zadziałał. Dowodem jest plik
+pod `https://stockview.org/data/financials/pkobp/data.json`. Żeby zobaczyć poziom 2 w akcji,
+trzeba zablokować `*/api/financials*` w DevTools → Network i odświeżyć stronę.
+
+Następne: D9 — waluta na ekran (Pepco jako EUR), najpierw `FinancialTable.jsx:55`, potem
+`currency` w eksporcie. Lokalny import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-23 — P13 i P12: eksport osobno od importu, brak sekretu = błąd
 
 Komputer: `MacBook-Pro-Kamil.local`

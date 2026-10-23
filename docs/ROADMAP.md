@@ -38,7 +38,8 @@ zaczyna się od odtwarzania kontekstu.
   ⚠️ Pierwotny warunek (PR z zepsutym importem dostaje czerwony status) **nieprzetestowany**
   — ścieżka `pull_request` jest w workflow, zweryfikuje ją pierwszy prawdziwy PR.
 
-- [ ] **F6 — jednolity obieg PR i recenzji** (~40 min)
+- [x] **F6 — jednolity obieg PR i recenzji** (~40 min)
+  · [`bd40d3a`](https://github.com/Kuchaar/stockview/commit/bd40d3a) (PR #1) · [`877e46b`](https://github.com/Kuchaar/stockview/commit/877e46b) (PR #5)
   Podział odpowiedzialności (Kamil — cele i zgoda na merge; Claude Code — bieżąca praca,
   propozycje zadań, implementacja, testy, PR-y; GPT — okresowe przeglądy, architektura
   i metodologia finansowa), **dobór recenzji do ryzyka**, zasady P1–P3, sekcja przekazania
@@ -49,8 +50,23 @@ zaczyna się od odtwarzania kontekstu.
   → jeśli były uwagi, poprawki z nowym SHA i ponownym sprawdzeniem dotkniętego zakresu
   → merge za zgodą Kamila. Warunek **nie wymaga znalezienia błędu** — recenzja bez uwag
   zalicza obieg tak samo.
-  W trakcie: [PR #1](https://github.com/Kuchaar/stockview/pull/1). Zrobione: gałąź, PR,
-  CI zielone, **recenzja Codex z 8 ustaleniami** (5× P1) i poprawki. Został merge.
+  **Zamknięte 2026-10-23 — obieg przeszedł pięć PR-ów, dwa razy w pełnej postaci.**
+  [PR #1](https://github.com/Kuchaar/stockview/pull/1) przeszedł cały warunek: gałąź → PR →
+  CI zielone → **cztery rundy recenzji Codex, 26 ustaleń**, wszystkie naprawione, 26/26 wątków
+  zamkniętych → merge za zgodą Kamila (`bd40d3a`, bez squasha, żeby odnośniki do SHA
+  w dzienniku nie prowadziły w nicość).
+  [PR #5](https://github.com/Kuchaar/stockview/pull/5) przeszedł go **już według nowych zasad**,
+  i to jest mocniejszy dowód niż PR #1, bo PR #1 powstał razem z regułami, a PR #5 je tylko
+  stosował: poziom ryzyka w opisie (**wysokie** — sekrety i źródło danych), **jedna** runda
+  `@codex review` z nazwanym celem, jedna uwaga **P2**, poprawka z nowym SHA
+  [`c477fe2`]({C}/c477fe2), ponowne sprawdzenie **dotkniętego zakresu** (audyt grepem, bez
+  powtarzania testów kodu, którego zmiana nie ruszała), wątek zamknięty mutacją
+  `resolveReviewThread`, nowy SHA podany w komentarzu, **bez** proszenia o drugą rundę →
+  merge za zgodą Kamila.
+  Po drodze obieg wyłapał też swoje własne błędy i je naprawił: PR #4 wymagał rebase'u przy
+  prawdziwym `CONFLICTING` i pokazał, że `--force-with-lease` działa; PR #2 i #4 pokazały,
+  że PR z samych plików `.md` **nie dostaje runu** `build`, co jest brakiem sprawdzenia,
+  nie zaliczeniem.
   Przy okazji zamknęła się pierwsza połowa warunku z F5: ścieżka `pull_request` w `ci.yml`
   odpaliła się i jest zielona. Druga połowa — że PR z zepsutym importem dostaje czerwony
   status — nadal nieprzetestowana.
@@ -136,6 +152,27 @@ To się nie skaluje i cicho starzeje.
   (U9 w `docs/DATA.md`). Wybrane źródło: Yahoo timeseries, **koszt 0 zł**, EODHD odrzucone.
   Po imporcie: 189 → **243 wiersze**, 218 z bilansem, 212 z przepływami, wszystkie 24 spółki,
   najnowszy okres `2026-07-31` zamiast `2026-03-31`. Przy okazji U10: Pepco raportuje w EUR.
+
+- [ ] **D9 — waluta nie dochodzi do ekranu, Pepco pokazane jako PLN** (~40 min) — ryzyko: **wysokie** (waluty)
+  Wyszło 2026-10-23 przy sprawdzaniu P0 — **nie jest skutkiem żadnej z dzisiejszych zmian**,
+  siedziało tam wcześniej. D8 ustaliło U10 („Pepco raportuje w EUR"), baza to wie
+  (`currency = 'EUR'` na 7 wierszach Pepco), ale na ekran ta informacja nie dochodzi:
+  - `src/components/FinancialTable.jsx:55` wypisuje nagłówek narożny jako **zaszyte**
+    `'mln PLN'` / `'M PLN'` i **w ogóle nie czyta** pola `currency`. Dotyczy **obu** poziomów
+    danych, więc tabela Pepco opisuje kwoty w euro jako „mln PLN".
+  - `scripts/export-financials.mjs:42` buduje `meta = { date, period }` i **gubi
+    `row.currency`**, więc opublikowane pliki poziomu 2 nie mają tego pola wcale
+    (sprawdzone na produkcji: `.../financials/pepco/data.json` → `currency: None`).
+    Poziom 1 z Yahoo walutę oddaje, poziom 2 nie — czyli zjazd na plik statyczny po cichu
+    kasuje informację o walucie.
+  To wzorzec **P1** z `AGENTS.md` („poprawność liczb": waluta musi być właściwa; nic nie może
+  twierdzić nieprawdy), dlatego zadanie jest w Bramce 1, nie na liście „Później".
+  *Gotowe, gdy:* tabela sprawozdań Pepco pokazuje `mln EUR`, a spółek raportujących w złotych
+  `mln PLN`, nagłówek bierze walutę z danych, eksport zapisuje `currency` w każdym wierszu
+  pliku, i żaden wskaźnik nie dzieli liczby w EUR przez liczbę w PLN.
+  *Niesprawdzone:* czy któryś wskaźnik już dziś miesza EUR z kapitalizacją w złotych —
+  `src/data/ratioCalculator.js` używa słowa `currency` tylko jako nazwy formatu, więc osłony
+  walutowej tam nie widziałem, ale pełnej ścieżki liczb nie przeszedłem.
 ---
 
 ## Bramka P — prywatność i bezpieczeństwo
@@ -154,19 +191,33 @@ z rozmiaru zmiany: **wysokie** dostaje jedną rundę `@codex review` przed merge
 **zwykłe** wymaga osobnej sesji Claude, **niskie** kończy się moim własnym review wpisanym
 w opis PR-a.
 
-- [ ] **P0 — wybudzić bazę i zablokować usypianie** (~20 min) — ryzyko: **wysokie** (sekrety)
+- [x] **P0 — wybudzić bazę i zablokować usypianie** (~20 min) — ryzyko: **wysokie** (sekrety)
+  · [`90ffed0`](https://github.com/Kuchaar/stockview/commit/90ffed0) (keepalive)
+  · [`877e46b`](https://github.com/Kuchaar/stockview/commit/877e46b) (eksport)
+  · [`388f32f`](https://github.com/Kuchaar/stockview/commit/388f32f) (commit bota z danymi)
   *Gotowe, gdy:* projekt Supabase ma status aktywny, logowanie na stockview.org działa, codzienny
   `keepalive.yml` robi prawdziwe zapytania `select` (także w weekendy), sekrety `SUPABASE_URL`
   i `SUPABASE_ANON_KEY` są w Actions, a ręcznie odpalony `update-financials.yml` odświeża
-  `public/data/financials/` (bilans i przepływy, nowa data).
-  **Zmiana warunku 2026-10-23 (decyzja Kamila):** pierwotnie wymagał **trzech** sekretów.
-  Po P13 import nie chodzi już na GitHubie, więc `SUPABASE_SERVICE_ROLE_KEY` nie jest
-  w Actions do niczego potrzebny — żywy tylko lokalnie, w `.env.local`.
-  **Stan na 2026-10-23:** baza aktywna ✓, logowanie na stockview.org działa ✓, oba potrzebne
-  sekrety w Actions ✓, codzienny `keepalive.yml` na `main` i sprawdzony ręcznym przebiegiem ✓
-  (PR #3, `90ffed0`; [run 39983171367](https://github.com/Kuchaar/stockview/actions/runs/39983171367)
-  — trzy `select` po HTTP 200, bez klucza w logu). Brakuje **jednej rzeczy**: ręczny przebieg
-  `update-financials.yml` nie odświeżył `public/data/financials/` — blokuje go **P13**.
+  `public/data/financials/` — pliki mają bilans i przepływy, a `lastUpdated` pokazuje datę
+  ostatniego zapisu w bazie.
+  **Dwie zmiany warunku, obie 2026-10-23.** (1) *decyzja Kamila:* pierwotnie wymagał **trzech**
+  sekretów; po P13 import nie chodzi na GitHubie, więc `SUPABASE_SERVICE_ROLE_KEY` nie jest
+  w Actions do niczego potrzebny — żywy tylko lokalnie, w `.env.local`. (2) *poprawka błędnego
+  założenia:* warunek mówił „**nowa data**", zakładając, że eksport stempluje pliki datą
+  przebiegu. Nie stempluje i nie powinien: `lastUpdated` to **najnowszy `updated_at` z bazy**
+  (`scripts/export-financials.mjs:56`), czyli data, kiedy zmieniły się **liczby**, a nie kiedy
+  przeszedł bot. Wszystkie 243 wiersze mają `updated_at` z 2026-09-20, więc `2026-09-20`
+  w plikach jest prawdą, a nie zastojem. Data ruszy się dopiero po pierwszym lokalnym imporcie
+  (raporty za III kwartał, początek grudnia). Przeciwny wzorzec siedzi w `scripts/fetch-stooq.mjs`,
+  który wpisuje dzisiejszą datę przy każdym przebiegu — i dlatego weekendowy cron produkowałby
+  tam commity-śmieci.
+  **Jak sprawdzone (2026-10-23):** baza aktywna ✓; logowanie na stockview.org działa ✓
+  (potwierdził Kamil); `gh secret list` → dokładnie dwa sekrety ✓; `keepalive.yml` zielony,
+  [run 39983171367](https://github.com/Kuchaar/stockview/actions/runs/39983171367) — trzy `select` po HTTP 200, bez klucza w logu ✓;
+  `update-financials.yml` zielony, [run 40001596221](https://github.com/Kuchaar/stockview/actions/runs/40001596221) — „Oba sekrety na miejscu",
+  243 wiersze, 24 pliki, commit bota `388f32f` (+6845/−373) ✓; na produkcji
+  `https://stockview.org/data/financials/pkobp/data.json` oddaje bilans 4R/5K i przepływy 4R/5K,
+  sprawdzone też dla `cdprojekt`, `pepco` i `zabka` ✓.
 
 - [ ] **P1 — własny SMTP** (~40 min) — ryzyko: **wysokie** (logowanie, sekrety)
   *Gotowe, gdy:* obcy adres e-mail dostaje link potwierdzający z adresu w stockview.org, a SPF, DKIM i DMARC przechodzą.
@@ -223,7 +274,8 @@ w opis PR-a.
   a w repo są włączone skanowanie sekretów i Dependabot.
   Ustawień kont nie ruszam bez uzgodnienia — mogę najwyżej sprawdzić, co widać z `gh`, i zgłosić braki.
 
-- [ ] **P12 — `update-financials.yml` przerywa się przy brakującym sekrecie** (~20 min) — ryzyko: **wysokie** (sekrety)
+- [x] **P12 — `update-financials.yml` przerywa się przy brakującym sekrecie** (~20 min) — ryzyko: **wysokie** (sekrety)
+  · [`c477fe2`](https://github.com/Kuchaar/stockview/commit/c477fe2) · PR #5
   Przed tą zmianą oba realne kroki były bramkowane `if: env.SUPABASE_* != ''`, a przy braku sekretu
   wykonywał się krok „Skip…" i cały przebieg kończył się na zielono. Tak przeszły cztery przebiegi
   „success" od 2026-09-26: po 16–24 s, bez jednej zmiany w plikach. To wzorzec P1 z `AGENTS.md` —
@@ -233,8 +285,14 @@ w opis PR-a.
   w logu nazwę brakującego sekretu, kroków „Skip…" nie ma w pliku, a przebieg z sekretami eksportuje.
   **Warunek poprawiony 2026-10-23** po uwadze P2 z recenzji PR #5 na `3532415`: mówił o **trzech**
   sekretach oraz o imporcie, czyli wymagał cofnięcia tego, co P13 właśnie usuwa.
+  **Jak sprawdzone:** krok `Check secrets` przepuszczony przez `bash -e` w trzech stanach —
+  oba sekrety `exit 0`, brak jednego `exit 1` z jego nazwą, brak obu `exit 1` z dwiema nazwami;
+  w pliku nie ma ani jednego kroku z `if:` (`yaml.safe_load` → `kroki z if: []`), a jedyne
+  trafienie na „Skip" to komentarz tłumaczący, co usunięto; przebieg z sekretami zielony
+  i eksportuje — [run 40001596221](https://github.com/Kuchaar/stockview/actions/runs/40001596221), „Oba sekrety na miejscu", 24 pliki zapisane.
 
-- [ ] **P13 — import z Yahoo nie przechodzi z runnera GitHuba** (~40 min) — ryzyko: **wysokie** (źródło danych)
+- [x] **P13 — import z Yahoo nie przechodzi z runnera GitHuba** (~40 min) — ryzyko: **wysokie** (źródło danych)
+  · [`c477fe2`](https://github.com/Kuchaar/stockview/commit/c477fe2) · PR #5
   Ręczny przebieg na `main` z 2026-10-23
   ([run 39981690212](https://github.com/Kuchaar/stockview/actions/runs/39981690212)):
   `import-financials.mjs` dostał HTTP 403 na 23 spółkach i „fetch failed" na PZU, zapisał 0 wierszy
@@ -257,7 +315,12 @@ w opis PR-a.
   *Gotowe, gdy:* cotygodniowy eksport jest zielony i odświeża `public/data/financials/`;
   ręczny import lokalny jest opisany w [`docs/SETUP.md`](SETUP.md) i kończy się błędem,
   gdy nic nie zapisze.
-  **Blokuje P0** — bez tego warunku „gotowe, gdy" przy P0 nie da się spełnić.
+  **Jak sprawdzone:** [run 40001596221](https://github.com/Kuchaar/stockview/actions/runs/40001596221) zielony, commit bota
+  [`388f32f`](https://github.com/Kuchaar/stockview/commit/388f32f) z 24 odświeżonymi plikami (+6845/−373), a na produkcji bilans
+  i przepływy widać w `https://stockview.org/data/financials/pkobp/data.json`; procedura
+  importu jest w `docs/SETUP.md` sekcja D; importer z nieosiągalnym źródłem kończy
+  `exit 1` i komunikatem „import nic nie wniósł do bazy", a na normalnej ścieżce `exit 0`
+  i 231 wierszy. **Odblokowało P0.**
 
 ### Poza kodem — zadania Kamila
 
