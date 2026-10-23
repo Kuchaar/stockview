@@ -36,3 +36,37 @@ jobs:
             git pull --rebase origin main
             git push
           fi
+
+      # Keepalive Supabase (P0). Projekt na darmowym planie jest usypiany po tygodniu bez
+      # zapytan, a uspiona baza to martwe logowanie, watchlista i dywidendy. Jedno lekkie
+      # `select` raz na dzien roboczy wystarcza, zeby licznik aktywnosci sie nie wyzerowal.
+      #
+      # Klucz `anon`, nie `service_role`: tabela `financials` ma polityke publicznego
+      # odczytu, wiec wyzszych uprawnien ten krok nie potrzebuje. Klucz idzie wylacznie
+      # w naglowkach, nigdy w URL-u, zeby nie wyciekl do logu przez komunikat bledu.
+      #
+      # Krok jest **ostatni** celowo: gdy Supabase nie odpowiada, ceny sa juz
+      # zacommitowane i opublikowane, a przebieg i tak robi sie czerwony.
+      # Brakujacy sekret **przerywa krok bledem**, a nie cichym pominieciem — tak jak
+      # w `update-financials.yml`, gdzie ciche pomijanie dalo miesiac zielonych
+      # przebiegow przy nieodswiezanych danych.
+      - name: Keepalive Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Brak sekretu SUPABASE_URL lub SUPABASE_ANON_KEY - keepalive NIE zostal wykonany, baza nadal usypia."
+            echo "Dodaj oba w Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/financials?select=company_id&limit=1")
+          echo "Supabase REST -> HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::Keepalive nieudany (HTTP $code) - baza moze byc uspiona albo klucz niewazny."
+            exit 1
+          fi
+          echo "Keepalive OK - baza odpowiada."

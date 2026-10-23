@@ -2,6 +2,72 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — Keepalive Supabase (P0) i odkrycie: w repo nie ma ani jednego sekretu
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Zrobione.**
+
+- **Krok `Keepalive Supabase` w `.github/workflows/update-prices.yml`** — jedno lekkie
+  `select` (`/rest/v1/financials?select=company_id&limit=1`) przez `curl`, raz na każdy
+  dzień roboczy. **Bez nowych zależności**: ten workflow celowo nie robi `npm ci`, więc
+  `@supabase/supabase-js` nie wchodzi w grę; `curl` jest na `ubuntu-latest` z pudełka.
+  **Klucz `anon`, nie `service_role`** — tabela `financials` ma politykę publicznego
+  odczytu, wyższych uprawnień ten krok nie potrzebuje. Klucz idzie **wyłącznie
+  w nagłówkach**, nigdy w URL-u, żeby nie wyciekł do logu przez komunikat błędu.
+- **Krok jest ostatni i celowo głośny.** Ostatni, bo gdy Supabase nie odpowiada, ceny są
+  już zacommitowane i opublikowane. Głośny, bo **brakujący sekret przerywa krok błędem,
+  a nie cichym pominięciem** — dokładnie odwrotnie niż w `update-financials.yml`, i poniżej
+  jest widać dlaczego.
+
+**Odkrycia — ważniejsze niż samo zadanie.**
+
+- **Baza żyje.** HTTP 200 w 840 ms. W tabeli `financials` jest **243 wiersze: 218
+  z bilansem, 212 z przepływami**, 24 spółki, najnowszy okres `2026-07-31`, 7 wierszy
+  w EUR (U10, Pepco). Dane z D8 są na miejscu.
+- **`public/data/financials/` ma 93 wiersze roczne przychodów i ZERO bilansu oraz ZERO
+  przepływów.** Wszystkie 24 pliki noszą `lastUpdated: 2026-09-20`. Czyli strona od
+  miesiąca pokazuje chude dane, choć baza ma komplet.
+- **Przyczyna: `gh secret list` zwraca pustą listę — w repo nie ma ani jednego sekretu.**
+  Oba realne kroki w `update-financials.yml` są bramkowane na `if: env.SUPABASE_* != ''`,
+  więc po cichu się pomijają. Workflow odpalił się **cztery razy od 2026-09-26, każdy raz
+  „success" w 16–24 s**, i ani razu nic nie zmienił. Zielony znaczek przy niezrobionej
+  pracy — wzorzec, który nasze własne „Code review rules" nazywają P1 („operacja zakończona
+  błędem nie może zgłaszać sukcesu").
+- **Wniosek praktyczny:** keepalive nie zadziała, dopóki Kamil nie doda `SUPABASE_URL`
+  i `SUPABASE_ANON_KEY` do sekretów repo. Dane z bilansem wrócą na stronę po dodaniu
+  sekretów i jednym przebiegu `update-financials.yml` — nie wymaga to żadnej zmiany w kodzie.
+
+**Decyzje.**
+
+- **Ryzyko tej zmiany: wysokie.** Według `AGENTS.md` → „Review by risk" wysokie ryzyko
+  obejmuje **sekrety**, a ten krok wprowadza odwołania do sekretów w workflow, który pisze
+  na `main`. Sam klucz `anon` jest publiczny z natury (jedzie w bundlu klienta jako
+  `VITE_*`), ale decyduje mechanizm, nie wrażliwość tego konkretnego klucza. Ścieżka
+  recenzji: **jedna runda `@codex review` przed merge** — pierwsze prawdziwe użycie tej
+  ścieżki.
+- **Brakujący sekret ma wywalać przebieg, nie pomijać kroku.** Cena: dopóki sekretów nie
+  ma, codzienny przebieg cen będzie czerwony (ceny i tak się zapiszą, bo krok jest
+  ostatni). Korzyść: nie powtarzamy miesiąca zielonych przebiegów przy martwej robocie.
+  Dlatego **sekrety warto dodać przed merge**, nie po.
+
+**Do sprawdzenia.** Krok jest wykonywalny, więc go wykonałem, a nie tylko napisałem:
+**wszystkie trzy gałęzie przeszły lokalnie** — sukces (`HTTP 200`), brak sekretu
+(`::error::` i `exit 1`), zły klucz (`HTTP 401`, `exit 1`, bez klucza w logu). YAML parsuje
+się (`yaml.safe_load`, 5 kroków, keepalive ostatni), skrypt kroku przechodzi `bash -n`,
+w pliku nie ma słowa `SERVICE_ROLE`. **Niesprawdzone:** przebieg na runnerze GitHuba —
+bez sekretów wyjdzie czerwony i to jest zachowanie oczekiwane, nie błąd. Nie odpalałem
+`update-prices.yml` ani `update-financials.yml` (punkt 3 zadania czeka na merge).
+Logowania na `stockview.org` nie da się sprawdzić z terminala — patrz „Następne:".
+
+**Następne:** **Kamil: dodaj dwa sekrety** (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) w
+Settings → Secrets and variables → Actions, i **zweryfikuj logowanie** na
+https://stockview.org — klik w „Zaloguj", mail z linkiem, powrót na stronę jako zalogowany.
+Potem merge PR-a po rundzie `@codex review`, ręczne odpalenie obu workflow i sprawdzenie,
+że `public/data/financials/` ma wreszcie bilans i przepływy. **P0 nie da się odhaczyć** —
+Bramki P nie ma jeszcze w `docs/ROADMAP.md`, bo czeka na `bramka-p.md`.
+
+
 ## 2026-10-23 — docs/VISION.md jako filtr zadań + rozbieżności z roadmapą
 
 Komputer: `MacBook-Pro-Kamil.local`
