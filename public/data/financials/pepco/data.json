@@ -10,6 +10,7 @@
       {
         "date": "2025-09-30",
         "period": "FY2025",
+        "currency": "EUR",
         "eps": -0.306,
         "ebitda": 808290000,
         "revenue": 4523463000,
@@ -21,6 +22,7 @@
       {
         "date": "2024-09-30",
         "period": "FY2024",
+        "currency": "EUR",
         "eps": -1.275,
         "ebitda": 810687000,
         "revenue": 4160416000,
@@ -32,6 +34,7 @@
       {
         "date": "2023-09-30",
         "period": "FY2023",
+        "currency": "EUR",
         "eps": 0.167,
         "ebitda": 717749000,
         "revenue": 5595664000,
@@ -43,6 +46,7 @@
       {
         "date": "2022-09-30",
         "period": "FY2022",
+        "currency": "EUR",
         "eps": 0.3,
         "ebitda": 669901000,
         "revenue": 4822819000,
@@ -56,11 +60,13 @@
       {
         "date": "2025-06-30",
         "period": "Q2 2025",
+        "currency": "PLN",
         "revenue": 1424000000
       },
       {
         "date": "2024-09-30",
         "period": "Q3 2024",
+        "currency": "PLN",
         "revenue": 1486000000
       }
     ]
@@ -70,6 +76,7 @@
       {
         "date": "2025-09-30",
         "period": "FY2025",
+        "currency": "EUR",
         "cash": 464357000,
         "netPPE": 1466135000,
         "inventory": 892487000,
@@ -87,6 +94,7 @@
       {
         "date": "2024-09-30",
         "period": "FY2024",
+        "currency": "EUR",
         "cash": 362881000,
         "netPPE": 1962628000,
         "inventory": 1174676000,
@@ -104,6 +112,7 @@
       {
         "date": "2023-09-30",
         "period": "FY2023",
+        "currency": "EUR",
         "cash": 330417000,
         "netPPE": 1993274000,
         "inventory": 1119547000,
@@ -121,6 +130,7 @@
       {
         "date": "2022-09-30",
         "period": "FY2022",
+        "currency": "EUR",
         "cash": 343933000,
         "netPPE": 1542791000,
         "inventory": 942894000,
@@ -140,6 +150,7 @@
       {
         "date": "2026-03-31",
         "period": "Q1 2026",
+        "currency": "EUR",
         "cash": 463621000,
         "netPPE": 2044611000,
         "inventory": 759824000,
@@ -157,6 +168,7 @@
       {
         "date": "2025-09-30",
         "period": "Q3 2025",
+        "currency": "EUR",
         "cash": 464357000,
         "netPPE": 1466135000,
         "inventory": 892487000,
@@ -174,6 +186,7 @@
       {
         "date": "2025-03-31",
         "period": "Q1 2025",
+        "currency": "EUR",
         "cash": 341122000,
         "netPPE": 1796720000,
         "inventory": 1127996000,
@@ -195,6 +208,7 @@
       {
         "date": "2025-09-30",
         "period": "FY2025",
+        "currency": "EUR",
         "freeCashFlow": 694302000,
         "financingCashFlow": -563971000,
         "investingCashFlow": -128319000,
@@ -204,6 +218,7 @@
       {
         "date": "2024-09-30",
         "period": "FY2024",
+        "currency": "EUR",
         "freeCashFlow": 673400000,
         "financingCashFlow": -620739000,
         "investingCashFlow": -195041000,
@@ -213,6 +228,7 @@
       {
         "date": "2023-09-30",
         "period": "FY2023",
+        "currency": "EUR",
         "freeCashFlow": 270236000,
         "financingCashFlow": -289545000,
         "investingCashFlow": -385296000,
@@ -222,6 +238,7 @@
       {
         "date": "2022-09-30",
         "period": "FY2022",
+        "currency": "EUR",
         "freeCashFlow": 138326000,
         "financingCashFlow": -299485000,
         "investingCashFlow": -224355000,

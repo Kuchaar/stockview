@@ -10,6 +10,7 @@
       {
         "date": "2025-12-31",
         "period": "FY2025",
+        "currency": "PLN",
         "eps": 18.44,
         "ebitda": 7973000000,
         "revenue": 36366000000,
@@ -21,6 +22,7 @@
       {
         "date": "2024-12-31",
         "period": "FY2024",
+        "currency": "PLN",
         "eps": 14.34,
         "ebitda": 6866000000,
         "revenue": 35320000000,
@@ -32,6 +34,7 @@
       {
         "date": "2023-12-31",
         "period": "FY2023",
+        "currency": "PLN",
         "eps": -18.49,
         "ebitda": -1141000000,
         "revenue": 33467000000,
@@ -43,6 +46,7 @@
       {
         "date": "2022-12-31",
         "period": "FY2022",
+        "currency": "PLN",
         "eps": 23.86,
         "ebitda": 8767000000,
         "revenue": 33847000000,
@@ -56,6 +60,7 @@
       {
         "date": "2026-06-30",
         "period": "Q2 2026",
+        "currency": "PLN",
         "eps": 10.25,
         "ebitda": 3720000000,
         "revenue": 12839000000,
@@ -67,6 +72,7 @@
       {
         "date": "2026-03-31",
         "period": "Q1 2026",
+        "currency": "PLN",
         "eps": 17.65,
         "ebitda": 5288000000,
         "revenue": 11872000000,
@@ -78,6 +84,7 @@
       {
         "date": "2025-12-31",
         "period": "Q4 2025",
+        "currency": "PLN",
         "ebitda": 3879000000,
         "revenue": 10495000000,
         "netIncome": 2675000000,
@@ -88,6 +95,7 @@
       {
         "date": "2025-09-30",
         "period": "Q3 2025",
+        "currency": "PLN",
         "eps": 2.17,
         "ebitda": 1656000000,
         "revenue": 8315000000,
@@ -99,6 +107,7 @@
       {
         "date": "2025-06-30",
         "period": "Q2 2025",
+        "currency": "PLN",
         "eps": 1.25,
         "ebitda": 1196000000,
         "revenue": 8614000000,
@@ -110,6 +119,7 @@
       {
         "date": "2025-03-31",
         "period": "Q1 2025",
+        "currency": "PLN",
         "eps": 1.65
       }
     ]
@@ -119,6 +129,7 @@
       {
         "date": "2025-12-31",
         "period": "FY2025",
+        "currency": "PLN",
         "cash": 425000000,
         "netPPE": 31599000000,
         "inventory": 9608000000,
@@ -136,6 +147,7 @@
       {
         "date": "2024-12-31",
         "period": "FY2024",
+        "currency": "PLN",
         "cash": 691000000,
         "netPPE": 29967000000,
         "inventory": 8063000000,
@@ -153,6 +165,7 @@
       {
         "date": "2023-12-31",
         "period": "FY2023",
+        "currency": "PLN",
         "cash": 1656000000,
         "netPPE": 26436000000,
         "inventory": 8425000000,
@@ -170,6 +183,7 @@
       {
         "date": "2022-12-31",
         "period": "FY2022",
+        "currency": "PLN",
         "cash": 1134000000,
         "netPPE": 28412000000,
         "inventory": 8902000000,
@@ -189,6 +203,7 @@
       {
         "date": "2026-06-30",
         "period": "Q2 2026",
+        "currency": "PLN",
         "cash": 1217000000,
         "netPPE": 32706000000,
         "inventory": 12214000000,
@@ -206,6 +221,7 @@
       {
         "date": "2026-03-31",
         "period": "Q1 2026",
+        "currency": "PLN",
         "cash": 522000000,
         "netPPE": 31991000000,
         "inventory": 12489000000,
@@ -223,6 +239,7 @@
       {
         "date": "2025-12-31",
         "period": "Q4 2025",
+        "currency": "PLN",
         "cash": 425000000,
         "netPPE": 31599000000,
         "inventory": 9608000000,
@@ -240,6 +257,7 @@
       {
         "date": "2025-09-30",
         "period": "Q3 2025",
+        "currency": "PLN",
         "cash": 411000000,
         "netPPE": 30720000000,
         "inventory": 9338000000,
@@ -257,6 +275,7 @@
       {
         "date": "2025-06-30",
         "period": "Q2 2025",
+        "currency": "PLN",
         "cash": 430000000,
         "netPPE": 30432000000,
         "inventory": 8765000000,
@@ -278,6 +297,7 @@
       {
         "date": "2025-12-31",
         "period": "FY2025",
+        "currency": "PLN",
         "freeCashFlow": -1538000000,
         "financingCashFlow": -111000000,
         "investingCashFlow": -4321000000,
@@ -287,6 +307,7 @@
       {
         "date": "2024-12-31",
         "period": "FY2024",
+        "currency": "PLN",
         "freeCashFlow": -1241000000,
         "financingCashFlow": -217000000,
         "investingCashFlow": -5506000000,
@@ -296,6 +317,7 @@
       {
         "date": "2023-12-31",
         "period": "FY2023",
+        "currency": "PLN",
         "freeCashFlow": 1079000000,
         "financingCashFlow": -747000000,
         "investingCashFlow": -4798000000,
@@ -305,6 +327,7 @@
       {
         "date": "2022-12-31",
         "period": "FY2022",
+        "currency": "PLN",
         "freeCashFlow": -1668000000,
         "financingCashFlow": -446000000,
         "investingCashFlow": -2695000000,
@@ -316,6 +339,7 @@
       {
         "date": "2026-06-30",
         "period": "Q2 2026",
+        "currency": "PLN",
         "freeCashFlow": 690000000,
         "financingCashFlow": -373000000,
         "investingCashFlow": -791000000,
@@ -325,6 +349,7 @@
       {
         "date": "2026-03-31",
         "period": "Q1 2026",
+        "currency": "PLN",
         "freeCashFlow": -777000000,
         "financingCashFlow": 221000000,
         "investingCashFlow": -827000000,
@@ -334,6 +359,7 @@
       {
         "date": "2025-12-31",
         "period": "Q4 2025",
+        "currency": "PLN",
         "freeCashFlow": -412000000,
         "financingCashFlow": -58000000,
         "investingCashFlow": -1290000000,
@@ -343,6 +369,7 @@
       {
         "date": "2025-09-30",
         "period": "Q3 2025",
+        "currency": "PLN",
         "freeCashFlow": -462000000,
         "financingCashFlow": 80000000,
         "investingCashFlow": -997000000,
@@ -352,6 +379,7 @@
       {
         "date": "2025-06-30",
         "period": "Q2 2025",
+        "currency": "PLN",
         "freeCashFlow": -552000000,
         "financingCashFlow": -168000000,
         "investingCashFlow": -715000000,
