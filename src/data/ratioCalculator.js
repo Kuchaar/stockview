@@ -127,11 +127,14 @@ function calcProfitability(inc, bs, bank) {
 }
 
 function calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap, currencyMismatch = false) {
-  // Każdy wskaźnik poniżej poza `forwardPe` łączy cenę albo kapitalizację (PLN) z liczbą
-  // ze sprawozdania. Przy innej walucie sprawozdania wszystkie idą na `null`.
-  // `forwardPe` zostaje: to gotowa liczba od Yahoo, my w niej nic nie mieszamy.
+  // Każdy wskaźnik poniżej łączy cenę albo kapitalizację (PLN) z liczbą ze sprawozdania,
+  // więc przy innej walucie sprawozdania wszystkie idą na `null` — `forwardPe` też.
+  // Tego ostatniego nie liczymy my, a Yahoo, i właśnie dlatego nie wiemy, czy dla spółki
+  // raportującej w EUR zestawia cenę w PLN z prognozą zysku w EUR. Jedna liczba stojąca
+  // między kreskami wyglądałaby na sprawdzoną, a sprawdzona nie jest (decyzja Kamila
+  // po recenzji PR #7).
   if (currencyMismatch) {
-    return { pe: null, forwardPe: ks.forwardPe ?? null, pb: null, ps: null, evEbitda: null, peg: null, fcfYield: null };
+    return { pe: null, forwardPe: null, pb: null, ps: null, evEbitda: null, peg: null, fcfYield: null };
   }
 
   const eps = inc?.eps ?? ks.eps ?? null;

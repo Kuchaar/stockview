@@ -19,8 +19,12 @@ const TAB_LABELS = {
   growth: { pl: 'Wzrost', en: 'Growth' },
 };
 
-function formatValue(value, format) {
+// `currency` dotyczy tylko formatu 'currency', czyli kwot (np. przepływ operacyjny).
+// `null` znaczy „nie wiem" i wtedy kwota idzie bez waluty — nigdy z domyślnym „PLN",
+// bo spółka może raportować w euro (D9).
+function formatValue(value, format, currency = null) {
   if (value == null) return '—';
+  const withCur = (text) => (currency ? `${text} ${currency}` : text);
   switch (format) {
     case 'percent':
       return `${value.toFixed(1)}%`;
@@ -29,9 +33,9 @@ function formatValue(value, format) {
     case 'ratio':
       return value.toFixed(2);
     case 'currency':
-      if (Math.abs(value) >= 1e9) return `${(value / 1e9).toFixed(1)} mld`;
-      if (Math.abs(value) >= 1e6) return `${(value / 1e6).toFixed(0)} mln`;
-      return value.toLocaleString('pl-PL');
+      if (Math.abs(value) >= 1e9) return withCur(`${(value / 1e9).toFixed(1)} mld`);
+      if (Math.abs(value) >= 1e6) return withCur(`${(value / 1e6).toFixed(0)} mln`);
+      return withCur(value.toLocaleString('pl-PL'));
     default:
       return String(value);
   }
@@ -50,7 +54,7 @@ function getValueColor(value, meta) {
   return '';
 }
 
-function MetricCard({ ratioKey, value, lang }) {
+function MetricCard({ ratioKey, value, lang, currency = null }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const meta = getRatioMeta(ratioKey);
   if (!meta) return null;
@@ -88,7 +92,7 @@ function MetricCard({ ratioKey, value, lang }) {
         </div>
       </div>
       <div className={`font-mono font-semibold text-lg ${colorClass}`}>
-        {formatValue(value, meta.format)}
+        {formatValue(value, meta.format, currency)}
       </div>
     </div>
   );
@@ -156,6 +160,7 @@ export default function MetricsPanel({ ratios, lang }) {
             ratioKey={field}
             value={activeRatios[field]}
             lang={lang}
+            currency={cur?.statement ?? null}
           />
         ))}
       </div>

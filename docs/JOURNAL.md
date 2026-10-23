@@ -82,9 +82,53 @@ kurs na koniec okresu i kurs średni okresu dają trzy różne C/Z, każdy obron
 źródło kursów i to, że wskaźnik historyczny wymagałby kursu historycznego — inaczej ruch
 na walucie udaje zmianę wyniku spółki.
 
+**Recenzja Codex na `cdd042a` — jedna uwaga, P1, trafna.** Moja nota obiecywała **kierunek
+i skalę** błędu: że wskaźniki byłyby „zawyżone o kurs walutowy". Dla `fcfYield` jest odwrotnie
+(FCF w EUR dzielone przez kapitalizację w PLN daje wynik **zaniżony**), a `evEbitda` zawiera
+dodawanie kapitalizacji do długu i odejmowanie gotówki, więc jego błędu żaden mnożnik kursowy
+nie opisuje. Czyli nota sama twierdziła nieprawdę — dokładnie to, czego zakazuje P1.
+Przepisana na neutralne „mieszanie dwóch walut zniekształca wynik", bez kierunku i bez skali,
+w `pl` i `en`.
+
+**Trzy decyzje Kamila do pytań z opisu PR-a.**
+
+- **`forwardPe` też na `null`** przy niezgodności walut i dopisane do listy w nocie. Powód
+  z podglądu: Pepco pokazywało „C/Z (forward) 63.9x" jako **jedyną liczbę między kreskami**,
+  a nie wiemy, jak Yahoo liczy ją dla spółki raportującej w EUR. Jedna liczba w takim
+  otoczeniu wygląda na sprawdzoną, a sprawdzona nie jest. Stopa dywidendy od Yahoo zostaje.
+- **Nota zostaje tylko na Wycenie i Dywidendzie**, ale kwoty w `MetricsPanel` dostają walutę
+  ze sprawozdania: `formatValue` z formatem `'currency'` (dziś jedyny taki wskaźnik to
+  przepływ operacyjny) drukuje teraz „790 mln EUR" dla Pepco i „11.9 mld PLN" dla PKO,
+  a przy nieznanej walucie — samą kwotę.
+- **`calculateHealthScoreV2` nietknięta**, dopisana do „Później — uwagi z recenzji" jako
+  martwy kod do usunięcia, z numerem PR-a, SHA i linią.
+
+**Nowe zadanie D10 — tylko zapisane, nic nie naprawiane** (polecenie Kamila). Wyszło z jego
+podglądu PR #7: na stronie Pepco nagłówek pokazuje „P/E: 23.4", Przegląd „C/Z 23,4"
+i „C/WK 2,16", a zakładka **tego samego ekranu** pokazuje „—", bo spółka ma stratę.
+Sprawdziłem skalę, o którą prosił, i jest większa niż samo Pepco: `useStockData` nakłada na
+`wig20Companies` **tylko ceny** (`useStockData.js:12-22`), więc `ratios` i `financials`
+zostają zaszyte u **wszystkich 24 spółek**, a czyta je pięć miejsc — plakietka w nagłówku,
+karty Przeglądu, **opis strony dla Google** (`StockPage.jsx:100`), Screener z Porównywarką
+oraz ocena kondycji. Porównanie zaszytego `price` z ceną z `latest-prices.json`: **mediana
+odchylenia 91%**, **14 spółek powyżej 50%**, maksimum **+186%** (Modivo). Dino wychodzi −91%
+(430 → 39,56), co wygląda na podział akcji, nie spadek — i tym bardziej pokazuje, że tych
+liczb nikt nie odświeżał. C/Z w nagłówku nie jest „trochę stare", jest policzone ceną z innej
+epoki.
+
+**Sprawdzone ponownie po poprawkach.** `forwardPe`: Pepco **null**, PKO 9,94 — czyli osłona
+nie wylała dziecka z kąpielą. Pozostałe sześć wskaźników nadal `null` dla Pepco i liczone dla
+PKO. Kwoty z walutą przetestowane tą samą logiką, jaką ma `formatValue`. W `translations.js`
+nie ma już ani słowa „zawyżon", ani „o kurs walutowy", ani żadnej liczby opisującej skalę.
+`npm run build` przechodzi.
+
+**Czego nadal nie sprawdziłem.** Strony w przeglądarce — ani noty, ani nagłówków w obu
+motywach. Kamil widział podgląd Cloudflare i to z niego wyszły obie uwagi, ale sam jej nie
+otwierałem.
+
 Następne: po merge'u ręczny przebieg eksportu (żeby produkcja dostała `currency`), sprawdzenie
-zakładki Wycena dla Pepco w przeglądarce w obu motywach, i odhaczenie D9 z SHA. Potem P1 —
-własny SMTP. Import sprawozdań za III kwartał: początek grudnia.
+zakładki Wycena dla Pepco w przeglądarce w obu motywach, i odhaczenie D9 z SHA. Potem D10 albo
+P1 — kolejność ustala Kamil. Import sprawozdań za III kwartał: początek grudnia.
 
 ## 2026-10-23 — P0, P12, P13 i F6 odhaczone; bilans i przepływy są na produkcji
 
