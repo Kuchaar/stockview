@@ -173,16 +173,21 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
   for work handed over mid-task.
 - A pull request gets a Cloudflare preview deployment. **A change that is visible on the
   site is not finished until it has been opened in that preview in a browser, in both
-  themes, with a screenshot of the changed view attached to the pull request.** A screenshot
-  of the home page does not count — it has to show the view that changed. Screenshots go in
-  the pull request, **never committed to the repo**. Use the Chrome automation that is
-  already available; adding a browser-test dependency is a separate task, not a shortcut
-  around this rule.
+  themes.** What goes in the pull request is **the preview link plus a description of what
+  is on the screen, with the values read off it** — not images: `gh` cannot upload an image
+  to a pull request, GitHub has no API for it. Screenshots stay on the machine that took
+  them and are **never committed to the repo**. Name the view that changed, not the home
+  page. Use the Chrome automation that is already available; adding a browser-test
+  dependency is a separate task, not a shortcut around this rule.
 
   This rule exists because it caught what nothing else did: on PR #7 the preview showed
   „C/Z (forward) 63.9x" standing as the only number among dashes, and the Pepco page showing
   „P/E: 23.4" in the header next to „—" in the valuation tab. Neither was visible in the
   data, in a test or in a green build — only on the screen.
+- **Never write `@codex` in a pull request description or comment except when actually
+  ordering a review.** Every mention wakes the bot and starts another round — PR #9 was
+  reviewed twice because the phrase sat in its description as prose. Write „the review bot"
+  when referring to it.
 - Small commits, conventional commits (`feat:` / `fix:` / `chore:` / `docs:`), description
   in Polish.
 - A bot commits `public/data/` to `main` every weekday, so **rebase on `origin/main` before
@@ -282,8 +287,9 @@ Kamil. No `@codex review` here either. A separate session gives fresh context, w
 something — but it is **not** an independent review by a different model, and it shares the
 same blind spots. Do not report it as one, and do not let a bot comment stand in for it: a
 Codex review on the head SHA does **not** satisfy the separate-session requirement.
-**If the change is visible on the site, screenshots from the preview in both themes are part
-of that verification, not an extra.** The same applies to a high-risk change below.
+**If the change is visible on the site, opening the preview in both themes — and writing down
+what is on the screen — is part of that verification, not an extra.** The same applies to
+a high-risk change below.
 
 **High risk** — RLS and permissions, login, secrets, data migrations, an import that
 overwrites existing data, financial formulas, currencies, periods, data sources.

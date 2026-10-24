@@ -54,6 +54,50 @@ EUR+EUR, brak waluty); `node --check` na obu zmienionych plikach `.js`; `npm run
 przechodzi. **Podgląd w przeglądarce w obu motywach — zgodnie z nową zasadą z `AGENTS.md`** —
 opisany w komentarzu do PR-a.
 
+**Recenzja: dwie rundy, dwie uwagi P1, obie trafne.** Druga runda wzięła się stąd, że bot
+reaguje na **każdą** wzmiankę o sobie, a ja zostawiłem ją w opisie PR-a jako zwykły tekst.
+Stąd nowa zasada w `AGENTS.md`.
+
+1. **Nota `currencyInconsistent` twierdziła nieprawdę.** Kończyła się zapewnieniem, że
+   wskaźniki w pozostałych zakładkach są poprawne, „bo dzielą walutę przez tę samą walutę".
+   Przy stanie `inconsistent` to fałsz: `calcProfitability` zestawia zysk z **rachunku
+   wyników** z kapitałem z **bilansu**, `calcDividend` dzieli dywidendy z **przepływów**
+   przez zysk, a `calcGrowth` porównuje **dwa różne okresy** — czyli dokładnie te wiersze,
+   które mogą mieć różne waluty. Zakończenie przepisane w `pl` i `en` na ostrzeżenie.
+   **W nocie `currencyMismatch` to zdanie zostaje**, bo tam jest prawdziwe: wszystkie wiersze
+   mają jedną walutę, więc ROE naprawdę dzieli EUR przez EUR.
+2. **Panel admina kazał wpisywać złotówki przy wybranym EUR.** Pod polami stało na sztywno
+   „Wartości w złotych, nie w milionach", więc administrator uzupełniający okres Pepco
+   zapisałby kwoty w PLN z etykietą EUR — a `verified: true` zablokowałoby importerowi
+   poprawkę. Instrukcja pokazuje teraz **wybraną walutę** (`valuesIn` z podstawieniem),
+   z zachowanym ostrzeżeniem o pełnych kwotach zamiast milionów.
+
+**Uwaga Kamila — domyślna waluta nowego wiersza.** Była zaszyta na `PLN` niezależnie od
+spółki, czyli podpowiadała złotówki także dla Pepco. Teraz bierze się z **istniejących
+wierszy tej spółki**, osobnym zapytaniem po obu typach okresu (kwartalny wiersz ma
+podpowiadać walutę także przy dodawaniu rocznego). Przy braku wierszy albo ich niezgodności
+**nie zgadujemy**: pole jest puste, instrukcja zmienia się w ostrzeżenie, a zapis jest
+zablokowany — i w `save()`, i na przycisku.
+
+| wiersze spółki | domyślna waluta |
+|---|---|
+| brak | **pusta — wybór wymagany, zapis zablokowany** |
+| `PLN` | `PLN` |
+| `EUR` | `EUR` |
+| `EUR` i `PLN` | **pusta — wybór wymagany, zapis zablokowany** |
+
+**Zasada o zrzutach przepisana** (decyzja Kamila), bo zderzyła się z rzeczywistością: `gh`
+nie potrafi załadować obrazka do PR-a, GitHub nie ma do tego API. Do PR-a idzie teraz
+**link do podglądu plus opis tego, co widać, z odczytanymi wartościami**; zrzuty zostają
+lokalnie. Dopisana też zasada, żeby **nie pisać `@codex` inaczej niż przy zamawianiu
+recenzji** — każda wzmianka budzi bota, i to właśnie zrobiło drugą rundę na tym PR-ze.
+
+**Sprawdzone.** Cztery przypadki domyślnej waluty (tabela wyżej); zakończenia obu not w obu
+językach wypisane z prawdziwego `currencyGuard` dla Pepco zgodnego i Pepco z jednym wierszem
+przerobionym na `PLN`; `grep` potwierdza, że zapewnienie „waluta się skraca" zostało **tylko**
+w nocie, w której jest prawdziwe; `npm run build` przechodzi. **Nie sprawdzone:** panelu
+admina na żywo — wymaga konta administratora; Kamil obejrzy go po merge'u, bez zapisu.
+
 Następne: D10d (plaster: nagłówek, Przegląd, `pageDesc`), potem D10a, D10b, D10c, P8+D10e,
 dalej P1. Import sprawozdań za III kwartał: początek grudnia.
 
