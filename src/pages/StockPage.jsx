@@ -19,7 +19,6 @@ import DataFreshness from '../components/DataFreshness';
 import BalanceSheet from '../components/BalanceSheet';
 import IncomeStatement from '../components/IncomeStatement';
 import CashFlowStatement from '../components/CashFlowStatement';
-import ValuationMetrics from '../components/ValuationMetrics';
 import MetricsPanel from '../components/MetricsPanel';
 import HealthScore from '../components/HealthScore';
 import StockChart from '../components/StockChart';
@@ -62,9 +61,12 @@ export default function StockPage() {
   const { companies, lastUpdated } = useStockData();
   const stock = companies.find(s => s.id === id);
 
-  // Live financials — only fetch when on financials, overview, or valuation tab
-  const financialsSymbol = (tab === 'financials' || tab === 'overview' || tab === 'valuation') ? stock?.yahooSymbol : null;
-  const { data: liveFinancials, loading: financialsLoading } = useFinancials(financialsSymbol, stock?.id);
+  // Sprawozdania ściągamy na każdej zakładce, nie tylko na trzech, które pokazują same
+  // liczby ze sprawozdań: plakietka C/Z w nagłówku jest widoczna zawsze, a liczba, która
+  // znika po przejściu na „Wykres”, byłaby gorsza niż jej brak. Koszt jest jednorazowy —
+  // `useFinancials` trzyma wynik w `sessionStorage` na godzinę, a `/api/financials` ma
+  // własny cache na brzegu.
+  const { data: liveFinancials, loading: financialsLoading } = useFinancials(stock?.yahooSymbol, stock?.id);
 
   // Zakładka „Przegląd” pokazuje dane z bazy/API, a zaszyte w kodzie dopiero, gdy tamtych brak.
   const overviewFinancials = useMemo(
@@ -72,11 +74,27 @@ export default function StockPage() {
     [liveFinancials, stock],
   );
 
-  // Comprehensive ratios from live financial data
-  const allRatios = useMemo(() => {
-    if (!liveFinancials || !stock) return null;
-    return calculateAllRatios(liveFinancials, stock.price, stock.sharesOutstanding);
-  }, [liveFinancials, stock]);
+  // Sprawozdania **bieżące**: poziom 1 (Yahoo) albo 2 (baza StockView). Poziom 3 —
+  // zaszyte `financials` w `wig20.js` — jest tu wyłączony celowo i to jedno miejsce
+  // decyduje o tym dla całej strony: tamte liczby pochodzą z nieznanego okresu, nie znają
+  // swojej waluty i mają kolumnę prognozy („2024E"), a `normalizeFinancials` gubi przy
+  // okazji samą literę „E" (`financialSchema.js:272`), więc prognoza przestaje być
+  // rozpoznawalna. Lepiej pokazać brak niż liczbę, która wygląda na sprawdzoną.
+  const currentFinancials = liveFinancials?.source === 'hardcoded' ? null : liveFinancials;
+
+  // Bieżące wskaźniki — **jedno** źródło dla nagłówka, Przeglądu i zakładki Wskaźniki,
+  // żeby jedna strona nie podawała dwóch różnych C/Z (D10d). Liczy je `calculateAllRatios`
+  // z osłoną walutową, z bieżącej ceny i sprawozdań `currentFinancials`.
+  const currentRatios = useMemo(() => {
+    if (!currentFinancials || !stock) return null;
+    return calculateAllRatios(currentFinancials, stock.price, stock.sharesOutstanding);
+  }, [currentFinancials, stock]);
+
+  // Tabela „Rachunek zysków i strat" na Przeglądzie czyta te same sprawozdania co zakładka
+  // „Sprawozdania", a nie zaszyte `stock.financials`: tamte pokazywały dla Pepco 350 mln
+  // w kolumnie „2024E" pod podpisem „w milionach PLN", przy rzeczywistym FY2024
+  // **−734 mln EUR** (uwaga Kamila z podglądu PR #10).
+  const overviewTable = useMemo(() => toLegacyTable(currentFinancials), [currentFinancials]);
 
   if (!stock) {
     return (
@@ -97,7 +115,10 @@ export default function StockPage() {
   const health = calculateHealthScore(stock.ratios);
 
   const pageTitle = `${stock.name} (${stock.ticker}) — analiza, wykres, wskaźniki | StockView`;
-  const pageDesc = `${stock.name} — analiza fundamentalna, wykres TradingView, P/E ${stock.ratios.pe ?? '–'}, ROE ${stock.ratios.roe ?? '–'}%, dywidenda ${stock.ratios.dividendYield ?? '–'}%. Sprawdź ocenę kondycji finansowej i wycenę na StockView.`;
+  // Bez ani jednej liczby wskaźnikowej: opis trafia do snippetu w wyszukiwarce, czyli do
+  // kogoś, kto nawet nie wszedł na stronę, a sam snippet bywa starszy od danych. Liczba
+  // w opisie nie ma gdzie dostać ani daty, ani waluty, ani zastrzeżenia (D10d).
+  const pageDesc = `${stock.name} (${stock.ticker}) — analiza fundamentalna spółki z WIG20: sprawozdania, wskaźniki, wykres kursu i ocena kondycji finansowej na StockView.`;
   const pageUrl = `${SITE_URL}/stock/${stock.id}`;
 
   return (
@@ -171,11 +192,15 @@ export default function StockPage() {
                 {formatNumber(stock.marketCap, lang)}
               </strong>
             </span>
-            {stock.ratios.pe !== null && (
+            {/* Plakietka znika, gdy nie ma bieżącego C/Z — „C/Z: —” to szum, nie informacja.
+                Znika też przy C/Z **nie większym od zera**: cena podzielona przez stratę
+                daje liczbę ujemną, która nie jest „tanią" wyceną, tylko znakiem straty
+                (dziś JSW, PGE i Cyfrowy Polsat). Objaśnienie stoi na karcie Przeglądu. */}
+            {currentRatios?.valuation?.pe > 0 && (
               <span className="text-sm text-surface-500 dark:text-surface-400">
-                P/E:{' '}
+                {t('stock.peLabel')}:{' '}
                 <strong className="text-surface-600 dark:text-surface-300 font-medium">
-                  {stock.ratios.pe.toFixed(1)}
+                  {currentRatios.valuation.pe.toFixed(1)}
                 </strong>
               </span>
             )}
@@ -242,7 +267,16 @@ export default function StockPage() {
         transition={{ duration: 0.25 }}
       >
         {tab === 'overview' && (
-          <OverviewTab stock={stock} lang={lang} dark={dark} health={health} t={t} />
+          <OverviewTab
+            stock={stock}
+            currentRatios={currentRatios}
+            overviewTable={overviewTable}
+            financialsLoading={financialsLoading}
+            lang={lang}
+            dark={dark}
+            health={health}
+            t={t}
+          />
         )}
 
         {tab === 'about' && (
@@ -322,7 +356,7 @@ export default function StockPage() {
             )}
             {financialSubTab === 'overview' && !overviewFinancials?.annual?.years?.length && (
               <div className="text-sm text-surface-400 text-center py-8">
-                {lang === 'pl' ? 'Brak danych finansowych.' : 'No financial data available.'}
+                {financialsLoading ? t('stock.financialsLoading') : t('stock.noFinancialData')}
               </div>
             )}
             {financialSubTab === 'income' && (
@@ -355,9 +389,13 @@ export default function StockPage() {
         {tab === 'valuation' && (
           <div className="card">
             <h2 className="section-title mb-6">{t('stock.valuation')}</h2>
-            {allRatios
-              ? <MetricsPanel ratios={allRatios} lang={lang} />
-              : <ValuationMetrics ratios={stock.ratios} />
+            {currentRatios
+              ? <MetricsPanel ratios={currentRatios} lang={lang} />
+              : (
+                <p className="text-sm text-surface-500 dark:text-surface-400">
+                  {financialsLoading ? t('stock.ratiosLoading') : t('stock.ratiosUnavailable')}
+                </p>
+              )
             }
           </div>
         )}
@@ -379,14 +417,14 @@ export default function StockPage() {
 
 /* ─── Overview tab ─────────────────────────────────────────────────────────── */
 
-function OverviewTab({ stock, lang, dark, health, t }) {
+function OverviewTab({ stock, currentRatios, overviewTable, financialsLoading, lang, dark, health, t }) {
   const subs = calculateSubScores(stock.ratios);
 
   return (
     <div className="space-y-10">
       <HealthGrid stock={stock} lang={lang} dark={dark} health={health} subs={subs} />
-      <KeyRatiosSection stock={stock} lang={lang} />
-      <FinancialHighlights stock={stock} lang={lang} />
+      <KeyRatiosSection stock={stock} ratios={currentRatios} lang={lang} t={t} />
+      <FinancialHighlights financials={overviewTable} loading={financialsLoading} lang={lang} t={t} />
       <CtaBanner lang={lang} ticker={stock.ticker} stockId={stock.id} />
     </div>
   );
@@ -562,8 +600,24 @@ function HealthGrid({ stock, lang, dark, health, subs }) {
 
 /* ─── Key ratios ────────────────────────────────────────────────────────────── */
 
-function KeyRatiosSection({ stock, lang }) {
-  const { ratios, financials } = stock;
+// `ratios` to bieżące wskaźniki z `calculateAllRatios` (poziom 1/2, z osłoną walutową)
+// albo `null`, gdy ich nie ma. Karty zostają w obu przypadkach, bo tłumaczą, czym jest
+// dany wskaźnik (Zasady 3 i 4 z VISION.md) — ale bez liczby i bez porównania ze średnią
+// WIG20, bo porównanie nieistniejącej liczby ze średnią to już wniosek z niczego (D10d).
+function KeyRatiosSection({ stock, ratios, lang, t }) {
+  const { financials } = stock;
+
+  // C/Z nie większe od zera nie znaczy „tanio" — to znak straty. Mnożnik ceny do zysku
+  // jest określony tylko dla zysku dodatniego, więc przy stracie nie pokazujemy ani
+  // liczby, ani kontekstu „Poniżej średniej WIG20" w zielonym: `pe < 12` było prawdą
+  // także dla −3,7 (Cyfrowy Polsat), −0,6 (JSW) i −10,7 (PGE). Zamiast werdyktu idzie
+  // zdanie, że spółka ma stratę.
+  const rawPe = ratios?.valuation?.pe ?? null;
+  const peLoss = rawPe != null && rawPe <= 0;
+  const pe = peLoss ? null : rawPe;
+  const pb = ratios?.valuation?.pb ?? null;
+  const roe = ratios?.profitability?.roe ?? null;
+  const dividendYield = ratios?.dividend?.dividendYield ?? null;
 
   const annualRevenue = (financials?.annual?.revenue || []).filter(v => v != null);
   const maxRev = Math.max(...annualRevenue, 1);
@@ -579,32 +633,36 @@ function KeyRatiosSection({ stock, lang }) {
       tooltip: lang === 'pl'
         ? 'Cena/Zysk — ile lat zajęłoby odzyskanie inwestycji z samych zysków. Im niższe, tym „tańsza" spółka. Dla WIG20 średnia to ok. 12–15.'
         : 'Price/Earnings — years to recoup investment from earnings alone. Lower = cheaper stock. WIG20 average ≈ 12–15.',
-      value: ratios.pe != null ? ratios.pe.toFixed(1) : '—',
-      context: ratios.pe != null
-        ? (ratios.pe < 12
-            ? (lang === 'pl' ? 'Poniżej średniej WIG20' : 'Below WIG20 average')
-            : ratios.pe < 20
-              ? (lang === 'pl' ? 'Blisko średniej WIG20' : 'Near WIG20 average')
-              : (lang === 'pl' ? 'Powyżej średniej WIG20' : 'Above WIG20 average'))
-        : '—',
-      ctxCls: ratios.pe != null
-        ? (ratios.pe < 15 ? 'text-green-600 dark:text-green-400' : ratios.pe < 25 ? 'text-surface-400' : 'text-red-500 dark:text-red-400')
-        : 'text-surface-400',
+      value: pe != null ? pe.toFixed(1) : '—',
+      context: peLoss
+        ? t('stock.peNotMeaningful')
+        : pe != null
+          ? (pe < 12
+              ? (lang === 'pl' ? 'Poniżej średniej WIG20' : 'Below WIG20 average')
+              : pe < 20
+                ? (lang === 'pl' ? 'Blisko średniej WIG20' : 'Near WIG20 average')
+                : (lang === 'pl' ? 'Powyżej średniej WIG20' : 'Above WIG20 average'))
+          : '—',
+      ctxCls: peLoss
+        ? 'text-red-500 dark:text-red-400'
+        : pe != null
+          ? (pe < 15 ? 'text-green-600 dark:text-green-400' : pe < 25 ? 'text-surface-400' : 'text-red-500 dark:text-red-400')
+          : 'text-surface-400',
       bars: niBars,
-      barColor: ratios.pe != null && ratios.pe < 15 ? '#22c55e' : '#60a5fa',
+      barColor: pe != null && pe < 15 ? '#22c55e' : '#60a5fa',
     },
     {
       name: lang === 'pl' ? 'C/WK (P/BV)' : 'P/B Ratio',
       tooltip: lang === 'pl'
         ? 'Cena/Wartość Księgowa — porównuje cenę rynkową z wartością majątku netto. Poniżej 1,0 oznacza, że rynek wycenia firmę poniżej jej majątku.'
         : 'Price/Book — market price vs net asset value. Below 1.0 means trading below book value.',
-      value: ratios.pb != null ? ratios.pb.toFixed(2) : '—',
-      context: ratios.pb != null
-        ? (ratios.pb < 1.5
+      value: pb != null ? pb.toFixed(2) : '—',
+      context: pb != null
+        ? (pb < 1.5
             ? (lang === 'pl' ? 'Blisko wartości księgowej' : 'Near book value')
             : (lang === 'pl' ? 'Premia do wartości księgowej' : 'Premium to book value'))
         : '—',
-      ctxCls: ratios.pb != null && ratios.pb < 1.5
+      ctxCls: pb != null && pb < 1.5
         ? 'text-green-600 dark:text-green-400'
         : 'text-surface-400',
       bars: revBars,
@@ -615,32 +673,36 @@ function KeyRatiosSection({ stock, lang }) {
       tooltip: lang === 'pl'
         ? 'Return on Equity — ile zysku generuje firma z kapitału akcjonariuszy. Im wyższe, tym efektywniej firma wykorzystuje Twoje pieniądze. Powyżej 15% to świetny wynik.'
         : 'Return on Equity — profit generated from shareholders\' capital. Higher is better. Above 15% is excellent.',
-      value: ratios.roe != null ? `${ratios.roe.toFixed(1)}%` : '—',
-      context: ratios.roe != null
-        ? (ratios.roe > 15
+      value: roe != null ? `${roe.toFixed(1)}%` : '—',
+      context: roe != null
+        ? (roe > 15
             ? (lang === 'pl' ? 'Solidna rentowność' : 'Solid profitability')
-            : ratios.roe > 8
+            : roe > 8
               ? (lang === 'pl' ? 'Przeciętna rentowność' : 'Average profitability')
               : (lang === 'pl' ? 'Niska rentowność' : 'Low profitability'))
         : '—',
-      ctxCls: ratios.roe != null
-        ? (ratios.roe > 15 ? 'text-green-600 dark:text-green-400' : ratios.roe > 8 ? 'text-surface-400' : 'text-red-500 dark:text-red-400')
+      ctxCls: roe != null
+        ? (roe > 15 ? 'text-green-600 dark:text-green-400' : roe > 8 ? 'text-surface-400' : 'text-red-500 dark:text-red-400')
         : 'text-surface-400',
       bars: niBars,
-      barColor: ratios.roe != null && ratios.roe > 10 ? '#22c55e' : '#f87171',
+      barColor: roe != null && roe > 10 ? '#22c55e' : '#f87171',
     },
     {
       name: lang === 'pl' ? 'Stopa dywidendy' : 'Dividend Yield',
       tooltip: lang === 'pl'
         ? 'Ile procent ceny akcji firma wypłaca rocznie w dywidendzie. Jak oprocentowanie lokaty, ale z akcji. 3–5% to solidna dywidenda na GPW.'
         : 'Annual dividend as a percentage of share price. 3–5% is a solid yield on the WSE.',
-      value: ratios.dividendYield ? `${ratios.dividendYield.toFixed(1)}%` : '—',
-      context: ratios.dividendYield > 4
-        ? (lang === 'pl' ? 'Wysoka dywidenda' : 'High dividend')
-        : ratios.dividendYield > 1
-          ? (lang === 'pl' ? 'Umiarkowana dywidenda' : 'Moderate dividend')
-          : (lang === 'pl' ? 'Brak / niska dywidenda' : 'None / low dividend'),
-      ctxCls: ratios.dividendYield > 3
+      value: dividendYield != null ? `${dividendYield.toFixed(1)}%` : '—',
+      // Brak danych nie jest tym samym co brak dywidendy: bez liczby nie piszemy „Brak /
+      // niska dywidenda”, bo to byłby wniosek wyciągnięty z nieobecnej danej.
+      context: dividendYield == null
+        ? '—'
+        : dividendYield > 4
+          ? (lang === 'pl' ? 'Wysoka dywidenda' : 'High dividend')
+          : dividendYield > 1
+            ? (lang === 'pl' ? 'Umiarkowana dywidenda' : 'Moderate dividend')
+            : (lang === 'pl' ? 'Brak / niska dywidenda' : 'None / low dividend'),
+      ctxCls: dividendYield != null && dividendYield > 3
         ? 'text-purple-600 dark:text-purple-400'
         : 'text-surface-400',
       bars: revBars,
@@ -716,15 +778,33 @@ function RatioCard({ rc }) {
 
 /* ─── Financial highlights ──────────────────────────────────────────────────── */
 
-function FinancialHighlights({ stock, lang }) {
+// `financials` to `overviewTable` — ten sam obiekt, z którego zakładka „Sprawozdania"
+// buduje swoją tabelę przeglądową. Podpis nie twierdzi już „w milionach PLN" na sztywno:
+// walutę bierze z danych, a gdy dane jej nie podają, nie mówi o niej nic. Wielkości nie
+// nazywa, bo każda komórka nazywa swoją sama („994 mln", „20,2 mld" — `formatNumber`)
+// (D10d, uwaga Kamila z podglądu PR #10).
+function FinancialHighlights({ financials, loading, lang, t }) {
+  const hasData = financials?.annual?.years?.length > 0;
+  const currency = financials?.currency ?? null;
+
   return (
     <div>
       <SectionHeader
         title={lang === 'pl' ? 'Rachunek zysków i strat' : 'Income Statement'}
-        sub={lang === 'pl' ? 'Dane roczne skonsolidowane · w milionach PLN' : 'Annual consolidated data · in millions PLN'}
+        sub={!hasData
+          ? null
+          : currency
+            ? t('stock.statementsCurrency').replace('{currency}', currency)
+            : t('stock.statementsConsolidated')}
       />
       <div className="card">
-        <FinancialTable financials={stock.financials} />
+        {hasData
+          ? <FinancialTable financials={financials} />
+          : (
+            <p className="text-sm text-surface-400 text-center py-8">
+              {loading ? t('stock.financialsLoading') : t('stock.noFinancialData')}
+            </p>
+          )}
       </div>
     </div>
   );

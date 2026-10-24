@@ -233,6 +233,11 @@ pochodzą z różnych momentów.
 o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć widoków czyta je
 **zamiast** danych bieżących, nawet gdy te bieżące są dostępne.
 
+**Kolejność (decyzja Kamila 2026-10-24, po podglądzie PR #10):**
+`D10d` → **`P8+D10e`** → `D10a` → `D10b` → `D10c`. P8+D10e wyszło przed D10a, bo po D10d
+na jednym ekranie Pepco stoją „Rentowność 9,2%" i „ROE −107,8%" — patrz uwaga przy tym
+zadaniu, razem z konsekwencją, że `ratios.json` powstaje dopiero w D10b.
+
 - [ ] **D10d — plaster: zdjąć zaszyte wskaźniki z trzech widoków** (~40 min) — ryzyko: **zwykłe**
   Zakres **tylko**: plakietka w nagłówku, karty Przeglądu, `pageDesc`. **Screener
   i Porównywarka zostają bez osłony** do D10c (decyzja Kamila) — ich treścią *są* wskaźniki,
@@ -246,6 +251,11 @@ o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć
   *Gotowe, gdy:* `grep -rn "stock.ratios" src/pages/StockPage.jsx` nie zwraca nic poza
   Screenerem i Porównywarką; strona Pepco **nie pokazuje dwóch różnych C/Z**; `pageDesc`
   nie zawiera C/Z, ROE ani stopy dywidendy; zrzuty z podglądu w obu motywach w opisie PR-a.
+  **Dobrane w recenzji PR #10:** tabela „Rachunek zysków i strat" na Przeglądzie też czyta
+  bieżące sprawozdania (była na zaszytych, z kolumną „2024E" i podpisem „w milionach PLN"),
+  a **C/Z nie większe od zera nie dostaje werdyktu** — `pe < 12` było prawdą także dla
+  −3,7 (Cyfrowy Polsat), −0,6 (JSW) i −10,7 (PGE), czyli trzy spółki ze stratą wychodziły
+  na „Poniżej średniej WIG20" w zielonym.
 
 - [ ] **D10a — liczba akcji jako dane z datą, nie stała w kodzie** (~40 min) — ryzyko: **wysokie** (poprawność liczb)
   Bez liczby akcji nie da się policzyć kapitalizacji, a bez niej C/WK, P/S, EV/EBITDA i FCF
@@ -270,10 +280,25 @@ o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć
   i zapisuje je do `public/data/ratios.json`. `calculateAllRatios` już się do tego nadaje —
   importuje tylko `financialSchema.js`, bez Reacta. **Osłona walutowa z D9 obowiązuje**,
   czyli Pepco dostaje `null` w siedmiu wskaźnikach, a nie liczbę.
+  **Stopa dywidendy z tabeli `dividends`** (zlecone przez Kamila 2026-10-24 po podglądzie
+  PR #10): dywidenda na akcję z ostatnich 12 miesięcy ÷ bieżąca cena. Dziś karta „Stopa
+  dywidendy" na Przeglądzie pokazuje „—" dla wszystkich 24 spółek, bo poziom 1 nie ma
+  `keyStats.dividendYield`, a poziom 2 nie ma `dividendsPaid` — a projekt te dane **ma**.
+  **Sprawdzone w bazie 2026-10-24: tabela nie pokrywa pełnych 12 miesięcy.** 17 wypłat,
+  12 spółek, `ex_date` od **2026-01-09** do **2026-09-04** — okno 2025-10-25…2026-01-08
+  jest puste, więc „ostatnie 12 miesięcy" liczone na dziś ucina wypłaty z IV kwartału 2025.
+  Do tego: `status` ma trzy wartości i tylko **`paid`** wolno wziąć do liczby historycznej
+  (6 wierszy, wszystkie I kwartał 2026) — `confirmed` (6) i `estimated` (5) to zapowiedzi,
+  czyli P1 §4; kolumna `dividend_yield` w bazie jest policzona **inną ceną** (PKO 4,20%
+  przy 3,62 zł na akcję to cena ok. 86 zł, dzisiejsza 109,54 zł), więc nie wolno jej
+  pokazać wprost; a 12 spółek nie ma w tabeli żadnego wiersza, więc ich „—" **nie znaczy
+  „nie płaci dywidendy"** i nie może tak wyglądać.
   *Gotowe, gdy:* plik istnieje dla 24 spółek i ma **dwie osobne daty** — ceny i sprawozdań,
   bo mieszanie ich w jedną „datę aktualizacji" to ten sam błąd co „nowa data" w P0; Pepco ma
   `null` w C/Z, C/Z prognozowanym, C/WK, P/S, EV/EBITDA, PEG i FCF yield; przebieg bez
-  `latest-prices.json` kończy się **błędem**, a nie plikiem bez cen.
+  `latest-prices.json` kończy się **błędem**, a nie plikiem bez cen; stopa dywidendy
+  pochodzi **tylko** z wypłat `paid` z ostatnich 12 miesięcy, spółka bez takiej wypłaty ma
+  `null` (nie zero), a okres, z którego liczba pochodzi, jest widoczny na ekranie.
 
 - [ ] **D10c — pięć widoków czyta `ratios.json`** (~40 min × 2) — ryzyko: **zwykłe**
   Nagłówek, Przegląd, `pageDesc`, Screener i Porównywarka. Tu Screener wreszcie dostaje
@@ -286,18 +311,49 @@ o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć
 - [ ] **P8+D10e — ocena kondycji na bieżących danych i bez wyceny** (~40 min × 2) — ryzyko: **wysokie** (ocena finansowa)
   **Scalone z P8 z Bramki P** (decyzja Kamila), bo to ten sam komponent i ten sam plik:
   osobno znaczyłoby dwie przebudowy `HealthScore.jsx` i okno, w którym ocena jest już bieżąca,
-  ale nadal mówi „atrakcyjna wycena". Wchodzi **po D10c**.
-  Zakres z obu zadań: ocena liczona z `ratios.json`, **bez bloku wyceny** (więc problem
+  ale nadal mówi „atrakcyjna wycena".
+  **Idzie jako następne, przed D10a (decyzja Kamila 2026-10-24)** — po D10d na jednym ekranie
+  Pepco stoją „Rentowność 9,2%" (zaszyte, zasila ocenę 40/100) i „ROE −107,8%" (bieżące),
+  a sprzeczność na ekranie waży więcej niż kolejność w roadmapie. **Potwierdzone przez Kamila
+  2026-10-24:** `ratios.json` powstaje dopiero w D10b, więc przy tej kolejności ocena liczy się
+  z `calculateAllRatios` na danych poziomu 1/2 (czyli z `currentRatios`, które `StockPage` już
+  ma), a na `ratios.json` przechodzi w D10c.
+  Zakres z obu zadań: ocena z **bieżących** sprawozdań, **bez bloku wyceny** (więc problem
   walutowy jej nie dotyczy), tekst werdyktu bez „atrakcyjnej wyceny" w `HealthScore.jsx:191-192`
   i `StockPage.jsx:802`, progi w zakładce wyceny opisane jako konwencja z podanym źródłem
   zamiast „✓", zasada językowa dopisana do `AGENTS.md`.
+  **Plus C/Z i PEG przy stracie — „n/m", nie liczba** (decyzja Kamila 2026-10-24, z recenzji
+  PR #10). To zmiana formuły, czyli ryzyko wysokie, a P8+D10e i tak dostaje rundę Codexa —
+  jedna runda zamiast dwóch. `calcValuation` ma zwracać `pe: null` przy `eps ≤ 0`
+  (`ratioCalculator.js:148`); dziś liczy np. −0,56 dla JSW, −3,74 dla Cyfrowego Polsatu
+  i −10,72 dla PGE. Konwencja z serwisów finansowych: ujemne C/Z oznacza się jako **„n/m"
+  (not meaningful)**, bo o wycenie nie mówi nic.
+  **PEG schodzi z `pe` sam** (`:157-163` liczy go tylko przy `pe != null`), ale ma własną
+  pułapkę do zamknięcia przy okazji: gdy **poprzedni** rok był stratą, a bieżący zyskiem,
+  `epsGrowth` wychodzi dodatnie z wyjścia ze straty i PEG robi się z odbicia, nie ze wzrostu.
+  Warunek: PEG tylko gdy `inc.eps > 0` **i** `incPrev.eps > 0`.
+  **Na ekranie „n/m" musi być odróżnialne od „—".** Dziś `MetricsPanel` pokazuje `null` jako
+  „—", czyli tak samo jak brak danych i jak wyłączenie przez osłonę walutową z D9 — trzy różne
+  rzeczy pod jednym znakiem. Karta Przeglądu ma już na to zdanie („Spółka ze stratą — C/Z
+  nieokreślone", `stock.peNotMeaningful`); zakładka Wskaźniki ma dostać to samo rozróżnienie.
+  **Nie wolno przy tym wskrzesić** `calculateHealthScoreV2`: jego blok wyceny punktuje
+  `scoreRange(v.pe, 8, 15, 25, true)`, więc ujemne C/Z dostaje tam **100 punktów** — to martwy
+  kod z listy „Później", ale gdyby wrócił jako podstawa nowej oceny, wracałby z tą wadą.
+  **Trzy konkretne wady do naprawienia w `HealthGrid`** (numery linii po PR #10):
+  karta „Dynamika przychodów" liczy się z zaszytych `stock.financials.annual.revenue`
+  (`StockPage.jsx:455`) i porównuje rok raportowany z **prognozą „2024E"** — to P1 §4;
+  karty „Rentowność", „Zadłużenie" i „Płynność" czytają zaszyte `stock.ratios`
+  (`:464`, `:473`, `:497`); a brak danych o dynamice przychodów dostaje **score 50**
+  (`:487`), czyli połowę punktów za nieobecną daną — klasa D4a, P1 §3.
   **Dwa trafienia grepa, które mają zostać**, żeby warunek dał się zamknąć bez dyskusji:
   „kupuj" wchodzi też w `src/data/translations.js:276` („inwestor kupujący «cały WIG20»")
   i `src/data/wig20.js:857` („Kupuje i obsługuje portfele wierzytelności" — opis działalności
   Kruka). To opisy, nie oceny.
   *Gotowe, gdy:* w `src/` nie ma słów „atrakcyjn", „kupuj", „niedowartościow" w tekstach dla
   użytkownika **poza** tymi dwoma opisami działalności; każda ocena prowadzi do opisu
-  metodologii; **żadna część oceny nie pochodzi z `wig20.js`**; zrzuty z podglądu w obu
+  metodologii; **żadna część oceny nie pochodzi z `wig20.js`**; `calculateAllRatios` zwraca
+  `pe: null` i `peg: null` dla JSW, Cyfrowego Polsatu i PGE, a na ekranie stoi tam „n/m"
+  z wyjaśnieniem, **nie** to samo „—" co przy braku danych; zrzuty z podglądu w obu
   motywach w opisie PR-a.
 ---
 
@@ -519,6 +575,20 @@ Logowanie i watchlista już działają na Supabase. Brakuje właściwego portfel
   Weryfikacja domeny, zgłoszenie `sitemap.xml`, sprawdzenie pokrycia.
   *Gotowe, gdy:* wszystkie 25 URL-i z sitemapy jest zgłoszonych do indeksacji.
   Domena `stockview.org` zweryfikowana, sitemapa zgłoszona 2026-09-20 (razem z S1).
+- [ ] **S6 — jeden `<meta name="description">`, nie dwa** (~20 min) — ryzyko: **niskie**
+  Znalezione przy D10d (PR #10). Po renderze strony spółki w DOM-ie są **dwa** opisy:
+  statyczny z `index.html` (pierwszy w kolejności, bez atrybutu) i ten od Helmeta
+  (`data-rh="true"`). `react-helmet-async` nie podmienia znacznika, którego sam nie
+  wyrenderował — dokłada własny obok, więc robot dostaje dwa opisy i sam wybiera; dziś
+  `document.querySelector('meta[name=description]')` zwraca ten ogólny. `og:description`
+  i `<title>` są pojedyncze i poprawne, więc dotyczy to **tylko** `description`.
+  Prawdopodobna poprawka: `data-rh="true"` przy statycznym znaczniku w `index.html`, żeby
+  Helmet uznał go za swój i podmienił.
+  *Gotowe, gdy:* `[...document.querySelectorAll('meta[name=description]')].map(m => m.content)`
+  na stronie spółki w podglądzie zwraca **jeden** wpis i jest to opis spółki; na stronie
+  głównej zwraca jeden i jest to opis ogólny; `curl -s <podgląd>/stock/pepco | grep
+  '<meta name="description"'` nadal zwraca jedną linię (bez JS robot widzi opis ogólny —
+  to nie zmiana, tylko kontrola, że nic nie zniknęło z `index.html`).
 
 
 ## Po Bramce P — do decyzji
@@ -587,6 +657,18 @@ Format wiersza: `- [ ] <uwaga> — PR #<nr>, zgłoszone na <SHA>, plik:linia`
 Bierz je stąd, gdy dotykasz tego samego pliku albo gdy zrobi się ich tyle, że warto zrobić
 z nich jedno zadanie.
 
+- [ ] **`normalizeFinancials` gubi literę „E" z prognozy** — PR #10, zgłoszone na `c005b8d`,
+  `src/data/financialSchema.js:272-273`. `mapHardcodedAnnualIncome` robi
+  `year.replace('E', '')`, więc zaszyta kolumna „2024E" wchodzi do danych kanonicznych jako
+  `FY2024` i prognoza przestaje być rozpoznawalna — P1 §4, tylko na poziomie 3, który po
+  PR #10 nie zasila już ani Przeglądu, ani wskaźników. Zostaje w zakładkach „Rachunek
+  wyników", „Bilans" i „Przepływy" przez `fallbackFinancials={stock.financials}`.
+  Zniknie samo wraz z „końcem poziomu 3" z listy „Po Bramce P".
+- [ ] **`ValuationMetrics.jsx` to martwy komponent — usunąć** — PR #10, zgłoszone na
+  `c005b8d`, `src/components/ValuationMetrics.jsx`. PR #10 usunął jego jedyny import
+  (zakładka Wskaźniki nie wraca już awaryjnie do zaszytych wskaźników), a `grep -rn
+  "ValuationMetrics" src/` zwraca samą definicję. Vite go nie pakuje, więc nie kosztuje
+  bajtów — jest tylko mylący. Do usunięcia przy D10c, które te widoki i tak przepisuje.
 - [ ] **`calculateHealthScoreV2` to martwy kod — usunąć** — PR #7, zgłoszone na `cdd042a`,
   `src/data/ratioCalculator.js:262`. Funkcja liczy ocenę kondycji z blokiem Wycena o wadze
   20% (`pe`, `pb`, `evEbitda`), ale **nikt jej nie importuje** — `grep` po `src/` zwraca samą

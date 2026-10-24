@@ -2,6 +2,195 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-24 — recenzja PR #10 w osobnej sesji: dwie poprawki, jedna sprostowana teza
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+Recenzja wymagana przez poziom ryzyka **zwykły**. Cel: **`c005b8d`** (odczyty z podglądu
+w PR pochodzą z `5073e05` — różnica między nimi to sam wpis w dzienniku). Poprawki:
+**`09f98bd`**. **Nie zmergowany** — merge to decyzja Kamila.
+
+**Uwaga 1 (Kamil, z podglądu) — poprawione.** Tabela „Rachunek zysków i strat" na Przeglądzie
+czytała zaszyte `stock.financials`: kolumny 2021–2024E, prognoza „E" i podpis „w milionach
+PLN" na sztywno. Dla Pepco dawało to **zysk netto 350 mln w „2024E"** przy rzeczywistym
+**FY2024 −734 mln EUR**. Teraz bierze te same sprawozdania co zakładka „Sprawozdania",
+a podpis podaje walutę z danych. Wielkości podpis **nie nazywa** — każda komórka nazywa
+swoją sama (`formatNumber` pisze „994 mln" albo „20,2 mld"), więc „mln PLN" w podpisie stałoby
+w sprzeczności z „20,2 mld" w komórce. To jedyne odstępstwo od litery zlecenia (było:
+„jednostka z `amountUnit`"); `amountUnit` nadal stoi w nagłówku kolumny opisowej samej tabeli.
+
+**Uwaga 2 (recenzja, P1) — poprawione.** Przestawienie kart Przeglądu na bieżące wskaźniki
+wpuściło na nie **ujemne C/Z**, a warunek `pe < 12` jest prawdą także dla liczby ujemnej.
+Trzy spółki ze stratą dostawały przez to werdykt **„Poniżej średniej WIG20" w zielonym**:
+Cyfrowy Polsat **−3,74**, JSW **−0,56**, PGE **−10,72** (policzone bieżącą ceną i `eps`
+z poziomu 2). Teraz C/Z ≤ 0 nie dostaje ani liczby, ani werdyktu: plakietka w nagłówku
+znika, a karta mówi „Spółka ze stratą — C/Z nieokreślone". **Zakładka Wskaźniki nadal
+pokazuje tam „−0.6x"** — to `calcValuation`, czyli formuła finansowa, a więc ryzyko wysokie
+i osobne zadanie; pytanie do Kamila niżej.
+
+**Sprostowanie do poprzedniego wpisu i do opisu PR-a.** Zdanie „ani poziom 1, ani 2 nie mają
+danych o dywidendzie" było prawdziwe o **sprawozdaniach**, ale brzmiało jak „projekt nie ma
+danych o dywidendzie" — a ma. Tabela `dividends` w Supabase: **17 wypłat, 12 spółek**,
+`ex_date` **2026-01-09 … 2026-09-04**. Sprawdzone zapytaniem 2026-10-24.
+
+**Czy tabela pokrywa pełne 12 miesięcy — nie.** Na dziś okno „ostatnie 12 miesięcy" to
+2025-10-25…2026-10-24, a najstarszy wiersz ma `ex_date` 2026-01-09, więc **kwartał
+2025-10-25…2026-01-08 jest pusty**. Do tego `status` ma trzy wartości i tylko **`paid`**
+(6 wierszy, wszystkie I kwartał 2026) wolno wziąć do liczby historycznej — `confirmed` (6)
+i `estimated` (5) to zapowiedzi, czyli P1 §4. Kolumna `dividend_yield` w bazie jest policzona
+**inną ceną** (PKO: 3,62 zł na akcję przy 4,20% to cena ok. 86 zł, dzisiejsza 109,54), więc
+nie wolno jej pokazać wprost. I 12 spółek nie ma w tabeli **żadnego** wiersza, więc ich „—"
+nie znaczy „nie płaci dywidendy". Wszystko to wpisane do **D10b** w roadmapie razem
+z warunkiem „gotowe, gdy".
+
+**Czego świadomie nie ruszam.** „Dynamika przychodów" w ocenie kondycji nadal liczy się
+z zaszytych `stock.financials` i porównuje rok raportowany z **prognozą „2024E"** — decyzja
+Kamila: to część **P8+D10e**, więc dopisane tam, razem z dwoma innymi wadami `HealthGrid`
+(karty Rentowność/Zadłużenie/Płynność na `stock.ratios`; brak danych o dynamice dostaje
+**score 50**, czyli połowę punktów za nieobecną daną — klasa D4a). Podwójny
+`<meta name="description">` → nowe zadanie **S6** w Bramce 3, ryzyko niskie.
+
+**Kolejność po merge'u** (decyzja Kamila): `P8+D10e` → `D10a` → `D10b` → `D10c`. Wpisana
+w roadmapę przy D10 i przy samym zadaniu. **Konsekwencja do potwierdzenia:** P8+D10e miało
+liczyć ocenę z `ratios.json`, a ten plik powstaje dopiero w **D10b** — przy tej kolejności
+ocena musi na razie iść z `calculateAllRatios` (czyli z `currentRatios`, które `StockPage`
+już ma), a na `ratios.json` przejść w D10c.
+
+**Sprawdzone.** Podgląd [82cab1d0](https://82cab1d0.stockview-3e4.pages.dev), SHA `09f98bd`,
+**oba motywy**, cztery spółki. JSW doszło do trójki Kamila, bo to na nim widać poprawkę C/Z.
+
+| | nagłówek | C/Z | C/WK | ROE | dyw. | tabela |
+|---|---|---|---|---|---|---|
+| Pepco (48,20 zł) | bez plakietki | — | — | −107.8% | — | kwoty w EUR, FY2022–FY2025 |
+| PKO BP (109,54 zł) | C/Z: 12.8 | 12.8 | 2.45 | 18.3% | — | kwoty w PLN, FY2022–FY2025 |
+| Dino (39,65 zł) | C/Z: 24.9 | 24.9 | 4.13 | 18.0% | — | kwoty w PLN, FY2022–FY2025 |
+| JSW (29,75 zł) | bez plakietki | — *(„Spółka ze stratą")* | 1.73 | −203.2% | — | kwoty w PLN, FY2022–FY2025 |
+
+Pepco: zysk netto **−734 mln** w FY2024 i **−176 mln** w FY2025, obie na czerwono, pod
+podpisem „Dane skonsolidowane · kwoty w EUR" — wcześniej w tym miejscu stało **350 mln**
+w kolumnie „2024E" pod „w milionach PLN". Kreski „—", czerwone zdanie o stracie i kolory
+kart czytelne w obu motywach; nic nie znika w jasnym. EN na JSW daje „Loss-making — P/E not
+meaningful" i „Consolidated data · amounts in PLN". `npm run build` przechodzi.
+
+**Nie sprawdzone.** Pozostałe 20 spółek. Cyfrowy Polsat i PGE — ujemne C/Z policzone
+lokalnie z `calculateAllRatios` na danych produkcyjnych, **na ekranie oglądane tylko JSW**.
+Testów w repo nie ma, więc żadna z tych liczb nie ma asercji. Zakładki Wskaźniki, Kondycja,
+Screener i Porównywarka — poza zakresem tej rundy. CI dla `09f98bd`: `build` zielone
+(dwa przebiegi), GitGuardian i Cloudflare zielone — status dla **nowej głowy** odpytany
+po pushu tego wpisu.
+
+**Dwie decyzje Kamila, tego samego dnia.** (1) **C/Z ma być puste przy `eps ≤ 0`, i PEG też** —
+tak robią serwisy finansowe, które ujemny mnożnik oznaczają „n/m" (*not meaningful*), bo
+o wycenie nie mówi nic. **Nie w tym PR-ze:** to zmiana `calcValuation`, czyli formuły, czyli
+ryzyko wysokie — wchodzi do **P8+D10e**, które i tak jest następne, też jest wysokiego ryzyka
+i dostanie rundę Codexa. Jedna runda zamiast dwóch oszczędza limit. Zakres dopisany do zadania
+razem z pułapką PEG (wyjście ze straty daje dodatni `epsGrowth`, więc PEG robi się z odbicia)
+i z warunkiem, żeby „n/m" na ekranie było odróżnialne od „—" przy braku danych.
+(2) **Kolejność potwierdzona:** P8+D10e przed D10a, a ocena kondycji liczy się na razie
+z bieżących wskaźników strony (`currentRatios`) i przechodzi na `ratios.json` dopiero w D10c.
+
+Następne: decyzja Kamila o merge'u PR #10 — zostaje już tylko ona i karta dywidendy. Potem
+**P8+D10e** (sprzeczność „Rentowność 9,2%" vs „ROE −107,8%" na jednym ekranie Pepco; na JSW
+„−3,2%" vs „−203,2%"), **w tym C/Z i PEG jako „n/m" przy stracie**. Dalej **D10a**, **D10b**,
+**D10c**, potem Bramka P od P1. Import sprawozdań za III kwartał: początek grudnia.
+
+## 2026-10-24 — D10d: nagłówek i Przegląd na bieżących wskaźnikach, opis dla Google bez liczb
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+PR [#10](https://github.com/Kuchaar/stockview/pull/10), ryzyko **zwykłe**, gałąź
+`fix/d10d-biezace-wskazniki`. **Nie zmergowany** — czeka na recenzję w osobnej sesji
+i na decyzję Kamila.
+
+**Co zrobione.** Strona spółki podawała dwa różne C/Z na jednym ekranie: plakietka
+w nagłówku i karty Przeglądu czytały `stock.ratios` zaszyte w `wig20.js` (policzone zaszytą
+ceną), a zakładka Wskaźniki liczyła je na bieżąco. Teraz wszystkie trzy miejsca czytają
+**jeden** obiekt `currentRatios` z `calculateAllRatios`, na danych poziomu 1/2
+i z osłoną walutową z D9a.
+
+- **Poziom 3 wyłączony z tego wyliczenia.** Gdy `liveFinancials.source === 'hardcoded'`,
+  `currentRatios` jest `null`. Bieżąca cena nad zyskiem z nieznanego okresu wygląda na
+  liczbę świeżą, nie będąc nią. W praktyce poziom 3 jest nieosiągalny — wszystkie 24 spółki
+  mają `public/data/financials/{id}/data.json`.
+- **Plakietka w nagłówku znika** bez bieżącego C/Z; karty Przeglądu zostają z objaśnieniem,
+  ale bez liczby i **bez porównania ze średnią WIG20**.
+- **`pageDesc` bez żadnej liczby wskaźnikowej.** Było: „P/E 23.4, ROE 9.2%, dywidenda 0%".
+- **Zakładka Wskaźniki nie wraca już awaryjnie do zaszytych wskaźników** (`ValuationMetrics`
+  z `stock.ratios`); przy ich braku jest zdanie wyjaśniające, nie stare liczby. Sam plik
+  komponentu zostaje nieużywany — do usunięcia przy D10c, które i tak przepisuje te widoki.
+- **Sprawozdania ściągane na każdej zakładce**, bo plakietka w nagłówku jest widoczna zawsze.
+- Nowe klucze `t()` w `pl` i `en`: `stock.peLabel`, `stock.ratiosLoading`,
+  `stock.ratiosUnavailable`. Zaszyty napis „P/E:" w nagłówku poszedł przez `t()`, więc po
+  polsku jest teraz **„C/Z"**, po angielsku „P/E".
+
+**Zakres szerszy niż „C/Z i C/WK" — świadomie.** Przestawione są **wszystkie cztery** karty
+Przeglądu. Zostawienie ROE i stopy dywidendy na zaszytych liczbach dałoby fałszywe zdanie
+o spółce obok poprawnego C/Z: Pepco miało na karcie **ROE 9,2%**, a bieżące ROE to
+**−107,9%**; stopa 5,8% dla PKO była policzona ceną 57,80 zł przy dzisiejszych 109,54 zł.
+
+**Karta „Stopa dywidendy" pokazuje teraz „—" dla wszystkich 24 spółek.** Ani poziom 1, ani 2
+nie mają dziś danych o dywidendzie: `keyStats.dividendYield` z Yahoo jest `null`,
+a `dividendsPaid` nie występuje w żadnym wierszu przepływów. Projekt ma dane w tabeli
+`dividends` i na `/dividends` — doprowadzenie ich do tej karty to osobne zadanie. Powrót do
+wariantu węższego (tylko C/Z i C/WK bieżące) to trzy linie; decyzja Kamila.
+
+**Sprawdzone.** Podgląd [a1650873](https://a1650873.stockview-3e4.pages.dev), SHA `5073e05`,
+w **obu motywach**, Pepco / PKO BP / Dino; pełne odczyty w komentarzu do PR #10. Skrót:
+
+| | nagłówek | C/Z | C/WK | ROE | dyw. |
+|---|---|---|---|---|---|
+| Pepco (48,20 zł) | bez plakietki | — | — | −107.8% | — |
+| PKO BP (109,54 zł) | C/Z: 12.8 | 12.8 | 2.45 | 18.3% | — |
+| Dino (39,65 zł) | C/Z: 24.9 | 24.9 | 4.13 | 18.0% | — |
+
+Zaszyte było odpowiednio: Pepco 23,4 / 2,16 / 9,2% · PKO 9,3 / 1,45 / 17,2% / 5,8% ·
+Dino 17,6 / 4,69 / 26,7% — to ostatnie przy kursie **430 zł** wobec dzisiejszych 39,65.
+Na Pepco nagłówek, Przegląd i Wycena mówią teraz to samo, a nota walutowa z D9a stoi pod
+pustą tabelą Wyceny. EN daje w nagłówku „P/E: 24.9", PL „C/Z: 24.9". Po przejściu na
+zakładkę „Wykres" plakietka **nie znika** — po to są sprawozdania ściągane zawsze.
+`npm run build` przechodzi, CI zielone (dwa przebiegi `build`), GitGuardian i Cloudflare
+zielone. Stan `stock.ratiosUnavailable` sprawdzony **lokalnie** (`npm run dev` z chwilowo
+odsuniętym `public/data/financials/`, potem przywróconym): nagłówek bez plakietki, zakładka
+Wskaźniki pokazuje zdanie i ani jednej starej liczby.
+
+**Nie sprawdzone.** Pozostałe 21 spółek — oglądane były trzy, o które prosił Kamil.
+Screener i Porównywarka — zostają na zaszytych wskaźnikach do D10c. Testów w repo nie ma,
+więc liczby wyżej są porównane z `calculateAllRatios` puszczonym lokalnie na tych samych
+danych produkcyjnych, nie z asercją w teście. **Recenzja wymagana przez poziom „zwykły" —
+osobna sesja Claude — jeszcze się nie odbyła.**
+
+**Wada 1: dwa znaczniki `<meta name="description">`.** Projekt nie ma prerenderu —
+`public/_redirects` oddaje ten sam `index.html` pod każdym adresem, a `pageDesc` powstaje
+dopiero po uruchomieniu JS. Po renderze w DOM-ie są **dwa** opisy: statyczny z `index.html`
+(pierwszy, bez atrybutu) i ten od Helmeta (`data-rh="true"`). `react-helmet-async` nie
+podmienia znacznika, którego sam nie wyrenderował — dokłada własny obok, więc robot dostaje
+dwa i sam wybiera. **Celu D10d to nie psuje** (opis ogólny też nie ma liczb), ale to osobna
+wada SEO. Prawdopodobna poprawka: `data-rh="true"` przy statycznym znaczniku w `index.html`,
+żeby Helmet uznał go za swój. Wymaga własnej weryfikacji — nie weszła do tego PR-a.
+Jak sprawdzać: `curl -s https://stockview.org/stock/pepco | grep '<meta name="description"'`
+(co widzi robot bez JS), `[...document.querySelectorAll('meta[name=description]')].map(m => m.content)`
+w konsoli (duplikat), Search Console → Sprawdzenie adresu URL → „Wyrenderowany kod HTML"
+(co naprawdę widzi Google po renderze).
+
+**Wada 2: ocena kondycji kłóci się teraz z bieżącym ROE.** Na Przeglądzie Pepco stoją obok
+siebie karta „Kondycja finansowa → Rentowność" z **9.2%** (zaszyte; zasila też ocenę 40/100)
+i „Kluczowe wskaźniki → ROE" z **−107.8%** (bieżące). **Tę sprzeczność tworzy ta zmiana** —
+wcześniej obie liczby były zgodne, bo obie były tą samą nieprawdą. Dla PKO różnica jest
+kosmetyczna (17,2% vs 18,3%), dla Dino wyraźna (26,7% vs 18,0%), dla Pepco jaskrawa.
+Ocena kondycji zostaje świadomie: to **P8+D10e**, które ma do zrobienia więcej niż podmianę
+źródła (podwyniki przyznają punkty za nieobecne dane). **Argument, żeby D10e zrobić zaraz
+po tym PR-ze, a nie na końcu kolejki.**
+
+**Przy okazji.** Kapitalizacja w nagłówku jest nadal zaszyta (Pepco „8,2 mld" przy kursie
+48,20 zł i 567,7 mln akcji — bieżąca to ok. 27 mld zł); to **D10a**. Klikanie w logo i górną
+nawigację w zautomatyzowanej przeglądarce zmieniało adres, ale widok zostawał na poprzedniej
+stronie — **na podglądzie poprzedniej gałęzi (zawartość `main`) zachowuje się identycznie**,
+więc nie wprowadza tego ta zmiana; do ręcznego sprawdzenia przez Kamila.
+
+Następne: recenzja PR #10 w osobnej sesji Claude (poziom „zwykły" tego wymaga), potem
+decyzja Kamila o merge'u — w tym decyzja o karcie dywidendy. Dalej **P8+D10e** (sprzeczność
+wyżej), potem D10a, D10b, D10c. Import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-23 — D9a: osłona walutowa fail-safe, pole waluty w panelu admina
 
 Komputer: `MacBook-Pro-Kamil.local`
