@@ -89,13 +89,23 @@ export function calculateAllRatios(financialData, currentPrice, sharesOutstandin
   const guard = currencyGuard(financialData);
   const currencyMismatch = guard.mismatch;
 
+  // `notMeaningful` wychodzi z wyceny, ale stoi na wierzchu obok `currencyInfo`, bo to
+  // informacja **o całym zestawie**, a nie kolejny wskaźnik: `MetricsPanel` iteruje po
+  // zamkniętej liście pól kategorii, więc klucz w środku `valuation` byłby cicho pomijany.
+  const { notMeaningful: valuationNm, ...valuation } = calcValuation(
+    inc, incPrev, bs, cf, ks, currentPrice, marketCap, currencyMismatch,
+  );
+  const { notMeaningful: growthNm, ...growth } = calcGrowth(inc, incPrev);
+
   return {
     profitability: calcProfitability(inc, bs, bank),
-    valuation: calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap, currencyMismatch),
+    valuation,
     debtAndLiquidity: calcDebtAndLiquidity(inc, bs, cf, bank),
     dividend: calcDividend(cf, inc, ks, marketCap, currencyMismatch),
-    growth: calcGrowth(inc, incPrev),
+    growth,
     currencyInfo: guard,
+    notMeaningful: { ...valuationNm, ...growthNm },
+    isBank: bank,
   };
 }
 
@@ -133,8 +143,13 @@ function calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap, curren
   // raportującej w EUR zestawia cenę w PLN z prognozą zysku w EUR. Jedna liczba stojąca
   // między kreskami wyglądałaby na sprawdzoną, a sprawdzona nie jest (decyzja Kamila
   // po recenzji PR #7).
+  //
+  // `notMeaningful` to **drugi, osobny** powód braku liczby. `null` znaczy „nie mamy danej";
+  // wpis w `notMeaningful` znaczy „daną mamy, ale ten wskaźnik jest z niej nieokreślony".
+  // Na ekranie muszą wyglądać inaczej, bo mówią co innego (P8+D10e). Przy niezgodności walut
+  // mapa zostaje pusta: tam powodem jest waluta i mówi o tym nota z `currencyInfo`.
   if (currencyMismatch) {
-    return { pe: null, forwardPe: null, pb: null, ps: null, evEbitda: null, peg: null, fcfYield: null };
+    return { pe: null, forwardPe: null, pb: null, ps: null, evEbitda: null, peg: null, fcfYield: null, notMeaningful: {} };
   }
 
   const eps = inc?.eps ?? ks.eps ?? null;
@@ -145,7 +160,15 @@ function calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap, curren
   const totalDebt = bs?.totalDebt ?? 0;
   const fcf = cf?.freeCashFlow;
 
-  const pe = round2(safeDivide(currentPrice, eps));
+  // C/Z przy zysku nie większym od zera **nie jest liczbą** — jest oznaczane „n/m"
+  // (not meaningful), konwencją serwisów finansowych. Arytmetyka daje wynik (dla JSW −0,56,
+  // Cyfrowego Polsatu −3,74, PGE −10,72), ale mnożnik ceny do zysku jest określony tylko
+  // dla zysku dodatniego: ujemne C/Z nie znaczy „tanio", nie da się go porównać z dodatnim
+  // i nie da się go uszeregować — −10,7 nie jest „niższe" niż 8 w żadnym użytecznym sensie.
+  // Decyzja Kamila 2026-10-24 z recenzji PR #10.
+  const notMeaningful = {};
+  if (eps != null && eps <= 0) notMeaningful.pe = 'loss';
+  const pe = notMeaningful.pe ? null : round2(safeDivide(currentPrice, eps));
   const forwardPe = ks.forwardPe ?? null;
   const pb = round2(safeDivide(currentPrice, bvps));
   const ps = round2(safeDivide(marketCap, revenue));
@@ -153,16 +176,29 @@ function calcValuation(inc, incPrev, bs, cf, ks, currentPrice, marketCap, curren
   const evEbitda = round2(safeDivide(ev, ebitda));
   const fcfYield = round2(safeDivide(fcf, marketCap) != null ? safeDivide(fcf, marketCap) * 100 : null);
 
-  // PEG: P/E divided by EPS growth rate
+  // PEG: C/Z podzielone przez tempo wzrostu EPS. Schodzi z `pe` sam, bo liczy się tylko
+  // przy `pe != null` — ale ma własną pułapkę. Gdy **poprzedni** rok zamknął się stratą,
+  // `(eps − epsPrev) / |epsPrev|` wychodzi dodatnie z samego wyjścia ze straty: przy
+  // −1,00 → +0,10 daje to „wzrost 110%", choć zysk jest dziesięciokrotnie mniejszy niż
+  // strata, od której liczymy. PEG z takiego mianownika mówi o odbiciu, nie o tempie
+  // wzrostu, więc też idzie na „n/m". Warunek: oba EPS-y dodatnie.
   let peg = null;
-  if (pe != null && inc?.eps != null && incPrev?.eps != null && incPrev.eps !== 0) {
-    const epsGrowth = (inc.eps - incPrev.eps) / Math.abs(incPrev.eps) * 100;
-    if (epsGrowth > 0) {
-      peg = round2(safeDivide(pe, epsGrowth));
+  const epsNow = inc?.eps ?? null;
+  const epsPrev = incPrev?.eps ?? null;
+  if (notMeaningful.pe) {
+    notMeaningful.peg = 'loss';
+  } else if (pe != null && epsNow != null && epsPrev != null) {
+    if (epsPrev > 0) {
+      const epsGrowth = (epsNow - epsPrev) / epsPrev * 100;
+      if (epsGrowth > 0) {
+        peg = round2(safeDivide(pe, epsGrowth));
+      }
+    } else {
+      notMeaningful.peg = 'rebound';
     }
   }
 
-  return { pe, forwardPe, pb, ps, evEbitda, peg, fcfYield };
+  return { pe, forwardPe, pb, ps, evEbitda, peg, fcfYield, notMeaningful };
 }
 
 function calcDebtAndLiquidity(inc, bs, cf, bank) {
@@ -208,16 +244,35 @@ function calcDividend(cf, inc, ks, marketCap, currencyMismatch = false) {
   return { dividendYield, payoutRatio };
 }
 
+/**
+ * Dynamika rok do roku. **Tempo wzrostu liczymy tylko od bazy dodatniej.**
+ *
+ * `(bieżące − poprzednie) / |poprzednie|` przy poprzednim roku na stracie mierzy wyjście
+ * ze straty, nie wzrost: Pepco ma tak „wzrost zysku netto +76%", mając **nadal stratę**
+ * (marża netto −3,89%) — strata po prostu zmalała. JSW ma „+14,19%" przy marży netto −66%.
+ * Oba wchodziły do oceny kondycji jako punkty za wzrost, czyli ocena nagradzała mniejszą
+ * stratę tak samo jak zysk. Przy ujemnej bazie wynik idzie na `null` z powodem `rebound`,
+ * żeby ekran mógł napisać „n/m", a nie „—" (P8+D10e).
+ *
+ * Spadek **w** stratę zostaje liczbą: baza jest dodatnia, więc „−150%" to prawdziwy spadek.
+ */
 function calcGrowth(inc, incPrev) {
-  function yoyGrowth(current, previous) {
-    if (current == null || previous == null || previous === 0) return null;
-    return round2((current - previous) / Math.abs(previous) * 100);
+  const notMeaningful = {};
+
+  function yoyGrowth(key, current, previous) {
+    if (current == null || previous == null) return null;
+    if (previous <= 0) {
+      notMeaningful[key] = 'rebound';
+      return null;
+    }
+    return round2((current - previous) / previous * 100);
   }
 
   return {
-    revenueGrowthYoY: yoyGrowth(inc?.revenue, incPrev?.revenue),
-    netIncomeGrowthYoY: yoyGrowth(inc?.netIncome, incPrev?.netIncome),
-    epsGrowthYoY: yoyGrowth(inc?.eps, incPrev?.eps),
+    revenueGrowthYoY: yoyGrowth('revenueGrowthYoY', inc?.revenue, incPrev?.revenue),
+    netIncomeGrowthYoY: yoyGrowth('netIncomeGrowthYoY', inc?.netIncome, incPrev?.netIncome),
+    epsGrowthYoY: yoyGrowth('epsGrowthYoY', inc?.eps, incPrev?.eps),
+    notMeaningful,
   };
 }
 
@@ -267,6 +322,204 @@ const RATIO_META = {
  */
 export function getRatioMeta(ratioKey) {
   return RATIO_META[ratioKey] || null;
+}
+
+// --- Ocena kondycji (P8+D10e) ---
+
+/**
+ * Pasma, którymi karty Przeglądu opisują pojedynczy wskaźnik.
+ *
+ * **To konwencja StockView, nie wyliczona średnia indeksu ani norma rynkowa.** Wcześniej
+ * karta C/Z pisała „Poniżej średniej WIG20" i podpowiadała w podpowiedzi „dla WIG20 średnia
+ * to ok. 12–15" — żadnej średniej WIG20 nie liczymy, więc było to zdanie bez pokrycia
+ * w danych. Liczby zostały, nazwa źródła się zmieniła: granice pasm są nasze i tak są
+ * podpisane. Trzymamy je tutaj, żeby ekran i opis metodologii brały je z jednego miejsca.
+ */
+export const CARD_BANDS = {
+  pe: [12, 20],
+  pb: [1.5],
+  roe: [8, 15],
+  dividendYield: [1, 4],
+};
+
+/**
+ * Progi oceny kondycji — również **konwencja StockView**. Żaden z nich nie jest cytatem
+ * ze standardu rachunkowości, rekomendacji nadzoru ani wyliczenia z GPW; są dobrane tak,
+ * by oddzielić wartości typowe dla dużej spółki giełdowej od skrajnych, i mogą się zmienić.
+ * Tam, gdzie próg miałby konkretne źródło, stałoby ono tutaj w komentarzu.
+ *
+ * Czego tu **nie ma**:
+ * - **bloku wyceny** — C/Z, C/WK i EV/EBITDA nie wchodzą do oceny kondycji. „Tanio" nie jest
+ *   cechą finansów spółki, tylko zdaniem o cenie, a takiego zdania nie wydajemy
+ *   (`docs/VISION.md`, Zasady 1 i 2). Przy okazji znika z oceny cały problem walutowy z D9,
+ *   bo wszystkie wskaźniki poniżej dzielą walutę przez tę samą walutę;
+ * - **płynności szybkiej** — `quickRatio` liczymy jako `aktywa obrotowe × 0,7`, czyli
+ *   z założeniem, że zapasy to 30% aktywów obrotowych. Ten mnożnik jest zmyślony, a nie
+ *   wzięty z bilansu, więc nie punktujemy nim niczego. W zakładce Wskaźniki zostaje, bo tam
+ *   jest podpisany własną definicją.
+ */
+export const HEALTH_CRITERIA = {
+  profitability: {
+    weight: 30,
+    group: 'profitability',
+    metrics: [
+      { key: 'roe', low: 5, mid: 10, high: 15 },
+      { key: 'netMargin', low: 3, mid: 8, high: 15 },
+      { key: 'operatingMargin', low: 5, mid: 10, high: 20 },
+    ],
+  },
+  leverage: {
+    weight: 25,
+    group: 'debtAndLiquidity',
+    metrics: [
+      { key: 'debtToEquity', low: 0.3, mid: 0.7, high: 1.5, invert: true, negative: 'worst' },
+      { key: 'netDebtToEbitda', low: 1, mid: 3, high: 5, invert: true, negative: 'skip' },
+      { key: 'interestCoverage', low: 2, mid: 5, high: 10 },
+    ],
+  },
+  growth: {
+    weight: 20,
+    group: 'growth',
+    metrics: [
+      { key: 'revenueGrowthYoY', low: 0, mid: 5, high: 15 },
+      { key: 'netIncomeGrowthYoY', low: 0, mid: 10, high: 25 },
+    ],
+  },
+  liquidity: {
+    weight: 15,
+    group: 'debtAndLiquidity',
+    metrics: [
+      { key: 'currentRatio', low: 1.0, mid: 1.5, high: 2.0 },
+    ],
+  },
+  efficiency: {
+    weight: 10,
+    group: 'profitability',
+    metrics: [
+      // Progi ROA 2/4/8% są skalą spółki niefinansowej. Bank przy tej samej skali dostaje
+      // najniższe pasmo z samej swojej budowy — PKO BP ma ROA 1,83% przy ROE 18,3% — bo
+      // aktywa banku to przede wszystkim udzielone kredyty. **Nie podstawiamy tu własnych
+      // progów bankowych**, bo nie mamy dla nich źródła, więc dla banku wskaźnik wypada
+      // z oceny tak samo jak brak danej. `roic` i tak jest dla banków `null` (brak zysku
+      // operacyjnego), więc cały obszar Efektywność znika im z oceny razem ze swoją wagą —
+      // i jest to widoczne na ekranie w linijce o liczbie obszarów.
+      { key: 'roa', low: 2, mid: 4, high: 8, skipForBank: true },
+      { key: 'roic', low: 4, mid: 8, high: 12 },
+    ],
+  },
+};
+
+export const HEALTH_LABEL_BANDS = [
+  { max: 25, label: 'critical' },
+  { max: 40, label: 'weak' },
+  { max: 60, label: 'neutral' },
+  { max: 75, label: 'good' },
+  { max: Infinity, label: 'strong' },
+];
+
+/**
+ * Punkty za jeden wskaźnik: 100 / 70 / 40 / 10, albo `null`, gdy danej nie ma.
+ *
+ * **`null` nigdy nie zamienia się w punkty.** To klasa błędu D4a: karta „Dynamika
+ * przychodów" dostawała wcześniej 50 punktów za nieobecną daną, czyli połowę za to, że
+ * czegoś nie wiemy — a połowa punktów to już ocena.
+ *
+ * Wartość **ujemna** przy wskaźniku „im mniej, tym lepiej" nie jest najlepszym wynikiem,
+ * choć zwykłe `value <= low` tak by ją potraktowało:
+ * - `debtToEquity < 0` może wyjść tylko z **ujemnego kapitału własnego** (dług ujemny nie
+ *   istnieje), czyli z sytuacji skrajnie złej → najniższe pasmo (`negative: 'worst'`);
+ * - `netDebtToEbitda < 0` ma **dwie** możliwe przyczyny o przeciwnym znaczeniu: nadwyżkę
+ *   gotówki nad długiem (dobrze) albo ujemną EBITDA (źle). Z samego ilorazu nie wiadomo
+ *   która, więc wskaźnik wypada z oceny (`negative: 'skip'`) — tak samo jak brak danej.
+ *   Zgadywanie w którąkolwiek stronę byłoby oceną wziętą z niczego.
+ */
+function scoreMetric(value, metric) {
+  if (value == null) return null;
+  if (metric.invert) {
+    if (value < 0) return metric.negative === 'worst' ? 10 : null;
+    if (value <= metric.low) return 100;
+    if (value <= metric.mid) return 70;
+    if (value <= metric.high) return 40;
+    return 10;
+  }
+  if (value >= metric.high) return 100;
+  if (value >= metric.mid) return 70;
+  if (value >= metric.low) return 40;
+  return 10;
+}
+
+/**
+ * Ocena kondycji z **bieżących** wskaźników (`calculateAllRatios` na danych poziomu 1/2).
+ * Nic tu nie pochodzi z `src/data/wig20.js` — zaszyte `ratios` policzono zaszytą ceną,
+ * a zaszyte `financials` mają kolumnę prognozy „2024E" (P8+D10e).
+ *
+ * @param {object|null} allRatios wynik `calculateAllRatios`
+ * @returns {{score: number|null, label: string|null, categories: object, usedWeight: number}}
+ *   `score: null` znaczy „nie ma z czego ocenić" — **nie zero i nie 50**. Zero wygląda
+ *   na najgorszą możliwą ocenę, 50 na przeciętną; obie są werdyktem o spółce, o której
+ *   nie wiemy nic (P1 §3).
+ */
+/**
+ * Wartość wskaźnika **wzięta tak, jak ją widzi ocena** — razem z trzema powodami, dla
+ * których wskaźnik może z oceny wypaść. Jedna funkcja, bo karta Przeglądu i sama ocena
+ * muszą czytać dokładnie to samo: gdyby karta liczyła kolor z surowej liczby, a ocena
+ * pomijała ją jako nieokreśloną, na ekranie stałby kolor bez punktów za nim.
+ */
+function metricValue(allRatios, def, metric) {
+  if (metric.skipForBank && allRatios?.isBank) return null;
+  if (allRatios?.notMeaningful?.[metric.key]) return null;
+  return allRatios?.[def.group]?.[metric.key] ?? null;
+}
+
+/**
+ * Punkty za **jeden** wskaźnik z podanego obszaru — dla kart Przeglądu, które pokazują
+ * jedną liczbę, a plakietkę i pasek biorą ze średniej całego obszaru. Bez tego kolor liczby
+ * szedłby za średnią: ROE −107,8% (Pepco) stałoby na pomarańczowo, gdyby marża operacyjna
+ * podciągnęła średnią rentowności do środka pasma.
+ */
+export function scoreHealthMetric(area, key, allRatios) {
+  const def = HEALTH_CRITERIA[area];
+  const metric = def?.metrics.find(m => m.key === key);
+  if (!metric) return null;
+  return scoreMetric(metricValue(allRatios, def, metric), metric);
+}
+
+export function calculateHealth(allRatios) {
+  const categories = {};
+  let weighted = 0;
+  let usedWeight = 0;
+
+  for (const [name, def] of Object.entries(HEALTH_CRITERIA)) {
+    const scores = def.metrics
+      .map(m => scoreMetric(metricValue(allRatios, def, m), m))
+      .filter(sc => sc != null);
+    const score = scores.length
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : null;
+    categories[name] = {
+      score,
+      weight: def.weight,
+      used: scores.length,
+      total: def.metrics.length,
+    };
+    if (score != null) {
+      weighted += score * def.weight;
+      usedWeight += def.weight;
+    }
+  }
+
+  if (usedWeight === 0) {
+    return { score: null, label: null, categories, usedWeight: 0 };
+  }
+
+  // Wagi obszarów bez danych **nie przechodzą** na pozostałe jako punkty — dzielimy przez
+  // sumę wag tych obszarów, które mamy. `usedWeight` wraca na wierzch, żeby ekran mógł
+  // powiedzieć, z jakiej części oceny ta liczba pochodzi: 82/100 z jednego obszaru i 82/100
+  // z pięciu to nie to samo twierdzenie.
+  const score = Math.round(weighted / usedWeight);
+  const label = HEALTH_LABEL_BANDS.find(b => score < b.max).label;
+
+  return { score, label, categories, usedWeight };
 }
 
 // --- Health Score V2 ---
