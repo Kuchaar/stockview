@@ -79,15 +79,20 @@ Screener i Porównywarka — poza zakresem tej rundy. CI dla `09f98bd`: `build` 
 (dwa przebiegi), GitGuardian i Cloudflare zielone — status dla **nowej głowy** odpytany
 po pushu tego wpisu.
 
-**Dwa pytania do Kamila.** (1) Czy `calcValuation` ma zwracać `null` dla C/Z przy `eps ≤ 0`,
-żeby zakładka Wskaźniki przestała pokazywać „−0.6x"? To zmiana formuły, czyli **ryzyko
-wysokie** i osobne zadanie — dlatego tutaj jej nie ma. (2) Czy potwierdzasz konsekwencję
-kolejności opisaną wyżej (P8+D10e liczy ocenę z `currentRatios`, nie z `ratios.json`)?
+**Dwie decyzje Kamila, tego samego dnia.** (1) **C/Z ma być puste przy `eps ≤ 0`, i PEG też** —
+tak robią serwisy finansowe, które ujemny mnożnik oznaczają „n/m" (*not meaningful*), bo
+o wycenie nie mówi nic. **Nie w tym PR-ze:** to zmiana `calcValuation`, czyli formuły, czyli
+ryzyko wysokie — wchodzi do **P8+D10e**, które i tak jest następne, też jest wysokiego ryzyka
+i dostanie rundę Codexa. Jedna runda zamiast dwóch oszczędza limit. Zakres dopisany do zadania
+razem z pułapką PEG (wyjście ze straty daje dodatni `epsGrowth`, więc PEG robi się z odbicia)
+i z warunkiem, żeby „n/m" na ekranie było odróżnialne od „—" przy braku danych.
+(2) **Kolejność potwierdzona:** P8+D10e przed D10a, a ocena kondycji liczy się na razie
+z bieżących wskaźników strony (`currentRatios`) i przechodzi na `ratios.json` dopiero w D10c.
 
-Następne: decyzja Kamila o merge'u PR #10 — w tym o karcie dywidendy i o dwóch pytaniach
-wyżej. Potem **P8+D10e** (sprzeczność „Rentowność 9,2%" vs „ROE −107,8%" na jednym ekranie
-Pepco; na JSW „−3,2%" vs „−203,2%"), dalej **D10a**, **D10b**, **D10c**, potem Bramka P
-od P1. Import sprawozdań za III kwartał: początek grudnia.
+Następne: decyzja Kamila o merge'u PR #10 — zostaje już tylko ona i karta dywidendy. Potem
+**P8+D10e** (sprzeczność „Rentowność 9,2%" vs „ROE −107,8%" na jednym ekranie Pepco; na JSW
+„−3,2%" vs „−203,2%"), **w tym C/Z i PEG jako „n/m" przy stracie**. Dalej **D10a**, **D10b**,
+**D10c**, potem Bramka P od P1. Import sprawozdań za III kwartał: początek grudnia.
 
 ## 2026-10-24 — D10d: nagłówek i Przegląd na bieżących wskaźnikach, opis dla Google bez liczb
 

@@ -314,14 +314,31 @@ zadaniu, razem z konsekwencją, że `ratios.json` powstaje dopiero w D10b.
   ale nadal mówi „atrakcyjna wycena".
   **Idzie jako następne, przed D10a (decyzja Kamila 2026-10-24)** — po D10d na jednym ekranie
   Pepco stoją „Rentowność 9,2%" (zaszyte, zasila ocenę 40/100) i „ROE −107,8%" (bieżące),
-  a sprzeczność na ekranie waży więcej niż kolejność w roadmapie. **Konsekwencja do
-  potwierdzenia przez Kamila:** `ratios.json` powstaje dopiero w D10b, więc przy tej
-  kolejności ocena liczy się z `calculateAllRatios` na danych poziomu 1/2 (czyli
-  z `currentRatios`, które `StockPage` już ma), a na `ratios.json` przechodzi w D10c.
+  a sprzeczność na ekranie waży więcej niż kolejność w roadmapie. **Potwierdzone przez Kamila
+  2026-10-24:** `ratios.json` powstaje dopiero w D10b, więc przy tej kolejności ocena liczy się
+  z `calculateAllRatios` na danych poziomu 1/2 (czyli z `currentRatios`, które `StockPage` już
+  ma), a na `ratios.json` przechodzi w D10c.
   Zakres z obu zadań: ocena z **bieżących** sprawozdań, **bez bloku wyceny** (więc problem
   walutowy jej nie dotyczy), tekst werdyktu bez „atrakcyjnej wyceny" w `HealthScore.jsx:191-192`
   i `StockPage.jsx:802`, progi w zakładce wyceny opisane jako konwencja z podanym źródłem
   zamiast „✓", zasada językowa dopisana do `AGENTS.md`.
+  **Plus C/Z i PEG przy stracie — „n/m", nie liczba** (decyzja Kamila 2026-10-24, z recenzji
+  PR #10). To zmiana formuły, czyli ryzyko wysokie, a P8+D10e i tak dostaje rundę Codexa —
+  jedna runda zamiast dwóch. `calcValuation` ma zwracać `pe: null` przy `eps ≤ 0`
+  (`ratioCalculator.js:148`); dziś liczy np. −0,56 dla JSW, −3,74 dla Cyfrowego Polsatu
+  i −10,72 dla PGE. Konwencja z serwisów finansowych: ujemne C/Z oznacza się jako **„n/m"
+  (not meaningful)**, bo o wycenie nie mówi nic.
+  **PEG schodzi z `pe` sam** (`:157-163` liczy go tylko przy `pe != null`), ale ma własną
+  pułapkę do zamknięcia przy okazji: gdy **poprzedni** rok był stratą, a bieżący zyskiem,
+  `epsGrowth` wychodzi dodatnie z wyjścia ze straty i PEG robi się z odbicia, nie ze wzrostu.
+  Warunek: PEG tylko gdy `inc.eps > 0` **i** `incPrev.eps > 0`.
+  **Na ekranie „n/m" musi być odróżnialne od „—".** Dziś `MetricsPanel` pokazuje `null` jako
+  „—", czyli tak samo jak brak danych i jak wyłączenie przez osłonę walutową z D9 — trzy różne
+  rzeczy pod jednym znakiem. Karta Przeglądu ma już na to zdanie („Spółka ze stratą — C/Z
+  nieokreślone", `stock.peNotMeaningful`); zakładka Wskaźniki ma dostać to samo rozróżnienie.
+  **Nie wolno przy tym wskrzesić** `calculateHealthScoreV2`: jego blok wyceny punktuje
+  `scoreRange(v.pe, 8, 15, 25, true)`, więc ujemne C/Z dostaje tam **100 punktów** — to martwy
+  kod z listy „Później", ale gdyby wrócił jako podstawa nowej oceny, wracałby z tą wadą.
   **Trzy konkretne wady do naprawienia w `HealthGrid`** (numery linii po PR #10):
   karta „Dynamika przychodów" liczy się z zaszytych `stock.financials.annual.revenue`
   (`StockPage.jsx:455`) i porównuje rok raportowany z **prognozą „2024E"** — to P1 §4;
@@ -334,7 +351,9 @@ zadaniu, razem z konsekwencją, że `ratios.json` powstaje dopiero w D10b.
   Kruka). To opisy, nie oceny.
   *Gotowe, gdy:* w `src/` nie ma słów „atrakcyjn", „kupuj", „niedowartościow" w tekstach dla
   użytkownika **poza** tymi dwoma opisami działalności; każda ocena prowadzi do opisu
-  metodologii; **żadna część oceny nie pochodzi z `wig20.js`**; zrzuty z podglądu w obu
+  metodologii; **żadna część oceny nie pochodzi z `wig20.js`**; `calculateAllRatios` zwraca
+  `pe: null` i `peg: null` dla JSW, Cyfrowego Polsatu i PGE, a na ekranie stoi tam „n/m"
+  z wyjaśnieniem, **nie** to samo „—" co przy braku danych; zrzuty z podglądu w obu
   motywach w opisie PR-a.
 ---
 
