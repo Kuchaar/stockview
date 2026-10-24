@@ -2,15 +2,13 @@ import { useParams, Link } from 'react-router-dom';
 import { useState, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLang } from '../context/LangContext';
-import { useTheme } from '../context/ThemeContext';
 import {
   wig20Companies, sectors, formatPrice, formatPercent, formatNumber,
-  calculateHealthScore, calculateSubScores,
 } from '../data/wig20';
 import useStockData from '../hooks/useStockData';
 import { SITE_URL } from '../config/site';
 import useFinancials from '../hooks/useFinancials';
-import { calculateAllRatios } from '../data/ratioCalculator';
+import { calculateAllRatios, calculateHealth, scoreHealthMetric, CARD_BANDS } from '../data/ratioCalculator';
 import { toLegacyTable } from '../data/financialSchema';
 import { buildStockJsonLd } from '../data/structuredData';
 import TradingViewChart from '../components/TradingViewChart';
@@ -21,6 +19,7 @@ import IncomeStatement from '../components/IncomeStatement';
 import CashFlowStatement from '../components/CashFlowStatement';
 import MetricsPanel from '../components/MetricsPanel';
 import HealthScore from '../components/HealthScore';
+import HealthMethodology from '../components/HealthMethodology';
 import StockChart from '../components/StockChart';
 import CompanyProfile from '../components/CompanyProfile';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
@@ -49,7 +48,6 @@ const FINANCIAL_SUB_TABS = [
 export default function StockPage() {
   const { id } = useParams();
   const { t, lang } = useLang();
-  const { dark } = useTheme();
   const [tab, setTab] = useState('overview');
   const [financialSubTab, setFinancialSubTab] = useState('overview');
   const [chartSource, setChartSource] = useState('stockview');
@@ -96,6 +94,12 @@ export default function StockPage() {
   // **−734 mln EUR** (uwaga Kamila z podglądu PR #10).
   const overviewTable = useMemo(() => toLegacyTable(currentFinancials), [currentFinancials]);
 
+  // Ocena kondycji liczona z `currentRatios`, czyli z tych samych bieżących danych, co
+  // reszta strony — **nic** w niej nie pochodzi z `wig20.js` (P8+D10e). Wcześniej szła
+  // z `calculateHealthScore(stock.ratios)`, więc na jednym ekranie Pepco stały „Rentowność
+  // 9,2%" (zaszyte, zasilały ocenę 40/100) i „ROE −107,8%" (bieżące).
+  const health = useMemo(() => calculateHealth(currentRatios), [currentRatios]);
+
   if (!stock) {
     return (
       <div className="text-center py-20">
@@ -112,7 +116,6 @@ export default function StockPage() {
 
   const isUp = stock.changePercent >= 0;
   const sectorName = sectors[lang]?.[stock.sector] || stock.sector;
-  const health = calculateHealthScore(stock.ratios);
 
   const pageTitle = `${stock.name} (${stock.ticker}) — analiza, wykres, wskaźniki | StockView`;
   // Bez ani jednej liczby wskaźnikowej: opis trafia do snippetu w wyszukiwarce, czyli do
@@ -273,7 +276,6 @@ export default function StockPage() {
             overviewTable={overviewTable}
             financialsLoading={financialsLoading}
             lang={lang}
-            dark={dark}
             health={health}
             t={t}
           />
@@ -403,7 +405,7 @@ export default function StockPage() {
         {tab === 'health' && (
           <div className="card">
             <h2 className="section-title mb-6">{t('stock.health')}</h2>
-            <HealthScore ratios={stock.ratios} />
+            <HealthScore health={health} loading={financialsLoading} />
           </div>
         )}
       </motion.div>
@@ -417,12 +419,10 @@ export default function StockPage() {
 
 /* ─── Overview tab ─────────────────────────────────────────────────────────── */
 
-function OverviewTab({ stock, currentRatios, overviewTable, financialsLoading, lang, dark, health, t }) {
-  const subs = calculateSubScores(stock.ratios);
-
+function OverviewTab({ stock, currentRatios, overviewTable, financialsLoading, lang, health, t }) {
   return (
     <div className="space-y-10">
-      <HealthGrid stock={stock} lang={lang} dark={dark} health={health} subs={subs} />
+      <HealthGrid ratios={currentRatios} health={health} loading={financialsLoading} lang={lang} t={t} />
       <KeyRatiosSection stock={stock} ratios={currentRatios} lang={lang} t={t} />
       <FinancialHighlights financials={overviewTable} loading={financialsLoading} lang={lang} t={t} />
       <CtaBanner lang={lang} ticker={stock.ticker} stockId={stock.id} />
@@ -432,8 +432,18 @@ function OverviewTab({ stock, currentRatios, overviewTable, financialsLoading, l
 
 /* ─── Health grid ───────────────────────────────────────────────────────────── */
 
-function HealthGrid({ stock, lang, dark, health, subs }) {
-  const { score, label } = health;
+// Karty biorą liczby z `ratios` (`calculateAllRatios` na bieżących sprawozdaniach), a nie
+// z zaszytych `stock.ratios` i `stock.financials` (P8+D10e). Cztery wady, które tu były:
+// „Dynamika przychodów" liczyła się z `stock.financials.annual.revenue`, czyli porównywała
+// rok raportowany z kolumną prognozy „2024E" (P1 §4); „Rentowność", „Zadłużenie"
+// i „Płynność" czytały zaszyte `stock.ratios`; a brak danych o dynamice dostawał 50 punktów,
+// czyli połowę za nieobecną daną (klasa D4a, P1 §3).
+//
+// Liczba na karcie i plakietka obok niej mówią o dwóch różnych rzeczach i tak są kolorowane:
+// liczba — własnym progiem tego wskaźnika, plakietka i pasek — średnią całego obszaru, z której
+// liczy się ocena.
+function HealthGrid({ ratios, health, loading, lang, t }) {
+  const { score, label, categories } = health;
 
   const accentColor =
     label === 'strong' || label === 'good' ? '#22c55e'
@@ -441,180 +451,200 @@ function HealthGrid({ stock, lang, dark, health, subs }) {
     : '#ef4444';
 
   const circumference = 2 * Math.PI * 63;
-  const dashOffset = circumference * (1 - score / 100);
+  const dashOffset = circumference * (1 - (score ?? 0) / 100);
 
-  const healthLabelText = {
-    strong: lang === 'pl' ? 'Bardzo dobra kondycja' : 'Very strong health',
-    good:   lang === 'pl' ? 'Dobra kondycja'        : 'Good health',
-    neutral: lang === 'pl' ? 'Neutralna kondycja'   : 'Neutral health',
-    weak:   lang === 'pl' ? 'Słaba kondycja'        : 'Weak health',
-    critical: lang === 'pl' ? 'Krytyczna kondycja'  : 'Critical health',
-  }[label];
-
-  // Revenue growth from last two annual data points
-  const rev = stock.financials?.annual?.revenue || [];
-  const revenueGrowth =
-    rev.length >= 2 && rev[rev.length - 2]
-      ? ((rev[rev.length - 1] - rev[rev.length - 2]) / rev[rev.length - 2]) * 100
-      : null;
+  const roe = ratios?.profitability?.roe ?? null;
+  const debtToEquity = ratios?.debtAndLiquidity?.debtToEquity ?? null;
+  const currentRatio = ratios?.debtAndLiquidity?.currentRatio ?? null;
+  const revenueGrowth = ratios?.growth?.revenueGrowthYoY ?? null;
 
   const detailCards = [
     {
-      label: lang === 'pl' ? 'Rentowność' : 'Profitability',
-      value: stock.ratios.roe != null ? `${stock.ratios.roe.toFixed(1)}%` : '—',
-      explain: lang === 'pl'
-        ? 'ROE — ile zysku generuje każda złotówka kapitału własnego. Powyżej 10% to dobry wynik.'
-        : 'ROE — profit generated per unit of equity. Above 10% is a good result.',
-      score: subs.profitability,
-      barWidth: Math.min(subs.profitability, 100),
+      label: t('stock.profitability'),
+      value: roe != null ? `${roe.toFixed(1)}%` : '—',
+      explain: t('stock.explain.roe'),
+      valueScore: scoreHealthMetric('profitability', 'roe', ratios),
+      score: categories.profitability?.score ?? null,
     },
     {
-      label: lang === 'pl' ? 'Zadłużenie' : 'Leverage',
-      value: stock.ratios.debtToEquity != null ? stock.ratios.debtToEquity.toFixed(2) : '—',
-      explain: lang === 'pl'
-        ? 'Dług/Kapitał — ile długu przypada na każdą złotówkę kapitału. Poniżej 0,5 to bezpieczny poziom.'
-        : 'Debt/Equity — debt per unit of capital. Below 0.5 is a safe level.',
-      score: subs.leverage,
-      barWidth: Math.min(subs.leverage, 100),
+      label: t('stock.leverage'),
+      value: debtToEquity != null ? debtToEquity.toFixed(2) : '—',
+      explain: t('stock.explain.debtToEquity'),
+      valueScore: scoreHealthMetric('leverage', 'debtToEquity', ratios),
+      score: categories.leverage?.score ?? null,
     },
     {
-      label: lang === 'pl' ? 'Dynamika przychodów' : 'Revenue Growth',
+      label: t('stock.revenueGrowth'),
       value: revenueGrowth != null
         ? `${revenueGrowth >= 0 ? '+' : ''}${revenueGrowth.toFixed(1)}%`
         : '—',
-      explain: lang === 'pl'
-        ? 'Zmiana przychodów rok do roku. Pokazuje czy firma rośnie czy kurczy się.'
-        : 'Year-over-year revenue change. Shows whether the company is growing or shrinking.',
-      score: revenueGrowth != null
-        ? (revenueGrowth > 10 ? 80 : revenueGrowth > 0 ? 55 : 25)
-        : 50,
-      barWidth: revenueGrowth != null
-        ? Math.min(Math.max(revenueGrowth + 50, 5), 100)
-        : 50,
+      explain: t('stock.explain.revenueGrowth'),
+      valueScore: scoreHealthMetric('growth', 'revenueGrowthYoY', ratios),
+      score: categories.growth?.score ?? null,
     },
     {
-      label: lang === 'pl' ? 'Płynność' : 'Liquidity',
-      value: stock.ratios.currentRatio != null ? stock.ratios.currentRatio.toFixed(2) : '—',
-      explain: lang === 'pl'
-        ? 'Current Ratio — czy firma jest w stanie spłacić bieżące zobowiązania. Powyżej 1,5 to komfort.'
-        : 'Current Ratio — ability to cover short-term obligations. Above 1.5 is comfortable.',
-      score: subs.liquidity,
-      barWidth: Math.min(subs.liquidity, 100),
+      label: t('stock.liquidity'),
+      value: currentRatio != null ? currentRatio.toFixed(2) : '—',
+      explain: t('stock.explain.currentRatio'),
+      valueScore: scoreHealthMetric('liquidity', 'currentRatio', ratios),
+      score: categories.liquidity?.score ?? null,
     },
   ];
 
-  const badgeFor = s =>
-    s >= 65
-      ? { text: lang === 'pl' ? 'Dobra' : 'Good',       cls: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 dark:border-green-400/20' }
-      : s >= 40
-        ? { text: lang === 'pl' ? 'Umiarkowana' : 'Moderate', cls: 'bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-400/20' }
-        : { text: lang === 'pl' ? 'Słaba' : 'Weak',      cls: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-400/20' };
+  // Brak danych nie dostaje koloru ani szerokości paska — szary napis „Brak danych" mówi
+  // prawdę, a pasek wypełniony do połowy mówiłby „przeciętnie".
+  const badgeFor = sc =>
+    sc == null
+      ? { text: t('stock.band.noData'), cls: 'bg-surface-200/60 text-surface-500 border-surface-300/50 dark:bg-surface-800/60 dark:text-surface-400 dark:border-surface-700/50' }
+      : sc >= 65
+        ? { text: t('stock.band.good'), cls: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 dark:border-green-400/20' }
+        : sc >= 40
+          ? { text: t('stock.band.moderate'), cls: 'bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-400/20' }
+          : { text: t('stock.band.weak'), cls: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-400/20' };
 
-  const valueColorFor = s =>
-    s >= 65 ? 'text-green-600 dark:text-green-400'
-    : s >= 40 ? 'text-amber-600 dark:text-amber-400'
+  const valueColorFor = sc =>
+    sc == null ? 'text-surface-400 dark:text-surface-500'
+    : sc >= 65 ? 'text-green-600 dark:text-green-400'
+    : sc >= 40 ? 'text-amber-600 dark:text-amber-400'
     : 'text-red-600 dark:text-red-400';
 
-  const barColorFor = s =>
-    s >= 65 ? 'bg-green-500 dark:bg-green-400'
-    : s >= 40 ? 'bg-amber-500 dark:bg-amber-400'
+  const barColorFor = sc =>
+    sc >= 65 ? 'bg-green-500 dark:bg-green-400'
+    : sc >= 40 ? 'bg-amber-500 dark:bg-amber-400'
     : 'bg-red-500 dark:bg-red-400';
 
   return (
     <div>
       <SectionHeader
         title={lang === 'pl' ? 'Kondycja finansowa' : 'Financial Health'}
-        sub={lang === 'pl' ? 'Ocena na podstawie ostatniego sprawozdania' : 'Based on latest financial report'}
+        sub={t('stock.healthBasis')}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-[268px_1fr] gap-4">
-        {/* Score ring */}
-        <div className="card flex flex-col items-center justify-center text-center py-8">
-          <div className="relative w-36 h-36 mb-4">
-            <svg viewBox="0 0 140 140" className="w-full h-full -rotate-90">
-              <circle
-                cx="70" cy="70" r="63"
-                fill="none"
-                className="stroke-surface-200 dark:stroke-surface-800"
-                strokeWidth="8"
-              />
-              <circle
-                cx="70" cy="70" r="63"
-                fill="none"
-                stroke={accentColor}
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                style={{ transition: 'stroke-dashoffset 1s ease' }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="font-mono font-bold text-[2.3rem] leading-none" style={{ color: accentColor }}>
-                {score}
-              </span>
-              <span className="text-xs text-surface-500 dark:text-surface-400">/100</span>
-            </div>
-          </div>
-          <div className="text-sm font-semibold mb-1.5" style={{ color: accentColor }}>
-            {healthLabelText}
-          </div>
-          <p className="text-xs text-surface-500 dark:text-surface-400 leading-relaxed max-w-[190px]">
-            {healthDescription(label, lang)}
+      {score == null ? (
+        <div className="card">
+          <p className="text-sm text-surface-500 dark:text-surface-400 leading-relaxed">
+            {loading ? t('stock.healthLoading') : t('stock.healthNoData')}
           </p>
         </div>
-
-        {/* 2×2 detail cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {detailCards.map((card, i) => {
-            const badge = badgeFor(card.score);
-            return (
-              <div
-                key={i}
-                className="card hover:border-surface-300/80 dark:hover:border-surface-700 transition-colors cursor-default"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-surface-600 dark:text-surface-400">{card.label}</span>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${badge.cls}`}>
-                    {badge.text}
-                  </span>
-                </div>
-                <div className={`font-mono font-bold text-2xl tracking-tight mb-1.5 ${valueColorFor(card.score)}`}>
-                  {card.value}
-                </div>
-                <p className="text-[11px] text-surface-500 dark:text-surface-400 leading-relaxed">{card.explain}</p>
-                <div className="h-1 bg-surface-200/70 dark:bg-surface-800/70 rounded-full mt-3 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${barColorFor(card.score)}`}
-                    style={{ width: `${card.barWidth}%` }}
-                  />
-                </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-[268px_1fr] gap-4">
+          {/* Score ring */}
+          <div className="card flex flex-col items-center justify-center text-center py-8">
+            <div className="relative w-36 h-36 mb-4">
+              <svg viewBox="0 0 140 140" className="w-full h-full -rotate-90">
+                <circle
+                  cx="70" cy="70" r="63"
+                  fill="none"
+                  className="stroke-surface-200 dark:stroke-surface-800"
+                  strokeWidth="8"
+                />
+                <circle
+                  cx="70" cy="70" r="63"
+                  fill="none"
+                  stroke={accentColor}
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={dashOffset}
+                  style={{ transition: 'stroke-dashoffset 1s ease' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-mono font-bold text-[2.3rem] leading-none" style={{ color: accentColor }}>
+                  {score}
+                </span>
+                <span className="text-xs text-surface-500 dark:text-surface-400">/100</span>
               </div>
-            );
-          })}
+            </div>
+            <div className="text-sm font-semibold mb-1.5" style={{ color: accentColor }}>
+              {t(`stock.healthLabel.${label}`)}
+            </div>
+            <p className="text-xs text-surface-500 dark:text-surface-400 leading-relaxed max-w-[190px]">
+              {t(`stock.healthDesc.${label}`)}
+            </p>
+          </div>
+
+          {/* 2×2 detail cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {detailCards.map((card, i) => {
+              const badge = badgeFor(card.score);
+              return (
+                <div
+                  key={i}
+                  className="card hover:border-surface-300/80 dark:hover:border-surface-700 transition-colors cursor-default"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium text-surface-600 dark:text-surface-400">{card.label}</span>
+                    {/* Plakietka nazywa ocenę **całego obszaru**, a liczba nad nią jest jednym
+                        wskaźnikiem z tego obszaru, więc mogą się rozchodzić: Dino ma ROE 18,0%
+                        (powyżej naszego progu 15%, liczba na zielono), a obszar Rentowność 60/100,
+                        bo marża netto i operacyjna są w środku pasma. Bez tej liczby przy plakietce
+                        rozejście wyglądałoby na błąd. Ta sama wartość stoi na paskach w zakładce
+                        Kondycja. */}
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${badge.cls}`}>
+                      {card.score == null ? badge.text : `${badge.text} · ${card.score}/100`}
+                    </span>
+                  </div>
+                  <div className={`font-mono font-bold text-2xl tracking-tight mb-1.5 ${valueColorFor(card.valueScore)}`}>
+                    {card.value}
+                  </div>
+                  <p className="text-[11px] text-surface-500 dark:text-surface-400 leading-relaxed">{card.explain}</p>
+                  <div className="h-1 bg-surface-200/70 dark:bg-surface-800/70 rounded-full mt-3 overflow-hidden">
+                    {card.score != null && (
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${barColorFor(card.score)}`}
+                        style={{ width: `${Math.min(card.score, 100)}%` }}
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      <HealthMethodology />
     </div>
   );
 }
 
 /* ─── Key ratios ────────────────────────────────────────────────────────────── */
 
+/**
+ * Opis pasma, w którym znalazła się wartość: „poniżej 12", „od 12 do 20", „powyżej 20".
+ *
+ * Zastępuje werdykty w rodzaju „Poniżej średniej WIG20" i „Solidna rentowność". Średniej
+ * WIG20 nigdzie nie liczymy, więc tamto zdanie nie miało pokrycia w danych; granice pasm
+ * są nasze i tak są podpisane (`CARD_BANDS`, opis w „Jak liczymy tę ocenę") — P8+D10e.
+ */
+function bandText(value, edges, percent, t, lang) {
+  const fmt = (v) => {
+    const n = lang === 'pl' ? String(v).replace('.', ',') : String(v);
+    return percent ? `${n}%` : n;
+  };
+  const last = edges[edges.length - 1];
+  if (value < edges[0]) return t('stock.band.below').replace('{v}', fmt(edges[0]));
+  if (edges.length === 1 || value >= edges[1]) return t('stock.band.above').replace('{v}', fmt(last));
+  return t('stock.band.between').replace('{a}', fmt(edges[0])).replace('{b}', fmt(edges[1]));
+}
+
 // `ratios` to bieżące wskaźniki z `calculateAllRatios` (poziom 1/2, z osłoną walutową)
 // albo `null`, gdy ich nie ma. Karty zostają w obu przypadkach, bo tłumaczą, czym jest
 // dany wskaźnik (Zasady 3 i 4 z VISION.md) — ale bez liczby i bez porównania ze średnią
 // WIG20, bo porównanie nieistniejącej liczby ze średnią to już wniosek z niczego (D10d).
+//
+// C/Z i C/WK **nie dostają koloru**. Zielone „niskie C/Z" byłoby zdaniem o cenie akcji,
+// a takich zdań nie wydajemy (`docs/VISION.md`, Zasady 1 i 2). ROE i stopa dywidendy kolor
+// mają, bo tam kierunek „lepiej/gorzej" dotyczy finansów spółki, nie jej wyceny (P8+D10e).
 function KeyRatiosSection({ stock, ratios, lang, t }) {
   const { financials } = stock;
 
   // C/Z nie większe od zera nie znaczy „tanio" — to znak straty. Mnożnik ceny do zysku
-  // jest określony tylko dla zysku dodatniego, więc przy stracie nie pokazujemy ani
-  // liczby, ani kontekstu „Poniżej średniej WIG20" w zielonym: `pe < 12` było prawdą
-  // także dla −3,7 (Cyfrowy Polsat), −0,6 (JSW) i −10,7 (PGE). Zamiast werdyktu idzie
-  // zdanie, że spółka ma stratę.
-  const rawPe = ratios?.valuation?.pe ?? null;
-  const peLoss = rawPe != null && rawPe <= 0;
-  const pe = peLoss ? null : rawPe;
+  // jest określony tylko dla zysku dodatniego, więc przy stracie `calcValuation` zwraca
+  // `pe: null` i wpis `notMeaningful.pe`, a karta zamiast werdyktu pisze, że spółka ma stratę.
+  const pe = ratios?.valuation?.pe ?? null;
+  const peLoss = ratios?.notMeaningful?.pe === 'loss';
   const pb = ratios?.valuation?.pb ?? null;
   const roe = ratios?.profitability?.roe ?? null;
   const dividendYield = ratios?.dividend?.dividendYield ?? null;
@@ -631,56 +661,36 @@ function KeyRatiosSection({ stock, ratios, lang, t }) {
     {
       name: lang === 'pl' ? 'C/Z (P/E)' : 'P/E Ratio',
       tooltip: lang === 'pl'
-        ? 'Cena/Zysk — ile lat zajęłoby odzyskanie inwestycji z samych zysków. Im niższe, tym „tańsza" spółka. Dla WIG20 średnia to ok. 12–15.'
-        : 'Price/Earnings — years to recoup investment from earnings alone. Lower = cheaper stock. WIG20 average ≈ 12–15.',
+        ? 'Cena/Zysk — ile lat zajęłoby odzyskanie inwestycji z samych zysków. Granice 12 i 20, którymi opisujemy wartość, są konwencją StockView, a nie wyliczoną średnią WIG20.'
+        : 'Price/Earnings — years to recoup the investment from earnings alone. The 12 and 20 boundaries we describe the value with are a StockView convention, not a computed WIG20 average.',
       value: pe != null ? pe.toFixed(1) : '—',
       context: peLoss
         ? t('stock.peNotMeaningful')
         : pe != null
-          ? (pe < 12
-              ? (lang === 'pl' ? 'Poniżej średniej WIG20' : 'Below WIG20 average')
-              : pe < 20
-                ? (lang === 'pl' ? 'Blisko średniej WIG20' : 'Near WIG20 average')
-                : (lang === 'pl' ? 'Powyżej średniej WIG20' : 'Above WIG20 average'))
+          ? bandText(pe, CARD_BANDS.pe, false, t, lang)
           : '—',
-      ctxCls: peLoss
-        ? 'text-red-500 dark:text-red-400'
-        : pe != null
-          ? (pe < 15 ? 'text-green-600 dark:text-green-400' : pe < 25 ? 'text-surface-400' : 'text-red-500 dark:text-red-400')
-          : 'text-surface-400',
+      ctxCls: peLoss ? 'text-red-500 dark:text-red-400' : 'text-surface-400',
       bars: niBars,
-      barColor: pe != null && pe < 15 ? '#22c55e' : '#60a5fa',
+      barColor: '#60a5fa',
     },
     {
       name: lang === 'pl' ? 'C/WK (P/BV)' : 'P/B Ratio',
       tooltip: lang === 'pl'
-        ? 'Cena/Wartość Księgowa — porównuje cenę rynkową z wartością majątku netto. Poniżej 1,0 oznacza, że rynek wycenia firmę poniżej jej majątku.'
-        : 'Price/Book — market price vs net asset value. Below 1.0 means trading below book value.',
+        ? 'Cena/Wartość Księgowa — porównuje cenę rynkową z wartością majątku netto. Poniżej 1,0 oznacza, że rynek wycenia firmę poniżej jej majątku. Granica 1,5, którą opisujemy wartość, jest konwencją StockView.'
+        : 'Price/Book — market price vs net asset value. Below 1.0 means trading below book value. The 1.5 boundary we describe the value with is a StockView convention.',
       value: pb != null ? pb.toFixed(2) : '—',
-      context: pb != null
-        ? (pb < 1.5
-            ? (lang === 'pl' ? 'Blisko wartości księgowej' : 'Near book value')
-            : (lang === 'pl' ? 'Premia do wartości księgowej' : 'Premium to book value'))
-        : '—',
-      ctxCls: pb != null && pb < 1.5
-        ? 'text-green-600 dark:text-green-400'
-        : 'text-surface-400',
+      context: pb != null ? bandText(pb, CARD_BANDS.pb, false, t, lang) : '—',
+      ctxCls: 'text-surface-400',
       bars: revBars,
       barColor: '#60a5fa',
     },
     {
       name: 'ROE',
       tooltip: lang === 'pl'
-        ? 'Return on Equity — ile zysku generuje firma z kapitału akcjonariuszy. Im wyższe, tym efektywniej firma wykorzystuje Twoje pieniądze. Powyżej 15% to świetny wynik.'
-        : 'Return on Equity — profit generated from shareholders\' capital. Higher is better. Above 15% is excellent.',
+        ? 'Return on Equity — ile zysku generuje firma z kapitału akcjonariuszy. Im wyższe, tym efektywniej firma wykorzystuje kapitał. Granice 8% i 15%, którymi opisujemy wartość, są konwencją StockView.'
+        : 'Return on Equity — profit generated from shareholders\' capital. Higher means capital is used more efficiently. The 8% and 15% boundaries we describe the value with are a StockView convention.',
       value: roe != null ? `${roe.toFixed(1)}%` : '—',
-      context: roe != null
-        ? (roe > 15
-            ? (lang === 'pl' ? 'Solidna rentowność' : 'Solid profitability')
-            : roe > 8
-              ? (lang === 'pl' ? 'Przeciętna rentowność' : 'Average profitability')
-              : (lang === 'pl' ? 'Niska rentowność' : 'Low profitability'))
-        : '—',
+      context: roe != null ? bandText(roe, CARD_BANDS.roe, true, t, lang) : '—',
       ctxCls: roe != null
         ? (roe > 15 ? 'text-green-600 dark:text-green-400' : roe > 8 ? 'text-surface-400' : 'text-red-500 dark:text-red-400')
         : 'text-surface-400',
@@ -690,18 +700,14 @@ function KeyRatiosSection({ stock, ratios, lang, t }) {
     {
       name: lang === 'pl' ? 'Stopa dywidendy' : 'Dividend Yield',
       tooltip: lang === 'pl'
-        ? 'Ile procent ceny akcji firma wypłaca rocznie w dywidendzie. Jak oprocentowanie lokaty, ale z akcji. 3–5% to solidna dywidenda na GPW.'
-        : 'Annual dividend as a percentage of share price. 3–5% is a solid yield on the WSE.',
+        ? 'Ile procent ceny akcji firma wypłaca rocznie w dywidendzie. Jak oprocentowanie lokaty, ale z akcji. Granice 1% i 4%, którymi opisujemy wartość, są konwencją StockView.'
+        : 'Annual dividend as a percentage of the share price. The 1% and 4% boundaries we describe the value with are a StockView convention.',
       value: dividendYield != null ? `${dividendYield.toFixed(1)}%` : '—',
-      // Brak danych nie jest tym samym co brak dywidendy: bez liczby nie piszemy „Brak /
-      // niska dywidenda”, bo to byłby wniosek wyciągnięty z nieobecnej danej.
-      context: dividendYield == null
-        ? '—'
-        : dividendYield > 4
-          ? (lang === 'pl' ? 'Wysoka dywidenda' : 'High dividend')
-          : dividendYield > 1
-            ? (lang === 'pl' ? 'Umiarkowana dywidenda' : 'Moderate dividend')
-            : (lang === 'pl' ? 'Brak / niska dywidenda' : 'None / low dividend'),
+      // Brak danych nie jest tym samym co brak dywidendy: bez liczby nie nazywamy pasma,
+      // bo to byłby wniosek wyciągnięty z nieobecnej danej.
+      context: dividendYield != null
+        ? bandText(dividendYield, CARD_BANDS.dividendYield, true, t, lang)
+        : '—',
       ctxCls: dividendYield != null && dividendYield > 3
         ? 'text-purple-600 dark:text-purple-400'
         : 'text-surface-400',
@@ -722,6 +728,10 @@ function KeyRatiosSection({ stock, ratios, lang, t }) {
           <RatioCard key={i} rc={rc} />
         ))}
       </div>
+
+      <p className="text-[11px] text-surface-500 dark:text-surface-400 mt-3 leading-relaxed">
+        {t('stock.keyRatiosBandsNote')}
+      </p>
     </div>
   );
 }
@@ -875,17 +885,6 @@ function SectionHeader({ title, sub }) {
       {sub && <div className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{sub}</div>}
     </div>
   );
-}
-
-function healthDescription(label, lang) {
-  const map = {
-    strong:   { pl: 'Spółka wykazuje silne fundamenty — wysoka rentowność, zdrowy bilans i atrakcyjna wycena.', en: 'Strong fundamentals — high profitability, healthy balance sheet, attractive valuation.' },
-    good:     { pl: 'Spółka jest w dobrej kondycji z większością wskaźników powyżej średniej.',                 en: 'Good financial health with most metrics above average.' },
-    neutral:  { pl: 'Kondycja neutralna — niektóre obszary wymagają uwagi.',                                   en: 'Neutral health — some areas need attention.' },
-    weak:     { pl: 'Spółka wykazuje słabości w kilku kluczowych obszarach finansowych.',                      en: 'Weaknesses in several key financial areas.' },
-    critical: { pl: 'Trudna sytuacja finansowa — należy zachować szczególną ostrożność.',                      en: 'Difficult financial situation — exercise extreme caution.' },
-  };
-  return map[label]?.[lang] ?? '';
 }
 
 /* ─── Stock prev/next navigation ───────────────────────────────────────────── */
