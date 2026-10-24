@@ -2,6 +2,103 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-24 — D10d: nagłówek i Przegląd na bieżących wskaźnikach, opis dla Google bez liczb
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+PR [#10](https://github.com/Kuchaar/stockview/pull/10), ryzyko **zwykłe**, gałąź
+`fix/d10d-biezace-wskazniki`. **Nie zmergowany** — czeka na recenzję w osobnej sesji
+i na decyzję Kamila.
+
+**Co zrobione.** Strona spółki podawała dwa różne C/Z na jednym ekranie: plakietka
+w nagłówku i karty Przeglądu czytały `stock.ratios` zaszyte w `wig20.js` (policzone zaszytą
+ceną), a zakładka Wskaźniki liczyła je na bieżąco. Teraz wszystkie trzy miejsca czytają
+**jeden** obiekt `currentRatios` z `calculateAllRatios`, na danych poziomu 1/2
+i z osłoną walutową z D9a.
+
+- **Poziom 3 wyłączony z tego wyliczenia.** Gdy `liveFinancials.source === 'hardcoded'`,
+  `currentRatios` jest `null`. Bieżąca cena nad zyskiem z nieznanego okresu wygląda na
+  liczbę świeżą, nie będąc nią. W praktyce poziom 3 jest nieosiągalny — wszystkie 24 spółki
+  mają `public/data/financials/{id}/data.json`.
+- **Plakietka w nagłówku znika** bez bieżącego C/Z; karty Przeglądu zostają z objaśnieniem,
+  ale bez liczby i **bez porównania ze średnią WIG20**.
+- **`pageDesc` bez żadnej liczby wskaźnikowej.** Było: „P/E 23.4, ROE 9.2%, dywidenda 0%".
+- **Zakładka Wskaźniki nie wraca już awaryjnie do zaszytych wskaźników** (`ValuationMetrics`
+  z `stock.ratios`); przy ich braku jest zdanie wyjaśniające, nie stare liczby. Sam plik
+  komponentu zostaje nieużywany — do usunięcia przy D10c, które i tak przepisuje te widoki.
+- **Sprawozdania ściągane na każdej zakładce**, bo plakietka w nagłówku jest widoczna zawsze.
+- Nowe klucze `t()` w `pl` i `en`: `stock.peLabel`, `stock.ratiosLoading`,
+  `stock.ratiosUnavailable`. Zaszyty napis „P/E:" w nagłówku poszedł przez `t()`, więc po
+  polsku jest teraz **„C/Z"**, po angielsku „P/E".
+
+**Zakres szerszy niż „C/Z i C/WK" — świadomie.** Przestawione są **wszystkie cztery** karty
+Przeglądu. Zostawienie ROE i stopy dywidendy na zaszytych liczbach dałoby fałszywe zdanie
+o spółce obok poprawnego C/Z: Pepco miało na karcie **ROE 9,2%**, a bieżące ROE to
+**−107,9%**; stopa 5,8% dla PKO była policzona ceną 57,80 zł przy dzisiejszych 109,54 zł.
+
+**Karta „Stopa dywidendy" pokazuje teraz „—" dla wszystkich 24 spółek.** Ani poziom 1, ani 2
+nie mają dziś danych o dywidendzie: `keyStats.dividendYield` z Yahoo jest `null`,
+a `dividendsPaid` nie występuje w żadnym wierszu przepływów. Projekt ma dane w tabeli
+`dividends` i na `/dividends` — doprowadzenie ich do tej karty to osobne zadanie. Powrót do
+wariantu węższego (tylko C/Z i C/WK bieżące) to trzy linie; decyzja Kamila.
+
+**Sprawdzone.** Podgląd [a1650873](https://a1650873.stockview-3e4.pages.dev), SHA `5073e05`,
+w **obu motywach**, Pepco / PKO BP / Dino; pełne odczyty w komentarzu do PR #10. Skrót:
+
+| | nagłówek | C/Z | C/WK | ROE | dyw. |
+|---|---|---|---|---|---|
+| Pepco (48,20 zł) | bez plakietki | — | — | −107.8% | — |
+| PKO BP (109,54 zł) | C/Z: 12.8 | 12.8 | 2.45 | 18.3% | — |
+| Dino (39,65 zł) | C/Z: 24.9 | 24.9 | 4.13 | 18.0% | — |
+
+Zaszyte było odpowiednio: Pepco 23,4 / 2,16 / 9,2% · PKO 9,3 / 1,45 / 17,2% / 5,8% ·
+Dino 17,6 / 4,69 / 26,7% — to ostatnie przy kursie **430 zł** wobec dzisiejszych 39,65.
+Na Pepco nagłówek, Przegląd i Wycena mówią teraz to samo, a nota walutowa z D9a stoi pod
+pustą tabelą Wyceny. EN daje w nagłówku „P/E: 24.9", PL „C/Z: 24.9". Po przejściu na
+zakładkę „Wykres" plakietka **nie znika** — po to są sprawozdania ściągane zawsze.
+`npm run build` przechodzi, CI zielone (dwa przebiegi `build`), GitGuardian i Cloudflare
+zielone. Stan `stock.ratiosUnavailable` sprawdzony **lokalnie** (`npm run dev` z chwilowo
+odsuniętym `public/data/financials/`, potem przywróconym): nagłówek bez plakietki, zakładka
+Wskaźniki pokazuje zdanie i ani jednej starej liczby.
+
+**Nie sprawdzone.** Pozostałe 21 spółek — oglądane były trzy, o które prosił Kamil.
+Screener i Porównywarka — zostają na zaszytych wskaźnikach do D10c. Testów w repo nie ma,
+więc liczby wyżej są porównane z `calculateAllRatios` puszczonym lokalnie na tych samych
+danych produkcyjnych, nie z asercją w teście. **Recenzja wymagana przez poziom „zwykły" —
+osobna sesja Claude — jeszcze się nie odbyła.**
+
+**Wada 1: dwa znaczniki `<meta name="description">`.** Projekt nie ma prerenderu —
+`public/_redirects` oddaje ten sam `index.html` pod każdym adresem, a `pageDesc` powstaje
+dopiero po uruchomieniu JS. Po renderze w DOM-ie są **dwa** opisy: statyczny z `index.html`
+(pierwszy, bez atrybutu) i ten od Helmeta (`data-rh="true"`). `react-helmet-async` nie
+podmienia znacznika, którego sam nie wyrenderował — dokłada własny obok, więc robot dostaje
+dwa i sam wybiera. **Celu D10d to nie psuje** (opis ogólny też nie ma liczb), ale to osobna
+wada SEO. Prawdopodobna poprawka: `data-rh="true"` przy statycznym znaczniku w `index.html`,
+żeby Helmet uznał go za swój. Wymaga własnej weryfikacji — nie weszła do tego PR-a.
+Jak sprawdzać: `curl -s https://stockview.org/stock/pepco | grep '<meta name="description"'`
+(co widzi robot bez JS), `[...document.querySelectorAll('meta[name=description]')].map(m => m.content)`
+w konsoli (duplikat), Search Console → Sprawdzenie adresu URL → „Wyrenderowany kod HTML"
+(co naprawdę widzi Google po renderze).
+
+**Wada 2: ocena kondycji kłóci się teraz z bieżącym ROE.** Na Przeglądzie Pepco stoją obok
+siebie karta „Kondycja finansowa → Rentowność" z **9.2%** (zaszyte; zasila też ocenę 40/100)
+i „Kluczowe wskaźniki → ROE" z **−107.8%** (bieżące). **Tę sprzeczność tworzy ta zmiana** —
+wcześniej obie liczby były zgodne, bo obie były tą samą nieprawdą. Dla PKO różnica jest
+kosmetyczna (17,2% vs 18,3%), dla Dino wyraźna (26,7% vs 18,0%), dla Pepco jaskrawa.
+Ocena kondycji zostaje świadomie: to **P8+D10e**, które ma do zrobienia więcej niż podmianę
+źródła (podwyniki przyznają punkty za nieobecne dane). **Argument, żeby D10e zrobić zaraz
+po tym PR-ze, a nie na końcu kolejki.**
+
+**Przy okazji.** Kapitalizacja w nagłówku jest nadal zaszyta (Pepco „8,2 mld" przy kursie
+48,20 zł i 567,7 mln akcji — bieżąca to ok. 27 mld zł); to **D10a**. Klikanie w logo i górną
+nawigację w zautomatyzowanej przeglądarce zmieniało adres, ale widok zostawał na poprzedniej
+stronie — **na podglądzie poprzedniej gałęzi (zawartość `main`) zachowuje się identycznie**,
+więc nie wprowadza tego ta zmiana; do ręcznego sprawdzenia przez Kamila.
+
+Następne: recenzja PR #10 w osobnej sesji Claude (poziom „zwykły" tego wymaga), potem
+decyzja Kamila o merge'u — w tym decyzja o karcie dywidendy. Dalej **P8+D10e** (sprzeczność
+wyżej), potem D10a, D10b, D10c. Import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-23 — D9a: osłona walutowa fail-safe, pole waluty w panelu admina
 
 Komputer: `MacBook-Pro-Kamil.local`
