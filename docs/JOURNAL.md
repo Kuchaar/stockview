@@ -2,6 +2,105 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-23 — D9a: osłona walutowa fail-safe, pole waluty w panelu admina
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+**Dane Pepco potwierdzone.** Kamil wykonał SQL. Baza: **9 wierszy, wszystkie `EUR`**,
+`verified = true` dokładnie przy dwóch poprawionych (`2025-06-30`, `2024-09-30`), `source`
+nadal `yahoo`. Zapytanie o spółki z więcej niż jedną walutą zwraca **pustą listę**. Eksport
+[run 40014697215](https://github.com/Kuchaar/stockview/actions/runs/40014697215) zielony,
+commit bota [`4da0b2c`](https://github.com/Kuchaar/stockview/commit/4da0b2c); na produkcji
+Pepco ma `EUR` we **wszystkich** wierszach wszystkich trzech sprawozdań, PKO BP `PLN`.
+
+**Zrobione w D9a.**
+
+- **`currencyGuard` zamiast porównania z jedną wartością** (`src/data/financialSchema.js`).
+  Cztery stany, bo trzy nie wystarczały: `match` (liczymy), `foreign` (sprawozdanie w innej
+  walucie — nie liczymy), **`inconsistent`** (wiersze jednej spółki podają różne waluty —
+  nie liczymy) i `unknown` (żaden wiersz nie podaje waluty — liczymy).
+- **`unknown` → liczymy, i to jest poparte danymi, nie założeniem.** Dotyczy poziomu 3
+  (zaszyte `financials` w `wig20.js`), gdzie waluty nie ma. Sprawdziłem na najtrudniejszym
+  przypadku: Pepco raportuje w EUR, ale na poziomie 3 ma przychód **15 200–22 000 mln**,
+  czyli wielkość **złotową** (realny przychód to ~4 500 mln EUR). Zaszyte dane są więc
+  przeliczone na złote i pasują do ceny w złotych.
+- **`currencyOfRows` zwraca `null` przy niezgodności**, nie pierwszą napotkaną walutę, więc
+  nagłówek tabeli nie twierdzi jednej waluty nad kolumnami, które jej nie mają wspólnej.
+- **Nota w `MetricsPanel` rozróżnia powód.** „Spółka raportuje w euro" to stan normalny,
+  „wiersze podają różne waluty" to wada danych — zlanie ich w jeden komunikat ukryłoby tę
+  drugą. Nowy wpis `stock.currencyInconsistent` w `pl` i `en`.
+- **Pole `currency` w `/admin/financials`.** To była druga połowa wady: `payload` go nie
+  zawierał, a zapis ustawiał `source: 'manual'` i `verified: true`, czyli **zamrażał** błędną
+  walutę i blokował importerowi jej poprawienie. Teraz jest wybór `PLN`/`EUR`, wczytywany
+  z wiersza i wysyłany w `payload`, z podpowiedzią w obu językach.
+
+**Dowód, że osłona naprawdę jest fail-safe — na danych, nie z lektury kodu.** Wziąłem
+prawdziwą odpowiedź produkcji dla Pepco i **zmieniłem etykietę jednego rocznego wiersza**
+na `PLN`, a potem puściłem obie wersje logiki obok siebie:
+
+| Scenariusz | stara logika | nowa logika |
+|---|---|---|
+| Pepco, wszystkie EUR | `mismatch: true` | `foreign`, `mismatch: true` |
+| PKO BP, wszystkie PLN | `mismatch: false` | `match`, `mismatch: false` |
+| **Pepco + jeden roczny wiersz `PLN`** | **`mismatch: false` — osłona wyłączona** | **`inconsistent`, `mismatch: true`** |
+| dane bez waluty (poziom 3) | `mismatch: false` | `unknown`, `mismatch: false` |
+
+Trzeci wiersz to cała treść D9a: jedna zła etykieta w jednym z dziewięciu wierszy wystarczała,
+żeby C/Z i C/WK znów policzyły się z PLN przez EUR. Nagłówek przy mieszanych kolumnach
+daje teraz „mln", a przy zgodnych „mln EUR".
+
+**Sprawdzone.** Cztery scenariusze osłony wyżej; nagłówek w trzech przypadkach (EUR+PLN,
+EUR+EUR, brak waluty); `node --check` na obu zmienionych plikach `.js`; `npm run build`
+przechodzi. **Podgląd w przeglądarce w obu motywach — zgodnie z nową zasadą z `AGENTS.md`** —
+opisany w komentarzu do PR-a.
+
+**Recenzja: dwie rundy, dwie uwagi P1, obie trafne.** Druga runda wzięła się stąd, że bot
+reaguje na **każdą** wzmiankę o sobie, a ja zostawiłem ją w opisie PR-a jako zwykły tekst.
+Stąd nowa zasada w `AGENTS.md`.
+
+1. **Nota `currencyInconsistent` twierdziła nieprawdę.** Kończyła się zapewnieniem, że
+   wskaźniki w pozostałych zakładkach są poprawne, „bo dzielą walutę przez tę samą walutę".
+   Przy stanie `inconsistent` to fałsz: `calcProfitability` zestawia zysk z **rachunku
+   wyników** z kapitałem z **bilansu**, `calcDividend` dzieli dywidendy z **przepływów**
+   przez zysk, a `calcGrowth` porównuje **dwa różne okresy** — czyli dokładnie te wiersze,
+   które mogą mieć różne waluty. Zakończenie przepisane w `pl` i `en` na ostrzeżenie.
+   **W nocie `currencyMismatch` to zdanie zostaje**, bo tam jest prawdziwe: wszystkie wiersze
+   mają jedną walutę, więc ROE naprawdę dzieli EUR przez EUR.
+2. **Panel admina kazał wpisywać złotówki przy wybranym EUR.** Pod polami stało na sztywno
+   „Wartości w złotych, nie w milionach", więc administrator uzupełniający okres Pepco
+   zapisałby kwoty w PLN z etykietą EUR — a `verified: true` zablokowałoby importerowi
+   poprawkę. Instrukcja pokazuje teraz **wybraną walutę** (`valuesIn` z podstawieniem),
+   z zachowanym ostrzeżeniem o pełnych kwotach zamiast milionów.
+
+**Uwaga Kamila — domyślna waluta nowego wiersza.** Była zaszyta na `PLN` niezależnie od
+spółki, czyli podpowiadała złotówki także dla Pepco. Teraz bierze się z **istniejących
+wierszy tej spółki**, osobnym zapytaniem po obu typach okresu (kwartalny wiersz ma
+podpowiadać walutę także przy dodawaniu rocznego). Przy braku wierszy albo ich niezgodności
+**nie zgadujemy**: pole jest puste, instrukcja zmienia się w ostrzeżenie, a zapis jest
+zablokowany — i w `save()`, i na przycisku.
+
+| wiersze spółki | domyślna waluta |
+|---|---|
+| brak | **pusta — wybór wymagany, zapis zablokowany** |
+| `PLN` | `PLN` |
+| `EUR` | `EUR` |
+| `EUR` i `PLN` | **pusta — wybór wymagany, zapis zablokowany** |
+
+**Zasada o zrzutach przepisana** (decyzja Kamila), bo zderzyła się z rzeczywistością: `gh`
+nie potrafi załadować obrazka do PR-a, GitHub nie ma do tego API. Do PR-a idzie teraz
+**link do podglądu plus opis tego, co widać, z odczytanymi wartościami**; zrzuty zostają
+lokalnie. Dopisana też zasada, żeby **nie pisać `@codex` inaczej niż przy zamawianiu
+recenzji** — każda wzmianka budzi bota, i to właśnie zrobiło drugą rundę na tym PR-ze.
+
+**Sprawdzone.** Cztery przypadki domyślnej waluty (tabela wyżej); zakończenia obu not w obu
+językach wypisane z prawdziwego `currencyGuard` dla Pepco zgodnego i Pepco z jednym wierszem
+przerobionym na `PLN`; `grep` potwierdza, że zapewnienie „waluta się skraca" zostało **tylko**
+w nocie, w której jest prawdziwe; `npm run build` przechodzi. **Nie sprawdzone:** panelu
+admina na żywo — wymaga konta administratora; Kamil obejrzy go po merge'u, bez zapisu.
+
+Następne: D10d (plaster: nagłówek, Przegląd, `pageDesc`), potem D10a, D10b, D10c, P8+D10e,
+dalej P1. Import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-23 — zasada podglądu w AGENTS.md, D9 odhaczone, plan D10 rozbity na zadania
 
 Komputer: `MacBook-Pro-Kamil.local`

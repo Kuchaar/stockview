@@ -10,6 +10,9 @@ import { motion } from 'framer-motion';
 
 const ADMIN_ID = '576bc3af-9081-4248-8985-959f50590340';
 
+// Waluty, w ktorych raportuja spolki WIG20: zlote plus euro (Pepco, U10 w docs/DATA.md).
+const CURRENCIES = ['PLN', 'EUR'];
+
 const BLOCKS = [
   { key: 'income', column: 'income' },
   { key: 'balance', column: 'balance' },
@@ -61,6 +64,12 @@ export default function AdminFinancialsPage() {
   const [selectedEnd, setSelectedEnd] = useState(null);
   const [values, setValues] = useState(emptyValues);
   const [verified, setVerified] = useState(true);
+  // Waluta wiersza. Bez wartości domyślnej, dopóki nie wiadomo, w czym raportuje ta spółka —
+  // zaszyte „PLN" podpowiadałoby złotówki także dla Pepco, które raportuje w EUR.
+  const [currency, setCurrency] = useState('');
+  // Waluty **wszystkich** wierszy spółki, obu typów okresu: kwartalny wiersz ma podpowiadać
+  // walutę także przy dodawaniu rocznego.
+  const [companyCurrencies, setCompanyCurrencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -83,6 +92,22 @@ export default function AdminFinancialsPage() {
   }, [companyId, periodType, isAdmin]);
 
   useEffect(() => { loadRows(); }, [loadRows]);
+
+  // Waluty spółki — osobne zapytanie, bo `loadRows` filtruje po typie okresu.
+  useEffect(() => {
+    if (!supabase || !isAdmin) return;
+    let anulowane = false;
+    (async () => {
+      const { data } = await supabase.from('financials').select('currency').eq('company_id', companyId);
+      if (anulowane) return;
+      setCompanyCurrencies([...new Set((data ?? []).map((r) => r.currency).filter(Boolean))].sort());
+    })();
+    return () => { anulowane = true; };
+  }, [companyId, isAdmin]);
+
+  // Podpowiedź tylko wtedy, gdy istniejące wiersze są zgodne. Przy braku wierszy albo
+  // niezgodności nie zgadujemy — wybór jest wymagany przed zapisem.
+  const defaultCurrency = companyCurrencies.length === 1 ? companyCurrencies[0] : '';
 
   // Zmiana spółki albo typu okresu zaczyna edycję od zera.
   useEffect(() => { setSelectedEnd(null); setValues(emptyValues()); }, [companyId, periodType]);
@@ -108,6 +133,7 @@ export default function AdminFinancialsPage() {
       cashFlow: asText(row.cash_flow),
     });
     setVerified(row.verified);
+    setCurrency(row.currency || defaultCurrency);
     setMessage(null);
   }
 
@@ -116,6 +142,7 @@ export default function AdminFinancialsPage() {
     setSelectedEnd(today);
     setValues(emptyValues());
     setVerified(true);
+    setCurrency(defaultCurrency);
     setMessage(null);
   }
 
@@ -131,6 +158,12 @@ export default function AdminFinancialsPage() {
   }
 
   async function save() {
+    // Bez waluty nie wolno zapisać: kwoty trafiłyby do bazy z nieznaną jednostką,
+    // a `verified: true` zablokowałoby importerowi poprawkę.
+    if (!currency) {
+      setMessage({ type: 'err', text: t('admin.pickCurrency') });
+      return;
+    }
     if (!selectedEnd || hasErrors) return;
     setSaving(true);
     setMessage(null);
@@ -151,6 +184,7 @@ export default function AdminFinancialsPage() {
       balance: clean(values.balance),
       cash_flow: clean(values.cashFlow),
       source: 'manual',
+      currency,
       verified,
     };
 
@@ -292,6 +326,19 @@ export default function AdminFinancialsPage() {
                 </span>
               </>
             )}
+            <label className="flex items-center gap-2">
+              <span className="font-medium">{t('admin.currency')}</span>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="rounded-lg border border-surface-300 dark:border-surface-700
+                           bg-white dark:bg-surface-900 px-2 py-1 font-mono text-xs"
+              >
+                {!currency && <option value="">—</option>}
+                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <span className="text-xs text-surface-500">{t('admin.currencyHint')}</span>
+            </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -304,7 +351,11 @@ export default function AdminFinancialsPage() {
             </label>
           </div>
 
-          <p className="text-xs text-surface-500">{t('admin.valuesInPln')}</p>
+          <p className={`text-xs ${currency ? 'text-surface-500' : 'text-warn'}`}>
+            {currency
+              ? t('admin.valuesIn').replace('{currency}', currency)
+              : t('admin.pickCurrency')}
+          </p>
 
           {/* Trzy sprawozdania */}
           <div className="grid gap-4 lg:grid-cols-3">
@@ -362,7 +413,7 @@ export default function AdminFinancialsPage() {
             </p>
             <button
               onClick={save}
-              disabled={saving || hasErrors}
+              disabled={saving || hasErrors || !currency}
               className="btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
