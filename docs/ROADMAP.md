@@ -182,7 +182,9 @@ To się nie skaluje i cicho starzeje.
   a `statementCurrency` bierze **pierwszą napotkaną** walutę. Osłona działa dziś tylko dlatego,
   że wszystkie cztery wiersze **roczne** są w EUR. To jest w D9a.
 
-- [ ] **D9a — osłona walutowa odporna na niespójny wiersz** (~40 min) — ryzyko: **wysokie** (waluty)
+- [x] **D9a — osłona walutowa odporna na niespójny wiersz** (~40 min) — ryzyko: **wysokie** (waluty)
+  · PR [#9](https://github.com/Kuchaar/stockview/pull/9), scalony jako [`9670070`](https://github.com/Kuchaar/stockview/commit/9670070),
+  zmiany w [`83a7cfc`](https://github.com/Kuchaar/stockview/commit/83a7cfc) i [`5c18511`](https://github.com/Kuchaar/stockview/commit/5c18511)
   Wyszło przy weryfikacji D9. `statementCurrency` (`src/data/financialSchema.js`) zwraca
   **pierwszą znalezioną** walutę, a Pepco ma w bazie 9 wierszy w **dwóch** walutach:
   4 roczne EUR, kwartalne Q1 2026 / Q3 2025 / Q1 2025 EUR, a **Q2 2025 i Q3 2024 oznaczone
@@ -238,7 +240,9 @@ o usunięcie zaszytych danych jako **źródła awaryjnego**; tu o to, że pięć
 na jednym ekranie Pepco stoją „Rentowność 9,2%" i „ROE −107,8%" — patrz uwaga przy tym
 zadaniu, razem z konsekwencją, że `ratios.json` powstaje dopiero w D10b.
 
-- [ ] **D10d — plaster: zdjąć zaszyte wskaźniki z trzech widoków** (~40 min) — ryzyko: **zwykłe**
+- [x] **D10d — plaster: zdjąć zaszyte wskaźniki z trzech widoków** (~40 min) — ryzyko: **zwykłe**
+  · PR [#10](https://github.com/Kuchaar/stockview/pull/10), scalony jako [`e29d29d`](https://github.com/Kuchaar/stockview/commit/e29d29d),
+  zmiany w [`5073e05`](https://github.com/Kuchaar/stockview/commit/5073e05) i [`09f98bd`](https://github.com/Kuchaar/stockview/commit/09f98bd) (poprawki z recenzji)
   Zakres **tylko**: plakietka w nagłówku, karty Przeglądu, `pageDesc`. **Screener
   i Porównywarka zostają bez osłony** do D10c (decyzja Kamila) — ich treścią *są* wskaźniki,
   więc „—" zamieniłoby je w pustą stronę, a baner nad fałszywą liczbą nadal pokazuje
@@ -355,6 +359,20 @@ zadaniu, razem z konsekwencją, że `ratios.json` powstaje dopiero w D10b.
   `pe: null` i `peg: null` dla JSW, Cyfrowego Polsatu i PGE, a na ekranie stoi tam „n/m"
   z wyjaśnieniem, **nie** to samo „—" co przy braku danych; zrzuty z podglądu w obu
   motywach w opisie PR-a.
+
+- [ ] **D10f — EV/EBITDA i FCF yield przy ujemnym mianowniku — „n/m", nie liczba** (~20 min) — ryzyko: **wysokie** (poprawność liczb)
+  **Znalezione przy P8+D10e**, ta sama klasa co C/Z i PEG przy stracie, ale **poza zakresem,
+  który zlecił Kamil** (ten mówił o C/Z i PEG), więc zgłoszone, a nie zrobione.
+  `EV/EBITDA` przy **ujemnej EBITDA** wychodzi ujemne i wygląda na skrajnie tanie: JSW ma
+  dziś **−1,09x**, a sortowanie „od najniższego" w Screenerze postawiłoby je przed każdą
+  spółką zdrową. `fcfYield` ma to samo przy ujemnych wolnych przepływach — JSW **−104,55%**.
+  Oba stoją w zakładce Wskaźniki jako zwykłe liczby.
+  *Gotowe, gdy:* `calculateAllRatios` zwraca `evEbitda: null` z powodem w `notMeaningful`
+  przy `ebitda <= 0`, a `fcfYield` pokazuje ujemną wartość **z opisem, że to ubytek gotówki,
+  nie rentowność** (albo `null` — do decyzji Kamila: ujemny FCF yield jest, w odróżnieniu od
+  ujemnego mnożnika, liczbą porównywalną i uszeregowaną); żaden widok nie pokazuje ujemnego
+  mnożnika bez oznaczenia; filtry Screenera pomijają te spółki, a nie stawiają ich na czele.
+
 ---
 
 ## Bramka P — prywatność i bezpieczeństwo
