@@ -2,6 +2,93 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-24 — recenzja PR #10 w osobnej sesji: dwie poprawki, jedna sprostowana teza
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+Recenzja wymagana przez poziom ryzyka **zwykły**. Cel: **`c005b8d`** (odczyty z podglądu
+w PR pochodzą z `5073e05` — różnica między nimi to sam wpis w dzienniku). Poprawki:
+**`09f98bd`**. **Nie zmergowany** — merge to decyzja Kamila.
+
+**Uwaga 1 (Kamil, z podglądu) — poprawione.** Tabela „Rachunek zysków i strat" na Przeglądzie
+czytała zaszyte `stock.financials`: kolumny 2021–2024E, prognoza „E" i podpis „w milionach
+PLN" na sztywno. Dla Pepco dawało to **zysk netto 350 mln w „2024E"** przy rzeczywistym
+**FY2024 −734 mln EUR**. Teraz bierze te same sprawozdania co zakładka „Sprawozdania",
+a podpis podaje walutę z danych. Wielkości podpis **nie nazywa** — każda komórka nazywa
+swoją sama (`formatNumber` pisze „994 mln" albo „20,2 mld"), więc „mln PLN" w podpisie stałoby
+w sprzeczności z „20,2 mld" w komórce. To jedyne odstępstwo od litery zlecenia (było:
+„jednostka z `amountUnit`"); `amountUnit` nadal stoi w nagłówku kolumny opisowej samej tabeli.
+
+**Uwaga 2 (recenzja, P1) — poprawione.** Przestawienie kart Przeglądu na bieżące wskaźniki
+wpuściło na nie **ujemne C/Z**, a warunek `pe < 12` jest prawdą także dla liczby ujemnej.
+Trzy spółki ze stratą dostawały przez to werdykt **„Poniżej średniej WIG20" w zielonym**:
+Cyfrowy Polsat **−3,74**, JSW **−0,56**, PGE **−10,72** (policzone bieżącą ceną i `eps`
+z poziomu 2). Teraz C/Z ≤ 0 nie dostaje ani liczby, ani werdyktu: plakietka w nagłówku
+znika, a karta mówi „Spółka ze stratą — C/Z nieokreślone". **Zakładka Wskaźniki nadal
+pokazuje tam „−0.6x"** — to `calcValuation`, czyli formuła finansowa, a więc ryzyko wysokie
+i osobne zadanie; pytanie do Kamila niżej.
+
+**Sprostowanie do poprzedniego wpisu i do opisu PR-a.** Zdanie „ani poziom 1, ani 2 nie mają
+danych o dywidendzie" było prawdziwe o **sprawozdaniach**, ale brzmiało jak „projekt nie ma
+danych o dywidendzie" — a ma. Tabela `dividends` w Supabase: **17 wypłat, 12 spółek**,
+`ex_date` **2026-01-09 … 2026-09-04**. Sprawdzone zapytaniem 2026-10-24.
+
+**Czy tabela pokrywa pełne 12 miesięcy — nie.** Na dziś okno „ostatnie 12 miesięcy" to
+2025-10-25…2026-10-24, a najstarszy wiersz ma `ex_date` 2026-01-09, więc **kwartał
+2025-10-25…2026-01-08 jest pusty**. Do tego `status` ma trzy wartości i tylko **`paid`**
+(6 wierszy, wszystkie I kwartał 2026) wolno wziąć do liczby historycznej — `confirmed` (6)
+i `estimated` (5) to zapowiedzi, czyli P1 §4. Kolumna `dividend_yield` w bazie jest policzona
+**inną ceną** (PKO: 3,62 zł na akcję przy 4,20% to cena ok. 86 zł, dzisiejsza 109,54), więc
+nie wolno jej pokazać wprost. I 12 spółek nie ma w tabeli **żadnego** wiersza, więc ich „—"
+nie znaczy „nie płaci dywidendy". Wszystko to wpisane do **D10b** w roadmapie razem
+z warunkiem „gotowe, gdy".
+
+**Czego świadomie nie ruszam.** „Dynamika przychodów" w ocenie kondycji nadal liczy się
+z zaszytych `stock.financials` i porównuje rok raportowany z **prognozą „2024E"** — decyzja
+Kamila: to część **P8+D10e**, więc dopisane tam, razem z dwoma innymi wadami `HealthGrid`
+(karty Rentowność/Zadłużenie/Płynność na `stock.ratios`; brak danych o dynamice dostaje
+**score 50**, czyli połowę punktów za nieobecną daną — klasa D4a). Podwójny
+`<meta name="description">` → nowe zadanie **S6** w Bramce 3, ryzyko niskie.
+
+**Kolejność po merge'u** (decyzja Kamila): `P8+D10e` → `D10a` → `D10b` → `D10c`. Wpisana
+w roadmapę przy D10 i przy samym zadaniu. **Konsekwencja do potwierdzenia:** P8+D10e miało
+liczyć ocenę z `ratios.json`, a ten plik powstaje dopiero w **D10b** — przy tej kolejności
+ocena musi na razie iść z `calculateAllRatios` (czyli z `currentRatios`, które `StockPage`
+już ma), a na `ratios.json` przejść w D10c.
+
+**Sprawdzone.** Podgląd [82cab1d0](https://82cab1d0.stockview-3e4.pages.dev), SHA `09f98bd`,
+**oba motywy**, cztery spółki. JSW doszło do trójki Kamila, bo to na nim widać poprawkę C/Z.
+
+| | nagłówek | C/Z | C/WK | ROE | dyw. | tabela |
+|---|---|---|---|---|---|---|
+| Pepco (48,20 zł) | bez plakietki | — | — | −107.8% | — | kwoty w EUR, FY2022–FY2025 |
+| PKO BP (109,54 zł) | C/Z: 12.8 | 12.8 | 2.45 | 18.3% | — | kwoty w PLN, FY2022–FY2025 |
+| Dino (39,65 zł) | C/Z: 24.9 | 24.9 | 4.13 | 18.0% | — | kwoty w PLN, FY2022–FY2025 |
+| JSW (29,75 zł) | bez plakietki | — *(„Spółka ze stratą")* | 1.73 | −203.2% | — | kwoty w PLN, FY2022–FY2025 |
+
+Pepco: zysk netto **−734 mln** w FY2024 i **−176 mln** w FY2025, obie na czerwono, pod
+podpisem „Dane skonsolidowane · kwoty w EUR" — wcześniej w tym miejscu stało **350 mln**
+w kolumnie „2024E" pod „w milionach PLN". Kreski „—", czerwone zdanie o stracie i kolory
+kart czytelne w obu motywach; nic nie znika w jasnym. EN na JSW daje „Loss-making — P/E not
+meaningful" i „Consolidated data · amounts in PLN". `npm run build` przechodzi.
+
+**Nie sprawdzone.** Pozostałe 20 spółek. Cyfrowy Polsat i PGE — ujemne C/Z policzone
+lokalnie z `calculateAllRatios` na danych produkcyjnych, **na ekranie oglądane tylko JSW**.
+Testów w repo nie ma, więc żadna z tych liczb nie ma asercji. Zakładki Wskaźniki, Kondycja,
+Screener i Porównywarka — poza zakresem tej rundy. CI dla `09f98bd`: `build` zielone
+(dwa przebiegi), GitGuardian i Cloudflare zielone — status dla **nowej głowy** odpytany
+po pushu tego wpisu.
+
+**Dwa pytania do Kamila.** (1) Czy `calcValuation` ma zwracać `null` dla C/Z przy `eps ≤ 0`,
+żeby zakładka Wskaźniki przestała pokazywać „−0.6x"? To zmiana formuły, czyli **ryzyko
+wysokie** i osobne zadanie — dlatego tutaj jej nie ma. (2) Czy potwierdzasz konsekwencję
+kolejności opisaną wyżej (P8+D10e liczy ocenę z `currentRatios`, nie z `ratios.json`)?
+
+Następne: decyzja Kamila o merge'u PR #10 — w tym o karcie dywidendy i o dwóch pytaniach
+wyżej. Potem **P8+D10e** (sprzeczność „Rentowność 9,2%" vs „ROE −107,8%" na jednym ekranie
+Pepco; na JSW „−3,2%" vs „−203,2%"), dalej **D10a**, **D10b**, **D10c**, potem Bramka P
+od P1. Import sprawozdań za III kwartał: początek grudnia.
+
 ## 2026-10-24 — D10d: nagłówek i Przegląd na bieżących wskaźnikach, opis dla Google bez liczb
 
 Komputer: `MacBook-Pro-Kamil.local`
