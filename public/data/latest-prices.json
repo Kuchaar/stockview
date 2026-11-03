@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-30",
+  "lastUpdated": "2026-11-03",
   "prices": {
     "PKO": {
       "close": 114.52,
@@ -18,7 +18,7 @@
       "date": "2026-10-30",
       "volume": 1416536,
       "open": 147.5,
-      "high": 148.78,
+      "high": 148.82,
       "low": 144.68
     },
     "KGH": {
@@ -32,14 +32,14 @@
       "low": 279.45
     },
     "PZU": {
-      "close": 72.14,
-      "change": -1.54,
-      "changePercent": -2.09,
+      "close": 73.68,
+      "change": 0,
+      "changePercent": 0,
       "date": "2026-10-30",
-      "volume": 1511599,
-      "open": 73.3,
-      "high": 73.3,
-      "low": 72.02
+      "volume": 0,
+      "open": 73.68,
+      "high": 73.68,
+      "low": 73.68
     },
     "PEO": {
       "close": 262.5,
