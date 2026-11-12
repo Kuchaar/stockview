@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-11",
+  "lastUpdated": "2026-11-12",
   "prices": {
     "PKO": {
       "close": 116.98,
@@ -32,14 +32,14 @@
       "low": 284.3
     },
     "PZU": {
-      "close": 73.68,
-      "change": 0,
-      "changePercent": 0,
-      "date": "2026-11-10",
-      "volume": 0,
-      "open": 73.68,
-      "high": 73.68,
-      "low": 73.68
+      "close": 75.22,
+      "change": 1.54,
+      "changePercent": 2.09,
+      "date": "2026-11-12",
+      "volume": 1793975,
+      "open": 74.82,
+      "high": 75.48,
+      "low": 74.36
     },
     "PEO": {
       "close": 268.9,
