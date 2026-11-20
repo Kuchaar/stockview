@@ -54,14 +54,17 @@ function getValueColor(value, meta) {
   return '';
 }
 
-function MetricCard({ ratioKey, value, lang, currency = null }) {
+function MetricCard({ ratioKey, value, lang, currency = null, notMeaningful = null, nmLabel = 'n/m' }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const meta = getRatioMeta(ratioKey);
   if (!meta) return null;
 
   const label = lang === 'pl' ? meta.label_pl : meta.label_en;
   const tooltip = lang === 'pl' ? meta.tooltip_pl : meta.tooltip_en;
-  const colorClass = getValueColor(value, meta);
+  // „n/m" i „—" to dwa różne zdania: pierwsze znaczy „dana jest, wskaźnik z niej
+  // nieokreślony", drugie „danej nie mamy". Wcześniej oba wychodziły jako „—", razem
+  // z trzecim przypadkiem — wyłączeniem przez osłonę walutową (P8+D10e).
+  const colorClass = notMeaningful ? 'text-warn' : getValueColor(value, meta);
 
   return (
     <div className="p-4 rounded-xl bg-surface-50/80 dark:bg-surface-900/50
@@ -92,7 +95,7 @@ function MetricCard({ ratioKey, value, lang, currency = null }) {
         </div>
       </div>
       <div className={`font-mono font-semibold text-lg ${colorClass}`}>
-        {formatValue(value, meta.format, currency)}
+        {notMeaningful ? nmLabel : formatValue(value, meta.format, currency)}
       </div>
     </div>
   );
@@ -134,6 +137,13 @@ export default function MetricsPanel({ ratios, lang }) {
         .replaceAll('{quote}', cur.quote)
     : null;
 
+  // Wskaźniki oznaczone „n/m" (nieokreślone) wraz z powodem — dziś C/Z i PEG przy stracie.
+  // Sam znak „n/m" bez zdania obok byłby kolejnym skrótem do odszyfrowania, więc powody
+  // idą pod siatką, tak samo jak nota walutowa.
+  const nm = ratios.notMeaningful || {};
+  const nmReasons = [...new Set(activeCategory.fields.map(f => nm[f]).filter(Boolean))];
+  const NM_NOTE_KEYS = { loss: 'stock.nmNoteLoss', rebound: 'stock.nmNoteRebound' };
+
   return (
     <div>
       {/* Sub-tabs */}
@@ -165,9 +175,24 @@ export default function MetricsPanel({ ratios, lang }) {
             value={activeRatios[field]}
             lang={lang}
             currency={cur?.statement ?? null}
+            notMeaningful={nm[field] ?? null}
+            nmLabel={t('stock.nm')}
           />
         ))}
       </div>
+
+      {nmReasons.map(reason => (
+        <div
+          key={reason}
+          className="mt-5 flex gap-3 rounded-xl border border-warn/30 bg-warn/5 p-4
+                     dark:border-warn/25 dark:bg-warn/10"
+        >
+          <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-warn" aria-hidden="true" />
+          <p className="text-xs leading-relaxed text-surface-600 dark:text-surface-300">
+            {t(NM_NOTE_KEYS[reason])}
+          </p>
+        </div>
+      ))}
 
       {currencyNote && (
         <div className="mt-5 flex gap-3 rounded-xl border border-warn/30 bg-warn/5 p-4

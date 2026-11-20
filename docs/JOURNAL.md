@@ -2,6 +2,60 @@
 
 <!-- Najnowszy wpis na górze. Każdy wpis kończy się polem „Następne:". -->
 
+## 2026-10-24 — P8+D10e: ocena kondycji na bieżących danych, bez wyceny, i „n/m" zamiast ujemnego C/Z
+
+Komputer: `MacBook-Pro-Kamil.local`
+
+Zadanie **P8+D10e**, ryzyko **wysokie** (ocena finansowa). PR **#11**, gałąź
+`fix/p8-d10e-ocena-kondycji`, commity `5414493` (kod) i `7b8fb6d` (dokumenty).
+**Nie zmergowany** — decyzja Kamila.
+
+**Co zrobione.** Ocena kondycji przestała czytać zaszyte `stock.ratios`
+i `stock.financials`. Nowa `calculateHealth` liczy ją z `currentRatios`, czyli z tych samych
+bieżących sprawozdań, co reszta strony — po D10d na jednym ekranie Pepco stały obok siebie
+„Rentowność 9,2%" (zaszyte, zasilały ocenę) i „ROE −107,8%" (bieżące). Z oceny wypadł **blok
+wyceny**: „tanio" nie jest cechą finansów spółki, tylko zdaniem o cenie. Skutek uboczny warty
+odnotowania — ocena nie używa teraz ani ceny, ani kapitalizacji, więc nie dotyka jej ani
+osłona walutowa z D9, ani nieaktualna liczba akcji z D10a. Brak danej nie daje punktów:
+obszar bez wskaźników wypada z oceny razem ze swoją wagą (dotąd „Dynamika przychodów"
+dostawała 50 pkt za nieobecną daną), a ekran mówi, z ilu obszarów ocena powstała.
+C/Z i PEG przy zysku ≤ 0 idą na `null` z powodem „n/m", odróżnialnym na ekranie od „—"
+i od wyłączenia osłoną walutową. „Atrakcyjna wycena" zniknęła z obu miejsc, progi na kartach
+są podpisane jako konwencja StockView, a każda ocena prowadzi do opisu metodologii, którego
+tabela progów buduje się z `HEALTH_CRITERIA` — opis nie może rozjechać się z liczbą.
+
+**Cztery wady znalezione przy okazji**, wszystkie zasilały nową ocenę, więc naprawione
+razem z nią: (1) tempo wzrostu liczone od **ujemnej bazy** mierzy wyjście ze straty, nie
+wzrost — Pepco miało „wzrost zysku +76%" przy marży netto **−3,89%**, czyli punkty za
+mniejszą stratę; (2) `Dług netto/EBITDA` ujemne szło w najlepsze pasmo, choć ujemna EBITDA
+i nadwyżka gotówki dają **ten sam znak** i z ilorazu nie wiadomo, która to sytuacja —
+wskaźnik wypada teraz z oceny; (3) `Dług/Kapitał` ujemne też szło w najlepsze pasmo, a może
+wyjść tylko z **ujemnego kapitału własnego**; (4) ROA mierzone progami spółki niefinansowej
+wrzucało każdy bank w najniższe pasmo (PKO BP: ROA 1,83% przy ROE 18,3%) — własnych progów
+bankowych nie wymyślam, więc dla banku wskaźnik wypada z oceny.
+
+**Zgłoszone, nie zrobione — D10f.** `EV/EBITDA` przy ujemnej EBITDA (JSW **−1,09x**)
+i `fcfYield` przy ujemnych przepływach (JSW **−104,55%**) to ta sama klasa co C/Z przy
+stracie: ujemny mnożnik wygląda na skrajnie tani i sortowałby się w Screenerze przed każdą
+spółką zdrową. Zakres zlecony przez Kamila mówił o C/Z i PEG, więc to poszło do roadmapy
+jako osobne zadanie, a nie po cichu do tego PR-a.
+
+**Jak sprawdzone.** `npm run build` zielony. Klucze `pl`/`en`: 312 = 312. Grep po
+„atrakcyjn / kupuj / niedowartościow" w `src/` → dokładnie dwa trafienia, oba opisy
+działalności. `grep "stock.ratios" src/pages/StockPage.jsx` → nic. Ocena policzona dla
+wszystkich 24 spółek: każda dostaje liczbę albo jawne „brak oceny". `pe` i `peg` to `null`
+dla JSW, Cyfrowego Polsatu i PGE. Podgląd PR-a obejrzany w obu motywach na czterech
+spółkach — odczyty w opisie PR-a. **Nie sprawdzone:** repo nie ma testów automatycznych;
+ocena liczona lokalnie na poziomie 2, a na produkcji pierwszeństwo ma poziom 1 z Yahoo, więc
+liczby mogą się różnić; brak przebiegu na produkcji.
+
+**Odhaczone w roadmapie:** D9a (PR #9, `9670070`) i D10d (PR #10, `e29d29d`).
+
+Następne: decyzja Kamila o merge'u PR #11 po rundzie recenzji bota. Potem **D10a** — liczba
+akcji jako dane z datą, nie stała w kodzie (ryzyko wysokie). Do rozstrzygnięcia przy D10f:
+czy ujemny `fcfYield` ma zostać liczbą z opisem („ubytek gotówki"), czy iść na `null` tak
+jak ujemny mnożnik — w odróżnieniu od mnożnika jest porównywalny i daje się uszeregować.
+
 ## 2026-10-24 — recenzja PR #10 w osobnej sesji: dwie poprawki, jedna sprostowana teza
 
 Komputer: `MacBook-Pro-Kamil.local`
