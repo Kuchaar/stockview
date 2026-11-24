@@ -150,6 +150,18 @@ of `useFinancials`. Manual corrections go through `/admin/financials`; a row wit
   `src/data/translations.js`. No hardcoded user-facing text.
 - **Every new component must work in dark mode** — check both themes before calling it done.
 - **No new dependencies without asking.** The bundle is already over Vite's 500 kB warning.
+- **The language of an assessment is descriptive, never advisory** (P8). A rating on screen
+  says what the numbers show and against which threshold — never what to do about it. No
+  „atrakcyjna wycena", „niedowartościowana", „kup/sprzedaj", „warto kupić", no „zachowaj
+  ostrożność": [`docs/VISION.md`](docs/VISION.md), Zasady 1 and 2, and MAR/KNF behind them.
+  What goes on screen instead is the number, the threshold and the period it comes from.
+  **Every threshold is either a quotation from a named source or a convention of the site
+  stated as such** — a „✓" next to a number is neither, and an invented average („średnia
+  WIG20 to 12–15", which nothing computes) is worse than either. **Colour is a verdict too:**
+  a direction may be encoded in colour where one exists in the company's finances (higher ROE
+  is better), and nowhere a direction would be an opinion about the price (a low P/E is not
+  green). Words that describe what a company does („Kupuje portfele wierzytelności") are not
+  assessments.
 
 ## Environment
 
@@ -383,6 +395,10 @@ breaking a convention is not automatically a P1.
   ships bash 3.2.
 - `noindex` changed in only one of its two places (`public/_headers` and `src/App.jsx`).
 - A migration without a matching note in [docs/DATA.md](docs/DATA.md).
+- An assessment written in advisory language, or a threshold that names neither a source nor
+  itself as a convention of the site — see „Conventions" above. A threshold presented as a
+  market fact that nothing in the code computes is a **P1 §1** instead: it states something
+  false.
 
 **P3 — remarks.** Naming, dead code, structure, duplication, a clearer way to write it. The
 author may decline a P3 with a reason and that closes it.
